@@ -31,34 +31,15 @@ const buttonStyle = {
   height: "40px",
 };
 
-const MenuAvatar = (props) => {
-  const { active } = props;
-  return (
-    <ListItemAvatar>
-      <Avatar>{active ? <AddIcon /> : <RemoveIcon />}</Avatar>
-    </ListItemAvatar>
-  );
-};
-
-const HistoricMap = (props) => {
-  const { active, onClick } = props;
+const MenuItem = (props) => {
+  const { active, onClick, label } = props;
   return (
     <ListItem disablePadding>
       <ListItemButton autoFocus onClick={onClick}>
-        <MenuAvatar active={active} />
-        <ListItemText primary="Luftbild 1945" />
-      </ListItemButton>
-    </ListItem>
-  );
-};
-
-const Markers = (props) => {
-  const { active, onClick } = props;
-  return (
-    <ListItem disablePadding>
-      <ListItemButton autoFocus onClick={onClick}>
-        <MenuAvatar active={active} />
-        <ListItemText primary="Orte Anzeigen" />
+        <ListItemAvatar>
+          <Avatar>{active ? <AddIcon /> : <RemoveIcon />}</Avatar>
+        </ListItemAvatar>
+        <ListItemText primary={label} />
       </ListItemButton>
     </ListItem>
   );
@@ -83,13 +64,15 @@ const Menu = (props) => {
 
       <Dialog onClose={handleOpen(false)} open={open}>
         <List sx={{ pt: 0 }}>
-          <HistoricMap
+          <MenuItem
             onClick={handleItemClick("showHistoricMap")}
             active={itemState.showHistoricMap}
+            label={"Luftbild 1945"}
           />
-          <Markers
+          <MenuItem
             onClick={handleItemClick("showMarkers")}
             active={itemState.showMarkers}
+            label={"Orte"}
           />
         </List>
       </Dialog>
