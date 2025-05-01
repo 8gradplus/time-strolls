@@ -1,0 +1,56 @@
+from topothek.crawl import crawl
+from transform.coordinates import get_affine_transform
+from transform.coordinates import to_web_mercator
+from extract.extract import get_coordinates
+from extract.extract import read_image
+from tiles import create_tiles
+from helpers.fs import clear_directory, Download, copy_file
+from transform.geotiff import geotiff
+from rasterio.shutil import copy
+from swak.funcflow import Pipe, Map
+
+
+EXAMPLE_TOPOTHEK_URL = 'https://lichtenau.topothek.at/#ipp=500&p=1&searchterm=Atalla%20Margarete%20(geb.%20Eckerstorfer%20Margarete)&t=1%2C2%2C4%2C7&sf=chk_docname%2Cchk_mainkeywords%2Cchk_subkeywords&vp=false&sort=publish_date&sortdir=desc'
+IMAGE_PATH = '../resources/us-army-1945.jpeg'
+AUDIO_PATH = '../resources/test.mp3'
+RASTER_TIFF_PATH = '../resources/geo.tif'
+
+# currently we serve data with react from public folder.
+# This will be replaced in the future DB / API
+# With a dynamic tile server zoom levels will get obsolete
+ZOOM_LEVELS = range (10, 18)
+STATIC_TILES_PATH = '../frontend/public/tiles'
+STATIC_TOPOTHEK_PATH = '../frontend/public/images'
+STATIC_AUDIO_PATH = '../frontend/public/audio'
+
+# lat / lon convention!
+LANDMARKS = {
+    'Kirche St. Oswald': {
+        'pixel': (286, 2125),
+        'gps': (48.619095, 14.030765)
+    },
+    'Laher Unteruresch': {
+        'pixel': (863, 2610) ,
+        'gps': (48.61017854015886, 14.04406485511563) ,
+                },
+    'Ruine Wittinghausen': {
+        'pixel': (2919, 143),
+        'gps': (48.64500581431426, 14.103290101060226),
+              },
+}
+
+def create_raster_tif():
+    pixel, gps = get_coordinates(LANDMARKS)
+    meters = to_web_mercator(gps)
+    tif = geotiff(read_image(IMAGE_PATH), get_affine_transform(pixel, meters))
+    with tif.open() as src:
+        copy(src, RASTER_TIFF_PATH, driver="GTiff")
+    create_tiles(RASTER_TIFF_PATH, ZOOM_LEVELS, STATIC_TILES_PATH)
+
+
+if __name__ == '__main__':
+    # Todo clean up folders before filling them
+    Map(clear_directory)((STATIC_AUDIO_PATH, STATIC_TILES_PATH, STATIC_TOPOTHEK_PATH))
+    copy_file(AUDIO_PATH, STATIC_AUDIO_PATH + '/test.mp3')
+    Pipe(crawl, Map(Download(STATIC_TOPOTHEK_PATH)))(EXAMPLE_TOPOTHEK_URL)
+    create_raster_tif()

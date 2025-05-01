@@ -1,0 +1,13 @@
+resources/
+
+# Python
+.python-version
+.ipynb_checkpoints
+__pycache__
+
+# javascript
+frontend/public/audio/*
+frontend/public/tiles/*
+frontend/public/images/*
+frontend/node_modules/
+frontend/build/*

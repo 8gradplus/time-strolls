@@ -1,0 +1,31 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+jupyter = "*"
+matplotlib = "*"
+opencv-python = "*"
+swak = "*"
+pandas = "*"
+tenacity = "*"
+pyproj = "*"
+rasterio = "*"
+rio-tiler = "*"
+morecantile = "*"
+ipympl = "*"
+folium = "*"
+selenium = "*"
+webdriver-manager = "*"
+torch="*"
+torchvision="*"
+torchaudio="*"
+
+[dev-packages]
+
+
+[scripts]
+
+[requires]
+python_version = "3.12"
