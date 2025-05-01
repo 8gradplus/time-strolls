@@ -14,7 +14,7 @@ const DisplayImages = () => {
   return (
     <>
       {imageFilenames.map((filename, idx) => (
-        <Box key={idx} sx={{ mb: 1 }}>
+        <Box key={`img-${idx}-${filename}`} sx={{ mb: 1 }}>
           <img
             src={`/images/${filename}`}
             alt={`img-${idx}-${filename}`}

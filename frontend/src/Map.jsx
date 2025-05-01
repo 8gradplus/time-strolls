@@ -1,18 +1,61 @@
 import { useState } from "react";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { placeIcon } from "./icons";
 import Track from "./Track";
 import Menu from "./Menu";
+import { placeIcon } from "./icons";
 import LocationInfo from "./LocationInfo/LocationInfo";
+// import LocationMarker from "./LocationMarkers/LocationMarker";
+import LocationMarkers from "./LocationMarkers/LocationMarkers";
+
+// This should be replaced by an API call
+const LOCATIONS = [
+  {
+    position: [48.61017854015886, 14.04406485511563],
+    id: 1,
+    name: "Urasch",
+  },
+  {
+    position: [48.616413, 14.050119],
+    id: 2,
+    name: "Muckenschlag",
+  },
+];
+
+const HistoricMap = (props) => {
+  const { open } = props;
+  if (!open) return null;
+  return (
+    <TileLayer url="/tiles/{z}/{x}/{y}.png" attribution="1945" noWrap={true} />
+  );
+};
 
 const CoordinateMap = () => {
-  // Todo set center to current postion
-  const center = [48.61017854015886, 14.04406485511563];
+  // Todo set center to current postion - Keep this for dev
+  const center = [48.61017, 14.044];
   const [showInfo, setShowInfo] = useState(false);
+  const [locationId, setLocationId] = useState(null);
+  const [showMarkers, setShowMarkers] = useState(true);
+  const [showHistoricMap, setShowHistoricMap] = useState(false);
 
   const handleInfoOpen = (newOpen) => () => {
     setShowInfo(newOpen);
+  };
+
+  const handleMenuItemClick = (item) => {
+    if (item === "showHistoricMap") {
+      setShowHistoricMap((prev) => !prev);
+    } else if (item === "showMarkers") {
+      console.log("Almost there for the markers");
+      setShowMarkers((prev) => !prev); // assuming setShowMarkers exists
+    } else {
+      console.log(`Menu item not found: ${item}`);
+    }
+  };
+
+  const handleMarkerClick = (id) => (toggle) => {
+    setLocationId(id);
+    setShowInfo(toggle);
   };
 
   return (
@@ -26,26 +69,29 @@ const CoordinateMap = () => {
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution="Timestrolls"
         />
-        <TileLayer
-          url="/tiles/{z}/{x}/{y}.png"
-          attribution="1945"
-          noWrap={true}
-        />
-        <Marker
-          position={center}
-          icon={placeIcon()}
-          eventHandlers={{
-            click: () => {
-              setShowInfo(true);
-            },
-          }}
+        <HistoricMap open={showHistoricMap} />
+
+        <LocationMarkers
+          open={showMarkers}
+          onClick={handleMarkerClick}
+          locations={LOCATIONS}
         />
 
         {/* Todo: add prop about location */}
-        <LocationInfo open={showInfo} onClose={handleInfoOpen(false)} />
+        <LocationInfo
+          open={showInfo}
+          onClose={handleInfoOpen(false)}
+          id={locationId}
+        />
         <Track />
       </MapContainer>
-      <Menu />
+      <Menu
+        onItemClick={handleMenuItemClick}
+        itemState={{
+          showHistoricMap: showHistoricMap,
+          showMarkers: showMarkers,
+        }}
+      />
     </div>
   );
 };
