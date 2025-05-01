@@ -1,13 +1,10 @@
 from rio_tiler.io import Reader
+from rio_tiler.utils import render
 import morecantile
 from PIL import Image
-from backend.helpers.fs import serve_static
+from backend.helpers.fs import serve_static, serve_static_binary
 
 WEB_MERCATOR_TMS = morecantile.tms.get("WebMercatorQuad")
-
-def to_png(img):
-    """Converts georaster image to png. Takes care of different channel convention in geo raster data."""
-    return Image.fromarray(img.transpose(1, 2, 0))
 
 def create_tiles(path, zooms, output_dir, tile_size=256):
     """
@@ -36,8 +33,14 @@ def create_tiles(path, zooms, output_dir, tile_size=256):
         tiles = list(src.tms.tiles(*bounds, zooms))
         for tile in tiles:
             try:
-                img, _ = src.tile(*tile, tilesize=tile_size)
-                img = to_png(img)
-                serve_static(img, tile, output_dir)
+                tile_data = src.tile(*tile, tilesize=tile_size)
+                # render png as bytes - could be also treated as normal png
+                # But bytes help to avoid black areas upon out of bonds
+                png_bytes =  render(
+                             tile_data.data,
+                             mask=tile_data.mask,
+                             img_format="PNG"
+                         )
+                serve_static_binary(png_bytes, tile, output_dir)
             except Exception as e:
                 print(f"Skipping tile {tile.z}/{tile.x}/{tile.y}: {e}")
