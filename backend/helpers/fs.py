@@ -5,14 +5,6 @@ from urllib.parse import urlparse
 from urllib.parse import unquote
 import requests
 
-def serve_static(img, tile, path):
-    # Todo this is probably obolete
-    """Writes files to directory respecting path structure for tiles"""
-    path = Path(path)
-    tile_path = path / str(tile.z) / str(tile.x)
-    tile_path.mkdir(parents=True, exist_ok=True)
-    img.save(tile_path / f"{tile.y}.png")
-
 def serve_static_binary(img_bytes, tile, path):
     """Writes binary image bytes to directory structure for tiles"""
     path = Path(path)
