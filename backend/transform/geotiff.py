@@ -9,7 +9,7 @@ def geotiff(image, A,  crs='EPSG:3857'):
     Parameters
     ----------
     image : numpy.ndarray
-        A 3D NumPy array of shape (H, W, channels) representing an RGB image.
+        A 3D NumPy array of shape (H, W, channel) representing an RGB image.
     A : numpy.ndarray
         Affine transformation mapping pixel coordinates to spatial coordinates.
     crs : str

@@ -11,7 +11,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 from urllib.parse import urljoin
 from urllib.parse import urlparse
 from urllib.parse import unquote
-from swak.funcflow import Pipe, Map
 from tenacity import retry, retry_if_result, wait_fixed, stop_after_attempt
 
 def get_driver():

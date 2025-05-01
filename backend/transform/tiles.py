@@ -1,23 +1,13 @@
 from rio_tiler.io import Reader
-import mercantile
 import morecantile
 from PIL import Image
-from pathlib import Path
-
-
+from backend.helpers.fs import serve_static
 
 WEB_MERCATOR_TMS = morecantile.tms.get("WebMercatorQuad")
 
 def to_png(img):
     """Converts georaster image to png. Takes care of different channel convention in geo raster data."""
     return Image.fromarray(img.transpose(1, 2, 0))
-
-def serve_static(img, tile, path):
-    """Writes files to directory respecting path structure for tiles"""
-    path = Path(path)
-    tile_path = path / str(tile.z) / str(tile.x)
-    tile_path.mkdir(parents=True, exist_ok=True)
-    img.save(tile_path / f"{tile.y}.png")
 
 def create_tiles(path, zooms, output_dir, tile_size=256):
     """
@@ -40,9 +30,8 @@ def create_tiles(path, zooms, output_dir, tile_size=256):
     -----
     At a latter point this should go into rasterio memfile or database upon creating an api
     """
-    output_dir = Path(output_dir)
     with Reader(path, tms=WEB_MERCATOR_TMS) as src:
-        # mercantile requires gps coordinates. oh man!
+        # Requires gps coordinates. oh man!
         bounds = src.get_geographic_bounds('EPSG:4326')
         tiles = list(src.tms.tiles(*bounds, zooms))
         for tile in tiles:
