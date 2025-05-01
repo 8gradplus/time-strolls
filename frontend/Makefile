@@ -9,7 +9,6 @@ install:
 
 build: install
 	rm -rf build/
-	npm run ci
 	npm run build --if-present
 
 run:

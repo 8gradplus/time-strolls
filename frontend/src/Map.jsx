@@ -10,6 +10,8 @@ import StarIcon from "@mui/icons-material/Star";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import DisplayImages from "./Images";
+import Podcast from "./Audio";
 
 // Fix Leaflet's default icon path
 import L from "leaflet";
@@ -19,17 +21,6 @@ L.Icon.Default.mergeOptions({
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
 });
-
-const imageFilenames = [
-  "full_res_image_1.jpg",
-  "full_res_image_2.jpg",
-  "full_res_image_3.jpg",
-  "full_res_image_4.jpg",
-  "full_res_image_5.jpg",
-  "full_res_image_6.jpg",
-
-  // add more as needed
-];
 
 const createMuiIcon = (MuiIcon, size = 32) => {
   // Render the MUI icon to an HTML string
@@ -77,7 +68,6 @@ const CoordinateMap = () => {
           },
         }}
       />
-
       <Drawer open={showInfo} onClose={toggleDrawer(false)}>
         <Box
           sx={{ width: 450 }}
@@ -85,21 +75,10 @@ const CoordinateMap = () => {
           onClick={toggleDrawer(false)}
         >
           <Box sx={{ my: 2, display: "flex", justifyContent: "center" }}>
-            <audio controls>
-              <source src="/audio/test.mp3" type="audio/mpeg" />
-            </audio>
+            <Podcast />
           </Box>
           <Divider sx={{ my: 2 }} />
-
-          {imageFilenames.map((filename, idx) => (
-            <Box key={idx} sx={{ mb: 1 }}>
-              <img
-                src={`/images/${filename}`}
-                alt={`img-${idx}`}
-                style={{ width: "100%", height: "auto", display: "block" }}
-              />
-            </Box>
-          ))}
+          <DisplayImages />
         </Box>
       </Drawer>
     </MapContainer>

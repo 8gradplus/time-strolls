@@ -12,14 +12,17 @@ def serve_static(img, tile, path):
     tile_path.mkdir(parents=True, exist_ok=True)
     img.save(tile_path / f"{tile.y}.png")
 
-def copy_file(src, dst):
-    """Copy file from `src` path to `dst` path"""
+def binary_copy_file(src, dst):
+    """Binare copy file from `src` path to `dst` path using binary mode"""
     src = Path(src)
     dst = Path(dst)
     if not src.is_file():
         raise FileNotFoundError(f"Source file not found: {src}")
     dst.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src, dst)
+    with open(src, 'rb') as source_file:
+        with open(dst, 'wb') as dest_file:
+            dest_file.write(source_file.read())
+    return dst
 
 def clear_directory(path):
     """Remove all files and subdirectories"""

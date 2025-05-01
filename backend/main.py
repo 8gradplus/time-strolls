@@ -1,14 +1,14 @@
-from topothek.crawl import crawl
-from transform.coordinates import get_affine_transform
-from transform.coordinates import to_web_mercator
-from extract.extract import get_coordinates
-from extract.extract import read_image
-from tiles import create_tiles
-from helpers.fs import clear_directory, Download, copy_file
-from transform.geotiff import geotiff
 from rasterio.shutil import copy
 from swak.funcflow import Pipe, Map
 
+from extract.extract import get_coordinates
+from extract.extract import read_image
+from helpers.fs import clear_directory, Download, binary_copy_file
+from topothek.crawl import crawl
+from transform.coordinates import get_affine_transform
+from transform.coordinates import to_web_mercator
+from transform.tiles import create_tiles
+from transform.geotiff import geotiff
 
 EXAMPLE_TOPOTHEK_URL = 'https://lichtenau.topothek.at/#ipp=500&p=1&searchterm=Atalla%20Margarete%20(geb.%20Eckerstorfer%20Margarete)&t=1%2C2%2C4%2C7&sf=chk_docname%2Cchk_mainkeywords%2Cchk_subkeywords&vp=false&sort=publish_date&sortdir=desc'
 IMAGE_PATH = '../resources/us-army-1945.jpeg'
@@ -51,6 +51,6 @@ def create_raster_tif():
 if __name__ == '__main__':
     # Todo clean up folders before filling them
     Map(clear_directory)((STATIC_AUDIO_PATH, STATIC_TILES_PATH, STATIC_TOPOTHEK_PATH))
-    copy_file(AUDIO_PATH, STATIC_AUDIO_PATH + '/test.mp3')
+    binary_copy_file(AUDIO_PATH, STATIC_AUDIO_PATH + '/test.mp3')
     Pipe(crawl, Map(Download(STATIC_TOPOTHEK_PATH)))(EXAMPLE_TOPOTHEK_URL)
     create_raster_tif()
