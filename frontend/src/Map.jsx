@@ -44,10 +44,8 @@ const CoordinateMap = () => {
     if (item === "showHistoricMap") {
       setShowHistoricMap((prev) => !prev);
     } else if (item === "showMarkers") {
-      console.log("Almost there for the markers");
       setShowMarkers((prev) => !prev); // assuming setShowMarkers exists
     } else {
-      console.log(`Menu item not found: ${item}`);
     }
   };
 

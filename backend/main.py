@@ -50,13 +50,10 @@ def create_raster_tif():
 
 if __name__ == '__main__':
     # Todo clean up folders before filling them
-    #Map(clear_directory)((STATIC_AUDIO_PATH, STATIC_TILES_PATH, STATIC_TOPOTHEK_PATH))
-
+    Map(clear_directory)((STATIC_AUDIO_PATH, STATIC_TILES_PATH, STATIC_TOPOTHEK_PATH))
     #Audio
-    #binary_copy_file(AUDIO_PATH, STATIC_AUDIO_PATH + '/test.mp3')
-
+    binary_copy_file(AUDIO_PATH, STATIC_AUDIO_PATH + '/test.mp3')
     #Images
     Pipe(crawl, save_to(STATIC_TOPOTHEK_PATH))(EXAMPLE_TOPOTHEK_URL) # url -> tuple -> none
-
     #Geo
-    #create_raster_tif()
+    create_raster_tif()

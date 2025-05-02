@@ -2,12 +2,12 @@ import { Box } from "@mui/material";
 
 //Todo: replace by API call
 const imageFilenames = [
-  "file564226.jpg",
-  "file840955.jpg",
-  "file546074.jpg",
-  "file546072.jpg",
-  "file546065.jpg",
-  "file430410.jpg",
+  "file564226.webp",
+  "file840955.webp",
+  "file546074.webp",
+  "file546072.webp",
+  "file546065.webp",
+  "file430410.webp",
 ];
 
 const DisplayImages = () => {

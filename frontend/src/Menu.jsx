@@ -9,26 +9,13 @@ import ListItemText from "@mui/material/ListItemText";
 import Dialog from "@mui/material/Dialog";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
+import Button from "./Components/Button";
 // Styling should go to css or theming (tailwind, mui)
 const divStyle = {
   position: "absolute",
   top: "10px",
   right: "10px",
   zIndex: 1000,
-};
-
-const buttonStyle = {
-  backgroundColor: "#fff",
-  border: "1px solid #ddd",
-  borderRadius: "50%",
-  padding: "10px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  boxShadow: "0 2px 5px rgba(0,0,0,0.15)",
-  width: "40px",
-  height: "40px",
 };
 
 const MenuItem = (props) => {
@@ -58,9 +45,9 @@ const Menu = (props) => {
   };
   return (
     <div style={divStyle}>
-      <button onClick={handleOpen(true)} style={buttonStyle}>
+      <Button onClick={handleOpen(true)}>
         <LayersOutlinedIcon style={{ fontSize: "24px", color: "#333" }} />
-      </button>
+      </Button>
 
       <Dialog onClose={handleOpen(false)} open={open}>
         <List sx={{ pt: 0 }}>
