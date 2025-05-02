@@ -1,22 +1,25 @@
-FROM node:16 as build
+# Build stage
+FROM node:16-slim AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build --if-present
 
+# Production stage
+# Production stage
+FROM node:16-slim AS runner
 WORKDIR /app
 
+# Only install production dependencies
 COPY package*.json ./
+RUN npm install --omit=dev
 
-RUN npm install
+# Copy built output from builder
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/src ./src
 
-COPY . .
-#RUN npm run ci
-RUN npm run build --
 
-FROM caddy:2.6.2-alpine
-
-# Copy built files from previous stage into Caddy's web root
-COPY --from=build /app/build /usr/share/caddy
-
-# Optional: Custom Caddyfile (uncomment if you have one)
-COPY Caddyfile /etc/caddy/Caddyfile
-
-# Expose port (Caddy defaults to 80)
-EXPOSE 80
+EXPOSE 3000
+CMD ["npm", "start"]

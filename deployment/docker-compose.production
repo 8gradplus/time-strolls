@@ -1,0 +1,36 @@
+services:
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    expose:
+      - "3000"
+    restart: unless-stopped
+    networks:
+      - timestrolls
+
+  caddy:
+    image: caddy:2.6.2-alpine
+    container_name: caddy
+    depends_on:
+      - frontend
+    volumes:
+      - ./Caddyfile.production:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "80:80"
+    restart: always
+    networks:
+      - timestrolls
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  timestrolls:
+    name: timestrolls
+    driver: bridge

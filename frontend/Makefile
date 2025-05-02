@@ -1,9 +1,3 @@
-DOCKER_LABEL=time-strolls
-
-define stop-container-by-label
-	docker stop $$(docker ps --filter label=$(1) --format {{.ID}}) | xargs docker rm
-endef
-
 install:
 	npm install
 
@@ -15,10 +9,10 @@ run:
 	npm start
 
 docker-build: build
-	docker build -t $(DOCKER_LABEL) .
+	docker build -t time-strolls .
 
 docker-run:
-	docker run -d -p 8080:80 -l $(DOCKER_LABEL) $(DOCKER_LABEL)
+	docker run -d -p 3000:3000 -l time-strolls time-strolls
 
 docker-stop:
-	$(call stop-container-by-label, $(DOCKER_LABEL))
+	docker rm -f $$(docker ps -q --filter label=time-strolls)

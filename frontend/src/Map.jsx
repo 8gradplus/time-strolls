@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { MapContainer, Marker, TileLayer } from "react-leaflet";
+import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import Track from "./Track";
 import Menu from "./Menu";
-import { placeIcon } from "./icons";
 import LocationInfo from "./LocationInfo/LocationInfo";
-// import LocationMarker from "./LocationMarkers/LocationMarker";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
 
 // This should be replaced by an API call
