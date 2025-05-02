@@ -20,10 +20,10 @@ tar -czf timestrolls.tar.gz  timestrolls/frontend timestrolls/deployment
 cat timestrolls.tar.gz | doctl compute ssh $DROPLET_NAME  --ssh-command 'cat > timestrolls.tar.gz'
 
 echo "Patch on server"
-doctl compute ssh $DROPLET_NAME  --ssh-command 'cd timestrolls/deployment && docker compose down || true && cd && tar -xzf timestrolls.tar.gz'
+doctl compute ssh $DROPLET_NAME  --ssh-command 'cd timestrolls/deployment && docker compose down | true && cd && tar -xzf timestrolls.tar.gz'
 
 echo "Deploy on server"
-doctl compute ssh $DROPLET_NAME  --ssh-command 'cd timestrolls/deployment && docker compose up -d'
+doctl compute ssh $DROPLET_NAME  --ssh-command 'cd timestrolls/deployment && docker compose up --build -d'
 
 echo "Cleanup"
 rm -rf timestrolls

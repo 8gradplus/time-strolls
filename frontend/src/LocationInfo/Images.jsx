@@ -2,12 +2,12 @@ import { Box } from "@mui/material";
 
 //Todo: replace by API call
 const imageFilenames = [
-  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/file430410.webp",
-  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/file546065.webp",
-  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/file546072.webp",
-  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/file546074.webp",
-  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/file564226.webp",
-  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/file840955.webp",
+  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file430410.webp",
+  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file546065.webp",
+  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file546072.webp",
+  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file546074.webp",
+  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file564226.webp",
+  "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file840955.webp",
 ];
 
 const DisplayImages = () => {

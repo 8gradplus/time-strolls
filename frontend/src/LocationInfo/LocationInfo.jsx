@@ -15,7 +15,8 @@ const LocationInfo = (props) => {
   if (id === null || id === undefined) return null;
   return (
     <Drawer open={open} onClose={onClose}>
-      <Box sx={{ width: 450 }} role="presentation">
+      {/* Full width on mobild device */}
+      <Box sx={{ width: { xs: "100vw", sm: 450 } }} role="presentation">
         <Box
           sx={{
             my: 2,
