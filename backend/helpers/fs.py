@@ -31,17 +31,7 @@ def serve_static_binary(img_bytes, tile, path):
     with open(tile_file, "wb") as f:
         f.write(img_bytes)
 
-def binary_copy_file(src, dst):
-    """Binare copy file from `src` path to `dst` path using binary mode"""
-    src = Path(src)
-    dst = Path(dst)
-    if not src.is_file():
-        raise FileNotFoundError(f"Source file not found: {src}")
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    with open(src, 'rb') as source_file:
-        with open(dst, 'wb') as dest_file:
-            dest_file.write(source_file.read())
-    return dst
+
 
 #Images
 def image_id(url):

@@ -20,7 +20,7 @@ RASTER_TIFF_PATH = '../resources/geo.tif'
 # With a dynamic tile server zoom levels will get obsolete
 ZOOM_LEVELS = range (10, 18)
 STATIC_TILES_PATH = '../frontend/public/tiles'
-STATIC_TOPOTHEK_PATH = '../frontend/public/images'
+STATIC_TOPOTHEK_PATH = '../resources/images'
 STATIC_AUDIO_PATH = '../frontend/public/audio'
 
 # lat / lon convention!
@@ -49,11 +49,7 @@ def create_raster_tif():
 
 
 if __name__ == '__main__':
-    # Todo clean up folders before filling them
-    Map(clear_directory)((STATIC_AUDIO_PATH, STATIC_TILES_PATH, STATIC_TOPOTHEK_PATH))
-    #Audio
-    binary_copy_file(AUDIO_PATH, STATIC_AUDIO_PATH + '/test.mp3')
-    #Images
-    Pipe(crawl, save_to(STATIC_TOPOTHEK_PATH))(EXAMPLE_TOPOTHEK_URL) # url -> tuple -> none
-    #Geo
+    # Use CDN as sink
+    clear_directory(STATIC_TILES_PATH)
+    Pipe(crawl, save_to(STATIC_TOPOTHEK_PATH, compress=False))(EXAMPLE_TOPOTHEK_URL) # url -> tuple -> none
     create_raster_tif()
