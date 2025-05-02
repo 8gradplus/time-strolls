@@ -3,8 +3,8 @@ from swak.funcflow import Pipe, Map
 
 from extract.extract import get_coordinates
 from extract.extract import read_image
-from helpers.fs import clear_directory, Download, binary_copy_file
-from topothek.crawl import crawl
+from helpers.fs import SaveImage, clear_directory, binary_copy_file, download
+from topothek import crawl, save_to
 from transform.coordinates import get_affine_transform
 from transform.coordinates import to_web_mercator
 from transform.tiles import create_tiles
@@ -50,7 +50,13 @@ def create_raster_tif():
 
 if __name__ == '__main__':
     # Todo clean up folders before filling them
-    Map(clear_directory)((STATIC_AUDIO_PATH, STATIC_TILES_PATH, STATIC_TOPOTHEK_PATH))
-    binary_copy_file(AUDIO_PATH, STATIC_AUDIO_PATH + '/test.mp3')
-    Pipe(crawl, Map(Download(STATIC_TOPOTHEK_PATH)))(EXAMPLE_TOPOTHEK_URL)
-    create_raster_tif()
+    #Map(clear_directory)((STATIC_AUDIO_PATH, STATIC_TILES_PATH, STATIC_TOPOTHEK_PATH))
+
+    #Audio
+    #binary_copy_file(AUDIO_PATH, STATIC_AUDIO_PATH + '/test.mp3')
+
+    #Images
+    Pipe(crawl, save_to(STATIC_TOPOTHEK_PATH))(EXAMPLE_TOPOTHEK_URL) # url -> tuple -> none
+
+    #Geo
+    #create_raster_tif()

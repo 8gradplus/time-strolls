@@ -2,7 +2,7 @@ from rio_tiler.io import Reader
 from rio_tiler.utils import render
 import morecantile
 from PIL import Image
-from backend.helpers.fs import serve_static, serve_static_binary
+from helpers.fs import serve_static_binary
 
 WEB_MERCATOR_TMS = morecantile.tms.get("WebMercatorQuad")
 

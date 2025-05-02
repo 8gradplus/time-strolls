@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 
-//Todo: replace by API
+//Todo: replace by API call
 const imageFilenames = [
   "file564226.jpg",
   "file840955.jpg",
@@ -18,6 +18,7 @@ const DisplayImages = () => {
           <img
             src={`/images/${filename}`}
             alt={`img-${idx}-${filename}`}
+            loading="lazy"
             style={{ width: "100%", height: "auto", display: "block" }}
           />
         </Box>

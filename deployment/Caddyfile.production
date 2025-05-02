@@ -1,3 +1,4 @@
-:80 {
+timestrolls.debtray.com: {
     reverse_proxy frontend:3000
+    tls v.atalla@debtray.com
 }

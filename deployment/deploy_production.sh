@@ -1,19 +1,33 @@
 #/bin/bash!
 
-rm -rf upload
-mkdir -p upload/deployment
-mkdir -p upload/frontend
+DROPLET_NAME=timestrolls
 
+rm -rf timestrolls
+mkdir -p timestrolls/deployment
+mkdir -p timestrolls/frontend
 
-cp Caddyfile.production upload/deployment
-cp docker-compose.production upload/deployment/docker-compose.yml
+echo "Prepare uplaod"
+cp Caddyfile.production timestrolls/deployment
+cp docker-compose.production timestrolls/deployment/docker-compose.yml
+cp ../frontend/Dockerfile timestrolls/frontend
+cp ../frontend/Dockerfile timestrolls/frontend
+cp ../frontend/*json timestrolls/frontend
+cp -rf ../frontend/src timestrolls/frontend
+cp -rf ../frontend/public timestrolls/frontend
 
-cp ../frontend/Dockerfile upload/frontend
-cp ../frontend/Dockerfile upload/frontend
-cp ../frontend/*json upload/frontend
-cp -rf ../frontend/src upload/frontend
-cp -rf ../frontend/public upload/frontend
+echo "Uploading to server"
+tar -czf timestrolls.tar.gz  timestrolls/frontend timestrolls/deployment
+cat timestrolls.tar.gz | doctl compute ssh $DROPLET_NAME  --ssh-command 'cat > timestrolls.tar.gz'
 
+echo "Patch on server"
+doctl compute ssh $DROPLET_NAME  --ssh-command 'cd timestrolls/deployment && docker compose down || true && cd && tar -xzf timestrolls.tar.gz'
 
-tar -czf timestrolls.tar.gz upload/frontend upload/deployment
-#rm -rf upload
+echo "Deploy on server"
+doctl compute ssh $DROPLET_NAME  --ssh-command 'cd timestrolls/deployment && docker compose up -d'
+
+echo "Cleanup"
+rm -rf timestrolls
+rm timestrolls.tar.gz
+doctl compute ssh $DROPLET_NAME  --ssh-command 'rm timestrolls.tar.gz && docker image prune -a -f'
+
+echo "Done"
