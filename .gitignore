@@ -1,9 +1,13 @@
+.env
+credentials.env
 resources/
 
 # Python
 .python-version
 .ipynb_checkpoints
 __pycache__
+.idea
+backend/.zed
 
 # javascript
 frontend/public/audio/*

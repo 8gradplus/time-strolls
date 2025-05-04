@@ -2,6 +2,11 @@
 
 DROPLET_NAME=timestrolls
 
+# Rewrite:
+# - just copy geotifs for api
+# - retrieve src code from github directly on docker
+
+
 rm -rf timestrolls
 mkdir -p timestrolls/deployment
 mkdir -p timestrolls/frontend

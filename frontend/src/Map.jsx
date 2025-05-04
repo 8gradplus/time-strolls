@@ -23,14 +23,14 @@ const LOCATIONS = [
 const HistoricMap = (props) => {
   const { open } = props;
   if (!open) return null;
-  return (
-    <TileLayer url="/tiles/{z}/{x}/{y}.png" attribution="1945" noWrap={true} />
-  );
+  const url =
+    "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/tiles/1945/{z}/{x}/{y}.png";
+  return <TileLayer url={url} attribution="1945" noWrap={true} />;
 };
 
 const CoordinateMap = () => {
   // Todo set center to current postion - Keep this for dev
-  const center = [48.61017, 14.044];
+  const fallbackCenter = [48.61017, 14.044]; // Unterurasch - default map center
   const [showInfo, setShowInfo] = useState(false);
   const [locationId, setLocationId] = useState(null);
   const [showMarkers, setShowMarkers] = useState(true);
@@ -57,7 +57,7 @@ const CoordinateMap = () => {
   return (
     <div style={{ position: "relative", height: "100vh" }}>
       <MapContainer
-        center={center}
+        center={fallbackCenter} // Will be overwritten by track upon location found
         zoom={16}
         style={{ height: "100vh", width: "100%" }}
       >
@@ -79,7 +79,9 @@ const CoordinateMap = () => {
           onClose={handleInfoOpen(false)}
           id={locationId}
         />
-        <Track />
+
+        {/* Switch off tracking temporarily to ease development */}
+        {/* <Track /> */}
       </MapContainer>
       <Menu
         onItemClick={handleMenuItemClick}

@@ -1,0 +1,32 @@
+[project]
+name = "timestrolls"
+version = "0.0.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+
+dependencies = [
+    "folium",
+    "ipympl",
+    "jupyter",
+    "matplotlib",
+    "morecantile",
+    "opencv-python",
+    "pandas",
+    "pyproj",
+    "rasterio",
+    "rio-tiler",
+    "selenium",
+    "swak",
+    "tenacity",
+    "webdriver-manager",
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "boto3",
+    "envyaml",
+    #"titiler.core"
+
+    # zed
+    "cst-lsp",
+]

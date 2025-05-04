@@ -1,11 +1,10 @@
-from pathlib import Path
-import pathlib
 import shutil
 import os
 from urllib.parse import urlparse
 from urllib.parse import unquote
 import requests
 from io import BytesIO
+from pathlib import Path
 from PIL import Image
 
 
@@ -21,25 +20,21 @@ def clear_directory(path):
         except Exception as e:
             print(f'Failed to delete {file_path}. Reason: {e}')
 
-#Tiles
-def serve_static_binary(img_bytes, tile, path):
-    """Writes binary image bytes to directory structure for tiles"""
-    path = Path(path)
-    tile_path = path / str(tile.z) / str(tile.x)
-    tile_path.mkdir(parents=True, exist_ok=True)
-    tile_file = tile_path / f"{tile.y}.png"
-    with open(tile_file, "wb") as f:
-        f.write(img_bytes)
-
-
-
-#Images
 def image_id(url):
     parsed = urlparse(url)
     path = unquote(parsed.path)  # Decode any %-encoded characters
     filename = os.path.basename(path)  # file840955.jpg
     id = os.path.splitext(filename)[0]
     return id
+
+def write_local(stuff: bytes, path: str):
+    #Create dir if not exists
+    file_path = Path(path)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, 'wb') as f:
+        f.write(stuff)
+
+# Todo: reconcile and cleanup
 
 def save_webp(path, img):
     buffer = Image.open(BytesIO(img))
