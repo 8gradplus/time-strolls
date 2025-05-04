@@ -1,6 +1,5 @@
 from rasterio.shutil import copy
 from swak.funcflow import Pipe, Map
-
 from extract.extract import get_coordinates
 from extract.extract import read_image
 from topothek import crawl, save_to
@@ -9,7 +8,6 @@ from transform.coordinates import to_web_mercator
 from transform import create_tiles
 from transform.geotiff import geotiff
 
-from config import config
 
 EXAMPLE_TOPOTHEK_URL = 'https://lichtenau.topothek.at/#ipp=500&p=1&searchterm=Atalla%20Margarete%20(geb.%20Eckerstorfer%20Margarete)&t=1%2C2%2C4%2C7&sf=chk_docname%2Cchk_mainkeywords%2Cchk_subkeywords&vp=false&sort=publish_date&sortdir=desc'
 IMAGE_PATH = '../resources/us-army-1945.jpeg'
@@ -41,6 +39,7 @@ def create_raster_tif():
 
 
 if __name__ == '__main__':
+    print()
     #clear_directory(STATIC_TILES_PATH)
     #Pipe(crawl, save_to(config.cdn.endpoint + config.cdn.path.imag))(EXAMPLE_TOPOTHEK_URL) # url -> tuple -> none
     #create_raster_tif()

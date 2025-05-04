@@ -1,4 +1,7 @@
-run:
+run-etl:
+	uv run python etl.py
+
+run-api:
 	uv run uvicorn api.main:app --reload
 
 docker-build:

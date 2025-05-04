@@ -23,7 +23,8 @@ const LOCATIONS = [
 const HistoricMap = (props) => {
   const { open } = props;
   if (!open) return null;
-  const url = "http://127.0.0.1:8000/timetiles/1945/{z}/{x}/{y}";
+  const url =
+    "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/tiles/1945/{z}/{x}.png";
   return <TileLayer url={url} attribution="1945" noWrap={true} />;
 };
 
