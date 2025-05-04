@@ -11,7 +11,7 @@ rm -rf time-strolls-main
 echo "start"
 curl -L -o time-strolls-main.zip https://github.com/8gradplus/time-strolls/archive/refs/heads/main.zip
 unzip time-strolls-main.zip
-cp time-strolls-main.zip/deployment/Caddyfile.production time-strolls-main.zip/deployment/Caddyfile
+cp time-strolls-main/deployment/Caddyfile.production time-strolls-main/deployment/Caddyfile
 cd time-strolls-main
 docker compose up -d
 EOF
