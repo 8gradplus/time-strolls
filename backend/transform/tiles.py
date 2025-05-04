@@ -6,12 +6,15 @@ from helpers.fs import serve_static_binary
 
 WEB_MERCATOR_TMS = morecantile.tms.get("WebMercatorQuad")
 
-def create_tiles(path, zooms, output_dir, tile_size=256):
+# Todo: make functional
+def create_tiles(path, year, zooms, output_dir, tile_size=256):
     """
     Create tiles and write it to file system.
 
     Parameters
     ----------
+    year: str
+        Year a map corresponds to
     path : str
         A geotiff file
     zooms : Zoom levels
@@ -33,14 +36,14 @@ def create_tiles(path, zooms, output_dir, tile_size=256):
         tiles = list(src.tms.tiles(*bounds, zooms))
         for tile in tiles:
             try:
-                tile_data = src.tile(*tile, tilesize=tile_size)
+                tile_data, mask = src.tile(*tile, tilesize=tile_size)
                 # render png as bytes - could be also treated as normal png
                 # But bytes help to avoid black areas upon out of bonds
                 png_bytes =  render(
-                             tile_data.data,
-                             mask=tile_data.mask,
+                             tile_data,
+                             mask=mask,
                              img_format="PNG"
                          )
-                serve_static_binary(png_bytes, tile, output_dir)
+                serve_static_binary(png_bytes, '1945', tile, output_dir)
             except Exception as e:
-                print(f"Skipping tile {tile.z}/{tile.x}/{tile.y}: {e}")
+                print(f"Skipping tile {year}/{tile.z}/{tile.x}/{tile.y}: {e}")

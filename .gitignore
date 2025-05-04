@@ -1,9 +1,11 @@
+.env
 resources/
 
 # Python
 .python-version
 .ipynb_checkpoints
 __pycache__
+.idea
 
 # javascript
 frontend/public/audio/*

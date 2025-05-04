@@ -23,11 +23,7 @@ const LOCATIONS = [
 const HistoricMap = (props) => {
   const { open } = props;
   if (!open) return null;
-  const rasterPath =
-    "file:////Users/viktor/Work/8gradplus/time-strolls/resources/geo.tif";
-  const url =
-    "http://127.0.0.1:8000/tiles/WebMercatorQuad/{z}/{x}/{y}.webp?url=" +
-    encodeURIComponent(rasterPath);
+  const url = "http://127.0.0.1:8000/timetiles/1945/{z}/{x}/{y}";
   return <TileLayer url={url} attribution="1945" noWrap={true} />;
 };
 

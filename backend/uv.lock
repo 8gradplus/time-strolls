@@ -2110,6 +2110,7 @@ name = "timestrolls"
 version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "fastapi" },
     { name = "folium" },
     { name = "ipympl" },
     { name = "jupyter" },
@@ -2118,22 +2119,19 @@ dependencies = [
     { name = "opencv-python" },
     { name = "pandas" },
     { name = "pyproj" },
+    { name = "rasterio" },
     { name = "rio-tiler" },
     { name = "selenium" },
     { name = "swak" },
     { name = "tenacity" },
-    { name = "webdriver-manager" },
-]
-
-[package.dev-dependencies]
-api = [
-    { name = "fastapi" },
     { name = "titiler-core" },
     { name = "uvicorn" },
+    { name = "webdriver-manager" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "fastapi" },
     { name = "folium" },
     { name = "ipympl" },
     { name = "jupyter" },
@@ -2142,18 +2140,14 @@ requires-dist = [
     { name = "opencv-python" },
     { name = "pandas" },
     { name = "pyproj" },
+    { name = "rasterio" },
     { name = "rio-tiler" },
     { name = "selenium" },
     { name = "swak" },
     { name = "tenacity" },
-    { name = "webdriver-manager" },
-]
-
-[package.metadata.requires-dev]
-api = [
-    { name = "fastapi" },
     { name = "titiler-core" },
     { name = "uvicorn" },
+    { name = "webdriver-manager" },
 ]
 
 [[package]]

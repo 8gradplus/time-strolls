@@ -14,17 +14,12 @@ dependencies = [
     "opencv-python",
     "pandas",
     "pyproj",
-    #"rasterio",
+    "rasterio",
     "rio-tiler",
     "selenium",
     "swak",
     "tenacity",
     "webdriver-manager",
-]
-
-[dependency-groups]
-
-api = [
     "fastapi",
     "uvicorn",
     "titiler.core"

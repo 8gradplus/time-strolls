@@ -22,16 +22,14 @@ def clear_directory(path):
             print(f'Failed to delete {file_path}. Reason: {e}')
 
 #Tiles
-def serve_static_binary(img_bytes, tile, path):
+def serve_static_binary(img_bytes, year, tile, path):
     """Writes binary image bytes to directory structure for tiles"""
     path = Path(path)
-    tile_path = path / str(tile.z) / str(tile.x)
+    tile_path = path / str(year) / str(tile.z) / str(tile.x)
     tile_path.mkdir(parents=True, exist_ok=True)
     tile_file = tile_path / f"{tile.y}.png"
     with open(tile_file, "wb") as f:
         f.write(img_bytes)
-
-
 
 #Images
 def image_id(url):
