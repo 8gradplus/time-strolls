@@ -79,6 +79,7 @@ const CoordinateMap = () => {
           onClose={handleInfoOpen(false)}
           id={locationId}
         />
+        {/* Switch off tracking temporarily to ease development */}
         {/* <Track /> */}
       </MapContainer>
       <Menu
