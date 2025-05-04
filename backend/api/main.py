@@ -8,7 +8,6 @@ from rio_tiler.utils import render
 from PIL import Image
 from helpers.fs import serve_static_binary
 
-
 app = FastAPI()
 
 @app.get("/timetiles/preview")

@@ -1,0 +1,16 @@
+cdn:
+  path:
+    image: /images
+    audio: /audio
+    tile: /tiles
+  #credentials:
+  #  key: "cdn key"
+  #  secret: "cdn path"
+  #endpoint: https://debtray.fra1.digitaloceanspaces.com
+  endpoint: /Users/viktor/Work/8gradplus/time-strolls/resources
+#tile:
+#zoom:
+#  min: 0
+#  max = 20
+#size: 256
+#format: png

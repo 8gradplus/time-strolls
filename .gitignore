@@ -6,6 +6,7 @@ resources/
 .ipynb_checkpoints
 __pycache__
 .idea
+backend/.zed
 
 # javascript
 frontend/public/audio/*
