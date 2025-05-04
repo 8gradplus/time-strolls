@@ -80,8 +80,7 @@ const CoordinateMap = () => {
           id={locationId}
         />
 
-        {/* Switch off tracking temporarily to ease development */}
-        {/* <Track /> */}
+        <Track />
       </MapContainer>
       <Menu
         onItemClick={handleMenuItemClick}
