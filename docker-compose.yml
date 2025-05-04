@@ -58,7 +58,7 @@ services:
       - "443:443"
     depends_on:
       - frontend
-      - api
+      #- api
     volumes:
       - ./deployment/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
