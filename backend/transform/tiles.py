@@ -1,6 +1,5 @@
 from rio_tiler.io import Reader
 from rio_tiler.utils import render
-from helpers.fs import serve_static_binary
 import morecantile
 from pathlib import Path
 
@@ -40,6 +39,7 @@ class ServeTiles:
     def __call__(self, img_bytes, year, tile, path, format):
         path = Path(path)
         tile_path = path / str(year) / str(tile.z) / str(tile.x)
-        tile_path.mkdir(parents=True, exist_ok=True)
+
+        #tile_path.mkdir(parents=True, exist_ok=True)
         tile_file = tile_path / f"{tile.y}.{format}"
-        self.writer(img_bytes, tile_file)
+        self.writer(img_bytes, str(tile_file))

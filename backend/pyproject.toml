@@ -24,6 +24,7 @@ dependencies = [
     "uvicorn",
     "pydantic",
     "boto3",
+    "envyaml",
     #"titiler.core"
 
     # zed

@@ -432,6 +432,18 @@ wheels = [
 ]
 
 [[package]]
+name = "envyaml"
+version = "1.10.211231"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/aa/ce/bcc062f1d55368713674cf55851a4d9dfa77835c0258753d0f23dff70743/envyaml-1.10.211231.tar.gz", hash = "sha256:88f8a076159e3c317d3450a5f404132b6ac91aecee4934ea72eac65f911f1244", size = 7591, upload-time = "2022-01-08T10:56:40.01Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/67/99/6612dcf7d494223041c029cc4fa325cb513fe99bf989e6895a1de357f1eb/envyaml-1.10.211231-py2.py3-none-any.whl", hash = "sha256:8d7a7a6be12587cc5da32a587067506b47b849f4643981099ad148015a72de52", size = 8138, upload-time = "2022-01-08T10:56:38.849Z" },
+]
+
+[[package]]
 name = "executing"
 version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1991,6 +2003,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "boto3" },
     { name = "cst-lsp" },
+    { name = "envyaml" },
     { name = "fastapi" },
     { name = "folium" },
     { name = "ipympl" },
@@ -2014,6 +2027,7 @@ dependencies = [
 requires-dist = [
     { name = "boto3" },
     { name = "cst-lsp" },
+    { name = "envyaml" },
     { name = "fastapi" },
     { name = "folium" },
     { name = "ipympl" },

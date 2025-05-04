@@ -1,17 +1,20 @@
 cdn:
   path:
-    image: /images
-    audio: /audio
-    tile: /tiles
+    image: images
+    audio: audio
+    tile: test/timestrolls/tiles
+    #tile: /tiles
 
-  #credentials:
-  #  key: "cdn key"
-  #  secret: "cdn path"
-  #endpoint: https://debtray.fra1.digitaloceanspaces.com
-  endpoint: /Users/viktor/Work/8gradplus/time-strolls/resources
-#tile:
-#zoom:
-#  min: 0
-#  max = 20
+  credentials:
+    key: ${SPACES_KEY}
+    secret: ${SPACES_SECRET}
+  bucket: debtray
+  endpoint: https://debtray.fra1.digitaloceanspaces.com
+  #endpoint: /Users/viktor/Work/8gradplus/time-strolls/resources/
+
+tile:
+  zoom:
+    min: 10
+    max: 11
 #size: 256
 #format: png
