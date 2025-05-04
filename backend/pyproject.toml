@@ -23,6 +23,7 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "pydantic",
+    "boto3",
     #"titiler.core"
 
     # zed

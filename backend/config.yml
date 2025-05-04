@@ -3,6 +3,7 @@ cdn:
     image: /images
     audio: /audio
     tile: /tiles
+
   #credentials:
   #  key: "cdn key"
   #  secret: "cdn path"

@@ -15,6 +15,8 @@ class Cdn(BaseModel):
     path: CdnPath
     credentials: Optional[CdnCredentials] = None
     endpoint: Optional[str] = None
+    region: Optional[str] = 'fra1'
+    bucket: Optional[str] = None
 
 class TileZoom(BaseModel):
     min: Optional[int] = 10
