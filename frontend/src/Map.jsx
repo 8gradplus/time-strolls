@@ -24,7 +24,7 @@ const HistoricMap = (props) => {
   const { open } = props;
   if (!open) return null;
   const url =
-    "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/tiles/1945/{z}/{x}.png";
+    "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/tiles/1945/{z}/{x}/{y}.png";
   return <TileLayer url={url} attribution="1945" noWrap={true} />;
 };
 
@@ -79,6 +79,7 @@ const CoordinateMap = () => {
           onClose={handleInfoOpen(false)}
           id={locationId}
         />
+
         {/* Switch off tracking temporarily to ease development */}
         {/* <Track /> */}
       </MapContainer>
