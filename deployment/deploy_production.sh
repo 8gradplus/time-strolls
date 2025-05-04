@@ -1,38 +1,19 @@
 #/bin/bash!
-
 DROPLET_NAME=timestrolls
 
-# Rewrite:
-# - just copy geotifs for api
-# - retrieve src code from github directly on docker
+read -r -d '' SSH_COMMAND <<'EOF'
+echo "shut down"
+cd time-strolls-main
+docker compose down v | true
+cd ..
+rm -rf time-strolls-main
 
+echo "start"
+curl -L -o time-strolls-main.zip https://github.com/8gradplus/time-strolls/archive/refs/heads/main.zip
+unzip time-strolls-main.zip
+cp time-strolls-main.zip/deployment/Caddyfile.production time-strolls-main.zip/deployment/Caddyfile
+cd time-strolls-main
+docker compose up -d
+EOF
 
-rm -rf timestrolls
-mkdir -p timestrolls/deployment
-mkdir -p timestrolls/frontend
-
-echo "Prepare uplaod"
-cp Caddyfile.production timestrolls/deployment
-cp docker-compose.production timestrolls/deployment/docker-compose.yml
-cp ../frontend/Dockerfile timestrolls/frontend
-cp ../frontend/Dockerfile timestrolls/frontend
-cp ../frontend/*json timestrolls/frontend
-cp -rf ../frontend/src timestrolls/frontend
-cp -rf ../frontend/public timestrolls/frontend
-
-echo "Uploading to server"
-tar -czf timestrolls.tar.gz  timestrolls/frontend timestrolls/deployment
-cat timestrolls.tar.gz | doctl compute ssh $DROPLET_NAME  --ssh-command 'cat > timestrolls.tar.gz'
-
-echo "Patch on server"
-doctl compute ssh $DROPLET_NAME  --ssh-command 'cd timestrolls/deployment && docker compose down | true && cd && tar -xzf timestrolls.tar.gz'
-
-echo "Deploy on server"
-doctl compute ssh $DROPLET_NAME  --ssh-command 'cd timestrolls/deployment && docker compose up --build -d'
-
-echo "Cleanup"
-rm -rf timestrolls
-rm timestrolls.tar.gz
-doctl compute ssh $DROPLET_NAME  --ssh-command 'rm timestrolls.tar.gz && docker image prune -a -f'
-
-echo "Done"
+doctl compute ssh $DROPLET_NAME  --ssh-command "$SSH_COMMAND"
