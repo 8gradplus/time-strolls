@@ -6,7 +6,7 @@ from envyaml import EnvYAML
 
 def load_yaml(path: str) -> dict:
     abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", path))
-    return(EnvYAML(abs_path).export())
+    return(EnvYAML(abs_path, strict=False).export())
 
 def validate(config: dict):
     try:
@@ -14,6 +14,7 @@ def validate(config: dict):
     except ValidationError as e:
         print(e)
 
-config = Pipe(load_yaml,
+config = Pipe(
+    load_yaml,
     validate
 )("config.yml")
