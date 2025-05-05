@@ -25,6 +25,6 @@ def write_s3(stuff: bytes, path: str):
         Body=stuff,
         Bucket=cdn.bucket,
         Key=path,
-        #ContentType=f"image/{config.tile.format}",
-        #ACL="public-read"
+        ContentType=f"image/{config.tile.format}",
+        ACL="public-read"
     )
