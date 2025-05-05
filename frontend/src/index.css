@@ -11,3 +11,20 @@ code {
   font-family:
     source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
+
+#map {
+  cursor: auto !important; /* or 'auto' for the default arrow */
+}
+
+.custom-tooltip {
+  background: rgb(219, 226, 190) !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 0;
+}
+
+.custom-tooltip::before {
+  display: none;
+}

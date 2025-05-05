@@ -2,7 +2,6 @@ import LocationMarker from "./LocationMarker";
 
 const LocationMarkers = (props) => {
   const { open, onClick, locations } = props;
-  console.log(locations);
   if (!open) return null;
   return (
     <>

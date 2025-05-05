@@ -68,7 +68,7 @@ const CoordinateMap = () => {
   };
 
   return (
-    <div style={{ position: "relative", height: "100vh" }}>
+    <div id="map" style={{ position: "relative", height: "100vh" }}>
       <MapContainer
         center={fallbackCenter} // Will be overwritten by track upon location found
         zoom={16}
