@@ -8,7 +8,7 @@ cdn:
   credentials:
     key: ${SPACES_KEY}
     secret: ${SPACES_SECRET}
-  bucket: debtray
+    bucket: debtray
   #endpoint: https://fra1.digitaloceanspaces.com
   endpoint: /Users/viktor/Work/8gradplus/time-strolls/resources/
 #tile:
