@@ -7,14 +7,6 @@ from .ground_control import get_transformation
 from .ground_control import gcp_to_rasterio
 from .geotif import AsGeoTif
 
-writer = write_s3
-output_dir = config.cdn.path.tile
-
-# this is too confusing -> put into main or make its own module!
-if not config.cdn.endpoint.startswith('https'):
-    writer = write_local
-    output_dir= config.cdn.endpoint + config.cdn.path.tile
-
 def create_tiles(year):
     """
      Returns a CreateTiles instance configured for the given year.
@@ -29,6 +21,17 @@ def create_tiles(year):
      CreateTiles
          Configured tile writer callable.
      """
+
+
+    writer = write_local
+    output_dir= config.cdn.endpoint + config.cdn.path.tile
+
+    if  config.cdn.endpoint.startswith('https'):
+        writer = write_s3
+        output_dir = config.cdn.path.tile
+
+    print(f'Write tiles to {output_dir} using cdn {config.cdn.endpoint}')
+
     return CreateTiles(
         year= year,
         zooms = range(config.tile.zoom.min, config.tile.zoom.max),

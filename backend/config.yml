@@ -2,15 +2,14 @@ cdn:
   path:
     image: images
     audio: audio
-    #tile: test/timestrolls/tiles
-    tile: /tiles
-
+    tile: test/timestrolls/tiles
+    #tile: /tiles
   credentials:
     key: ${SPACES_KEY}
     secret: ${SPACES_SECRET}
-    bucket: debtray
-  #endpoint: https://fra1.digitaloceanspaces.com
-  endpoint: /Users/viktor/Work/8gradplus/time-strolls/resources/
+  bucket: debtray
+  endpoint: https://fra1.digitaloceanspaces.com
+  #endpoint: /Users/viktor/Work/8gradplus/time-strolls/resources/
 #tile:
 #  zoom:
 #    min: 10

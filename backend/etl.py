@@ -1,6 +1,5 @@
 from swak.funcflow import Pipe, Map
-from extract.extract import get_coordinates
-from extract.extract import read_image
+from helpers.image import read_image
 from topothek import crawl, save_to
 from transform import create_tiles
 from collections import namedtuple
@@ -48,6 +47,5 @@ GROUND_CONTROL_POINTS = [
 if __name__ == '__main__':
     print()
     #Pipe(crawl, save_to(config.cdn.endpoint + config.cdn.path.imag))(EXAMPLE_TOPOTHEK_URL) # url -> tuple -> none
-    image = read_image(IMAGE_PATH)
-    create_tif(GROUND_CONTROL_POINTS, image, RASTER_TIF_PATH)
+    create_tif(GROUND_CONTROL_POINTS, read_image(IMAGE_PATH), RASTER_TIF_PATH)
     create_tiles(1945)(RASTER_TIF_PATH)
