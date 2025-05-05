@@ -25,7 +25,7 @@ dependencies = [
     "pydantic",
     "boto3",
     "envyaml",
-    #"titiler.core"
+    "titiler.core",
 
     # zed
     "cst-lsp",
