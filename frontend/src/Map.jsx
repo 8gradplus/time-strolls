@@ -6,12 +6,25 @@ import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
 
+// Wittinghausen -> gag podcast
+
 // This should be replaced by an API call
 const LOCATIONS = [
   {
     position: [48.61017854015886, 14.04406485511563],
     id: 1,
     name: "Urasch",
+    //podcast:
+    // {url: ???
+    // title: ???
+    // }
+    //images:
+    // [
+    //  {url:, ???
+    //   description: ???
+    //  }
+    // ]
+    //
   },
   {
     position: [48.616413, 14.050119],

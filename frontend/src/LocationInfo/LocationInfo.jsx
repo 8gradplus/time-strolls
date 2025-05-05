@@ -19,18 +19,29 @@ const LocationInfo = (props) => {
       <Box sx={{ width: { xs: "100vw", sm: 450 } }} role="presentation">
         <Box
           sx={{
-            my: 2,
-            display: "flex",
-            justifyContent: "space-evenly",
-            alignItems: "center",
+            paddingBottom: 2,
+            paddingTop: 1,
+            my: 0,
+            backgroundColor: "rgb(219, 226, 190)",
           }}
         >
-          <Podcast />
-          <Button onClick={onClose}>
-            <HighlightOffIcon style={{ fontSize: "24px", color: "#333" }} />
-          </Button>
+          <Box sx={{ mx: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h1>Unterurasch</h1>
+              <Button onClick={onClose} color={"transparent"}>
+                <HighlightOffIcon style={{ fontSize: "24px", color: "#333" }} />
+              </Button>
+            </Box>
+            <Podcast />
+          </Box>
         </Box>
-        <Divider sx={{ my: 2 }} />
+        <Divider sx={{ mb: 1 }} />
         <DisplayImages />
       </Box>
     </Drawer>
