@@ -13,7 +13,7 @@ curl -L -o time-strolls-main.zip https://github.com/8gradplus/time-strolls/archi
 unzip time-strolls-main.zip &&
 cp time-strolls-main/deployment/Caddyfile.production time-strolls-main/deployment/Caddyfile &&
 cd time-strolls-main &&
-docker compose up -d
+docker compose up --build -d
 EOF
 
 doctl compute ssh $DROPLET_NAME  --ssh-command "$SSH_COMMAND"
