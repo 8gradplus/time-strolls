@@ -1,11 +1,14 @@
 import React, { useState, useRef } from "react";
 import PlayButton from "../Components/PlayButton";
 import PlayCircleOutlineOutlinedIcon from "@mui/icons-material/PlayCircleOutlineOutlined";
-import Box from "@mui/material/Box";
 
-const Podcast = () => {
+const Podcast = (props) => {
+  const { podcast } = props;
   const [isExpanded, setIsExpanded] = useState(false);
   const audioRef = useRef(null);
+
+  // don't show anything if url is not present
+  if (!podcast?.url) return null;
 
   const handleClick = () => {
     setIsExpanded(true); // Expand the player
@@ -35,10 +38,7 @@ const Podcast = () => {
           ref={audioRef}
           onCanPlay={handlePlay} // Play when the audio is ready to play
         >
-          <source
-            src="https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/podcasts/test.mp3"
-            type="audio/mpeg"
-          />
+          <source src={podcast.url} type="audio/mpeg" />
         </audio>
       )}
     </div>

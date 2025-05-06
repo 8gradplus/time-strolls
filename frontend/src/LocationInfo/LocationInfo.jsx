@@ -5,14 +5,20 @@ import Podcast from "./Audio";
 import DisplayImages from "./Images";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import Button from "../Components/Button";
-// Todo Propaget id prop to Podcast and Display Images
-// They should then talk to an API via the id
+import { useEffect, useState } from "react";
+// Todo: We should talk at this place to the API via the id
+// => prop 'data' will be redundant!
+import { LOCATIONS } from "../testLocations";
 
-// same as menu -> make css
+// Todo: same as menu -> make css
 
 const LocationInfo = (props) => {
   const { open, onClose, id } = props;
-  if (id === null || id === undefined) return null;
+
+  // simulate api call
+  if (!id) return null;
+  const location = LOCATIONS.filter((item) => item.id === id)[0];
+  console.log("upon enter", location);
   return (
     <Drawer open={open} onClose={onClose}>
       {/* Full width on mobild device */}
@@ -33,12 +39,12 @@ const LocationInfo = (props) => {
                 alignItems: "center",
               }}
             >
-              <h1>Unterurasch</h1>
+              <h1>{location.name}</h1>
               <Button onClick={onClose} color={"transparent"}>
                 <HighlightOffIcon style={{ fontSize: "24px", color: "#333" }} />
               </Button>
             </Box>
-            <Podcast />
+            <Podcast podcast={location.podcast} />
           </Box>
         </Box>
         <Divider sx={{ mb: 1 }} />

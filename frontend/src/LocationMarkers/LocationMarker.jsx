@@ -3,7 +3,7 @@ import { useState } from "react";
 import { placeIcon } from "../icons";
 
 const LocationMarker = (props) => {
-  const { position, onClick } = props;
+  const { position, label, onClick } = props;
   const [iconSize, setIconSize] = useState(30);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -11,6 +11,7 @@ const LocationMarker = (props) => {
   const haloColor = "rgb(219, 226, 190)";
   const handleMarkerClick = () => {
     onClick(true);
+    setIconSize(30); // set back icon size once menu is opened
   };
 
   const handleMouseOver = () => {
@@ -39,7 +40,7 @@ const LocationMarker = (props) => {
           offset={[20, -10]}
           className="custom-tooltip"
         >
-          Urasch
+          {label}
         </Tooltip>
       )}
     </Marker>

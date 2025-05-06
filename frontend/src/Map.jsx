@@ -6,32 +6,8 @@ import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
 
-// Wittinghausen -> gag podcast
-
-// This should be replaced by an API call
-const LOCATIONS = [
-  {
-    position: [48.61017854015886, 14.04406485511563],
-    id: 1,
-    name: "Urasch",
-    //podcast:
-    // {url: ???
-    // title: ???
-    // }
-    //images:
-    // [
-    //  {url:, ???
-    //   description: ???
-    //  }
-    // ]
-    //
-  },
-  {
-    position: [48.616413, 14.050119],
-    id: 2,
-    name: "Muckenschlag",
-  },
-];
+// Todo: this should be removed by API
+import { LOCATIONS } from "./testLocations";
 
 const HistoricMap = (props) => {
   const { open } = props;
@@ -86,7 +62,8 @@ const CoordinateMap = () => {
           locations={LOCATIONS}
         />
 
-        {/* Todo: add prop about location */}
+        {/* Todo: Location info should make its own api call  */}
+        {/* So we sould not pass data any more */}
         <LocationInfo
           open={showInfo}
           onClose={handleInfoOpen(false)}
