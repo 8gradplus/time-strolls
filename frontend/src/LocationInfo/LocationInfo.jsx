@@ -22,13 +22,18 @@ const LocationInfo = (props) => {
   return (
     <Drawer open={open} onClose={onClose}>
       {/* Full width on mobild device */}
-      <Box sx={{ width: { xs: "100vw", sm: 450 } }} role="presentation">
+      <Box
+        sx={{
+          width: { xs: "100vw", sm: 450 },
+          backgroundColor: "rgb(219, 226, 190)",
+        }}
+        role="presentation"
+      >
         <Box
           sx={{
             paddingBottom: 2,
             paddingTop: 1,
             my: 0,
-            backgroundColor: "rgb(219, 226, 190)",
           }}
         >
           <Box sx={{ mx: 2 }}>
@@ -47,8 +52,10 @@ const LocationInfo = (props) => {
             <Podcast podcast={location.podcast} />
           </Box>
         </Box>
-        <Divider sx={{ mb: 1 }} />
-        <DisplayImages />
+        {/* <Divider sx={{ mb: 1 }} /> */}
+        <Box sx={{ backgroundColor: "white", pt: 1 }}>
+          <DisplayImages images={location.images} />
+        </Box>
       </Box>
     </Drawer>
   );
