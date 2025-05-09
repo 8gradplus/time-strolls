@@ -4,6 +4,9 @@ run-etl:
 run-api:
 	uv run uvicorn api.main:app --reload
 
+run-local-tile-server:
+	uv run uvicorn api.local_tile_server:app --reload
+
 docker-build:
 	docker build -t time-strolls-api .
 

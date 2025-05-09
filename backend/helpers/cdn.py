@@ -1,7 +1,6 @@
 import boto3
 from botocore.client import Config
 from config import config
-from io import BytesIO
 
 cdn = config.cdn
 
