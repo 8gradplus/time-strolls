@@ -1,34 +1,40 @@
 [project]
 name = "timestrolls"
 version = "0.0.0"
-description = "Add your description here"
+description = "Stroll in space and time."
 readme = "README.md"
 requires-python = ">=3.13"
 
 dependencies = [
-    "folium",
-    "ipympl",
-    "jupyter",
-    "matplotlib",
-    "morecantile",
-    "opencv-python",
-    "pandas",
-    "pyproj",
-    "rasterio",
-    "rio-tiler",
-    "selenium",
-    "swak",
-    "tenacity",
-    "webdriver-manager",
-    "fastapi",
-    "uvicorn",
-    "pydantic",
     "boto3",
     "envyaml",
-    "titiler.core",
-    # sql
+    "fastapi",
+    "gunicorn",
+    #"psycopg2",
+    "psycopg2-binary",
+    "pydantic",
     "sqlmodel",
-    "psycopg2",
+    "swak",
+    "uvicorn",
+]
+
+[project.optional-dependencies]
+dev = [
+    "matplotlib",
+    "jupyter",
+    "folium",
     # zed
     "cst-lsp",
+    # Geo Stuff
+    "titiler.core",
+    "morecantile",
+    "rasterio",
+    "rio-tiler",
+    "pyproj",
+    # Crawling
+    "selenium",
+    "webdriver-manager",
+    "tenacity",
+    # Image
+    "opencv-python",
 ]

@@ -2,9 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from typing import Annotated
 from sqlmodel import select
 from sqlmodel import Session
-from swak.funcflow import Map
 
-from .database import init_db, engine
 from .database import get_session
 from .models import Place, PlaceBase, PlaceInfo, PlacePublic, Podcast, Image
 
@@ -47,6 +45,7 @@ SessionDep = Annotated[Session, Depends(get_session)]
 
 app = FastAPI()
 
+"""
 @app.on_event("startup")
 def startup():
     init_db()
@@ -56,6 +55,7 @@ def startup():
         Map(session.add)(images)
         Map(session.add)(podcasts)
         session.commit()
+"""
 
 @app.get('/ready')
 def foobar():
