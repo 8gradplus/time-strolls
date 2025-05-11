@@ -1,23 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { Marker, useMapEvents } from "react-leaflet";
-import { currentLocationIcon } from "./icons";
+import { Marker, useMap } from "react-leaflet";
+import { currentLocationIcon } from "./icons"; // adjust path as needed
 
 const Track = () => {
   const [position, setPosition] = useState(null);
+  const map = useMap();
 
-  const map = useMapEvents({
-    locationfound(e) {
-      setPosition(e.latlng);
-      map.flyTo(e.latlng, map.getZoom());
-    },
-  });
-
-  // Trigger geolocation on mount
   useEffect(() => {
-    map.locate({
-      setView: true,
-      maxZoom: 16,
-    });
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const latlng = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
+        setPosition(latlng);
+        map.flyTo(latlng, map.getZoom());
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 10000,
+      },
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
   }, [map]);
 
   return position === null ? null : (
