@@ -8,7 +8,7 @@ const Track = () => {
   const map = useMapEvents({
     locationfound(e) {
       setPosition(e.latlng);
-      map.flyTo(e.latlng, 16); // Explicit zoom level
+      map.flyTo(e.latlng); // Explicit zoom level
     },
   });
 
