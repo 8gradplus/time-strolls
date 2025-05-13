@@ -7,6 +7,8 @@ services:
       - POSTGRES_DB=timestrolls
     container_name: postgres
     hostname: postgres.timestrolls
+    volumes:
+      - postgres:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
@@ -41,7 +43,7 @@ services:
     expose:
       - "8000"
     volumes:
-      - migrations_sql:/app/database/sql # Export migrations from API
+      - migrations_sql:/app/migration # Export migrations from API
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/ready"]
     depends_on:
@@ -81,3 +83,4 @@ volumes:
   caddy_data:
   caddy_config:
   migrations_sql:
+  postgres:
