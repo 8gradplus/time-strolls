@@ -4,7 +4,7 @@ from api.model.place import Place, PlaceCreate, PlacePublic, PlaceUpdate
 from sqlmodel import select
 from datetime import datetime as dt
 router = APIRouter(
-    tags=['Public'],
+    tags=['Places'],
     prefix='/places'
 )
 

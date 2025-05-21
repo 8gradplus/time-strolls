@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS timestrolls.image
     place_id INTEGER REFERENCES timestrolls.place (id) ON DELETE CASCADE,
     title TEXT,
     url TEXT,
+    hash TEXT,
+    content_type TEXT,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
 );
@@ -25,8 +27,11 @@ CREATE TABLE IF NOT EXISTS timestrolls.podcast
 (
     id SERIAL PRIMARY KEY,
     place_id INTEGER REFERENCES timestrolls.place (id) ON DELETE CASCADE,
-    title TEXT,
-    url TEXT,
+    title TEXT NOT NULL,
+    url TEXT NOT NULL,
+    path TEXT,
+    hash TEXT,
+    content_type TEXT,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
 );

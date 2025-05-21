@@ -1,10 +1,18 @@
 from pydantic import BaseModel
 from typing import Optional
 
+class DataBase(BaseModel):
+    driver: Optional[str] = "postgres"
+    ssl: Optional[bool] = True
+    host: str
+    port: Optional[int] = 5432
+    name: str
+    user: str
+    password: str
 
 class CdnPath(BaseModel):
     image: str
-    audio: str
+    podcast: str
     tile: str
 
 class CdnCredentials(BaseModel):
@@ -30,3 +38,4 @@ class Tile(BaseModel):
 class Validator(BaseModel):
     cdn: Cdn
     tile: Optional[Tile] = Tile()
+    database: DataBase

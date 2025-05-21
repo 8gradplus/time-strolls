@@ -1,9 +1,17 @@
+database:
+  driver: postgres
+  ssl: false
+  host: localhost
+  port: 5432
+  name: timestrolls
+  user: user
+  password: password
+
 cdn:
   path:
-    image: images
-    audio: audio
+    image: test/timestrolls/images
+    podcast: test/timestrolls/podcasts
     tile: test/timestrolls/tiles
-    #tile: /tiles
   credentials:
     key: ${SPACES_KEY}
     secret: ${SPACES_SECRET}

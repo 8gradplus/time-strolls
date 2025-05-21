@@ -15,8 +15,7 @@ class Place(PlaceBase, table=True):
     updated_at: datetime | None = Field(default=None)
 
 class PlaceCreate(PlaceBase):
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    pass
 
 
 class PlacePublic(PlaceBase):
@@ -29,7 +28,6 @@ class PlaceUpdate(SQLModel):
     type: str | None = None
     lat: float | None = None
     lon: float | None = None
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 """

@@ -2,7 +2,8 @@
 INSERT INTO timestrolls.place (name, type, lat, lon)
 VALUES
     ('Unterurasch', 'Place', 48.61017854015886, 14.04406485511563),
-    ('Sankt Thoma', 'Place', 48.645228734293525, 14.10324739758884);
+    ('Sankt Thoma', 'Place', 48.645228734293525, 14.10324739758884),
+    ('Dorfkapelle Oberuresch', 'Chapel', 48.6113, 14.06166);
 
 -- Podcast test data
 INSERT INTO timestrolls.podcast (title, url, place_id)

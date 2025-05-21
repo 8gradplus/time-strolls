@@ -6,7 +6,7 @@ from envyaml import EnvYAML
 
 def load_yaml(path: str) -> dict:
     abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", path))
-    return(EnvYAML(abs_path, strict=False).export())
+    return (EnvYAML(abs_path, strict=False).export())
 
 def validate(config: dict):
     try:

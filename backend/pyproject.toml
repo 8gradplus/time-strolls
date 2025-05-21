@@ -10,7 +10,8 @@ dependencies = [
     "envyaml",
     "fastapi",
     "gunicorn",
-    #"psycopg2",
+    # for uploads
+    "python-multipart",
     "psycopg2-binary",
     "pydantic",
     "sqlmodel",
@@ -23,6 +24,7 @@ dev = [
     "matplotlib",
     "jupyter",
     "folium",
+    "psycopg2",
     # zed
     "cst-lsp",
     # Geo Stuff
