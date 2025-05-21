@@ -5,6 +5,7 @@ from typing import Optional
 class PodcastBase(SQLModel):
     title: str
     place_id: int
+    owner: Optional[str]
 
 
 class Podcast(PodcastBase, table=True):
@@ -23,6 +24,7 @@ class PodcastCreate(PodcastBase):
 class PodcastUpdate(SQLModel):
     title: Optional[str] = None
     place_id: Optional[str] = None
+    owner: Optional[str] = None
 
 class PodcastPublic(PodcastBase):
     id: int

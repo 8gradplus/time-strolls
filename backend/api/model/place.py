@@ -1,3 +1,4 @@
+from asyncio.timeouts import Optional
 from sqlmodel import Field, SQLModel
 from datetime import datetime
 
@@ -10,13 +11,12 @@ class PlaceBase(SQLModel):
 
 class Place(PlaceBase, table=True):
     __table_args__ = {"schema": "timestrolls"}
-    id: int | None = Field(default=None, primary_key=True, index=True)
-    created_at: datetime | None = Field(default=None)
-    updated_at: datetime | None = Field(default=None)
+    id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    created_at: Optional[datetime] = Field(default=None)
+    updated_at: Optional[datetime] = Field(default=None)
 
 class PlaceCreate(PlaceBase):
     pass
-
 
 class PlacePublic(PlaceBase):
     id: int
@@ -24,15 +24,7 @@ class PlacePublic(PlaceBase):
     updated_at: datetime
 
 class PlaceUpdate(SQLModel):
-    name: str | None = None
-    type: str | None = None
-    lat: float | None = None
-    lon: float | None = None
-
-
-"""
-class PlaceInfo(SQLModel):
-    place: PlacePublic
-    podcast: Optional[PodcastPublic] = None
-    images: Optional[list[ImagePublic]] = None
-"""
+    name: Optional[str] = None
+    type: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None

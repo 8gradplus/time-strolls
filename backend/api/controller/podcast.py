@@ -62,7 +62,7 @@ def patch_podcast(id: int, podcast: PodcastUpdate):
     with Session(engine) as session:
         db_podcast = session.get(Podcast, id)
         if not db_podcast:
-            raise HTTPException(status_code=404, detail=f"Place {id} not found")
+            raise HTTPException(status_code=404, detail=f"Podcast {id} not found")
         db_podcast.sqlmodel_update(podcast.model_dump(exclude_unset=True))
         db_podcast.sqlmodel_update(dict(updated_at=dt.utcnow()))
         session.add(db_podcast)
@@ -76,6 +76,7 @@ async def upload_podcast(
     file: UploadFile = File(...),
     title: str = Form(...),
     place_id: int = Form( ... ),
+    owner: str = Form (...),
     response_model=PodcastPublic
 ):
 
@@ -96,6 +97,7 @@ async def upload_podcast(
         url = f'https://{config.cdn.bucket}.{config.cdn.endpoint.split('//')[-1]}/{path}',
         path=path,
         hash=file_hash,
+        owner = owner,
         content_type=file.content_type,
         created_at = dt.utcnow()
     )
