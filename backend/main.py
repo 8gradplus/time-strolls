@@ -5,21 +5,18 @@
 # Todo: config: extract DB URI
 #Todo: Maybe this boilerplate should go to api.__init__.py and then just import it?
 
-from fastapi import FastAPI
-#from typing import Annotated
-#from sqlmodel import Sessions
+# Docs
+#https://timberry.dev/fastapi-with-apikeys
 
-#from .db import get_session
+from fastapi import FastAPI
 from api.controller import place
 from api.controller import podcast
-
-#https://timberry.dev/fastapi-with-apikeys
-#SessionDep = Annotated[Session, Depends(get_session)]
-
+from api.controller import image
 
 app = FastAPI()
 app.include_router(place.router)
 app.include_router(podcast.router)
+app.include_router(image.router)
 
 @app.get('/ready')
 def ready():

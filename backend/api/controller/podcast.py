@@ -5,7 +5,6 @@ from datetime import datetime as dt
 
 from helpers import cdn
 from helpers.hash import hash, hash_exists
-from ..db import SessionDep
 from ..db import engine
 from fastapi import UploadFile, File, Form
 from api.model.podcast import Podcast, PodcastCreate, PodcastPublic, PodcastUpdate
@@ -17,13 +16,15 @@ router = APIRouter(
 )
 
 @router.get('/', response_model=list[PodcastPublic])
-def get_postcast(session: SessionDep):
-    return session.exec(select(Podcast)).all()
+def get_postcasts():
+    with Session(engine) as session:
+        return session.exec(select(Podcast)).all()
 
 
 @router.get('/{id}', response_model=PodcastPublic)
-def get_pocast(id: int, session: SessionDep):
-    podcast = session.get(Podcast, id)
+def get_pocast(id: int):
+    with Session(engine) as session:
+        podcast = session.get(Podcast, id)
     if not podcast:
         raise HTTPException(status_code=404, detail=f"Podcast {id} not found")
     return podcast
@@ -40,7 +41,7 @@ async def delete_podcast(id: int):
     try:
         await cdn.delete(podcast.path)
     except:
-        raise HTTPException(status_code=404, detail=f"Could not delete {podcast.title} on cdn")
+        raise HTTPException(status_code=404, detail=f"Could not delete podcast {podcast.id} (title: {podcast.title}) on cdn")
     return {f"Deleted podcast {id}": True}
 
 
@@ -49,7 +50,6 @@ def post_podcast(podcast: PodcastCreate):
     # Todo: add created at info
     db_podcast = Podcast.model_validate(podcast)
     db_podcast.sqlmodel_update(dict(created_at=dt.utcnow()))
-    print(db_podcast)
     with Session(engine) as session:
         session.add(db_podcast)
         session.commit()
@@ -58,7 +58,6 @@ def post_podcast(podcast: PodcastCreate):
 
 @router.patch('/{id}', response_model=PodcastPublic)
 def patch_podcast(id: int, podcast: PodcastUpdate):
-    print(f'PODCAST {podcast}')
     with Session(engine) as session:
         db_podcast = session.get(Podcast, id)
         if not db_podcast:

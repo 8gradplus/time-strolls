@@ -20,35 +20,41 @@ VALUES
     );
 
 -- Image test data
-INSERT INTO timestrolls.image (url, title, place_id)
+INSERT INTO timestrolls.image (url, path, title, place_id)
 VALUES
     (
         'https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file430410.webp',
+        'test/timestrolls/images/file430410.webp',
         'Sonntags Spaziergang',
         1
     ),
     (
         'https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file546065.webp',
+        'test/timestrolls/images/file546065.webp',
         NULL,
         1
     ),
     (
         'https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file546072.webp',
+        'test/timestrolls/images/file546072.webp',
         NULL,
         1
     ),
     (
         'https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file546074.webp',
+        'test/timestrolls/images/file546074.webp',
         NULL,
         1
     ),
     (
         'https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file564226.webp',
+        'test/timestrolls/images/file564226.webp',
         NULL,
         1
     ),
     (
         'https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/images/file840955.webp',
+        'test/timestrolls/images/file840955.webp',
         NULL,
         1
     );

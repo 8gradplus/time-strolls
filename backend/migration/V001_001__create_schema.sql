@@ -3,37 +3,44 @@ CREATE SCHEMA IF NOT EXISTS timestrolls;
 CREATE TABLE IF NOT EXISTS timestrolls.place
 (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    type TEXT NOT NULL DEFAULT 'Place',
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
     lat DOUBLE PRECISION NOT NULL,
     lon DOUBLE PRECISION NOT NULL,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    name TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'Place',
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS timestrolls.image
 (
     id SERIAL PRIMARY KEY,
-    place_id INTEGER REFERENCES timestrolls.place (id) ON DELETE CASCADE,
-    title TEXT,
-    url TEXT UNIQUE,
-    hash TEXT,
     content_type TEXT,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+    description TEXT,
+    hash TEXT,
+    owner TEXT,
+    path TEXT,
+    place_id INTEGER REFERENCES timestrolls.place (id) ON DELETE CASCADE,
+    source_id TEXT,
+    source_url TEXT,
+    title TEXT,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    url TEXT UNIQUE,
+    year INTEGER
+
 );
 
 CREATE TABLE IF NOT EXISTS timestrolls.podcast
 (
     id SERIAL PRIMARY KEY,
-    place_id INTEGER REFERENCES timestrolls.place (id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    url TEXT UNIQUE,
-    path TEXT,
-    hash TEXT,
-    owner TEXT,
     content_type TEXT,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    hash TEXT,
+    owner TEXT,
+    place_id INTEGER REFERENCES timestrolls.place (id) ON DELETE CASCADE,
+    path TEXT,
+    title TEXT NOT NULL,
+    url TEXT UNIQUE,
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
 );
 
