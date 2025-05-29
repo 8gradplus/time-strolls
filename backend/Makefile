@@ -2,7 +2,7 @@ run-etl:
 	uv run python etl.py
 
 run-api:
-	uv run uvicorn main:app --reload
+	uv run uvicorn api.main:app --reload
 
 run-local-tile-server:
 	uv run uvicorn local_tile_server:app --reload
