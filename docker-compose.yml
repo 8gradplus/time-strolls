@@ -1,3 +1,7 @@
+configs:
+  api_config:
+    file: ./deployment/api-config.yml
+
 services:
   postgres:
     image: postgres:13
@@ -44,6 +48,10 @@ services:
       - "8000"
     volumes:
       - migrations_sql:/app/migration # Export migrations from API
+    configs:
+      - source: api_config
+        target: /app/config.yml
+        mode: 0444 # read only
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/ready"]
     depends_on:

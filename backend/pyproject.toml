@@ -14,6 +14,7 @@ dependencies = [
     "python-multipart",
     "psycopg2-binary",
     "pydantic",
+    "selenium",
     "sqlmodel",
     "swak",
     "uvicorn",
@@ -34,7 +35,6 @@ dev = [
     "rio-tiler",
     "pyproj",
     # Crawling
-    "selenium",
     "webdriver-manager",
     "tenacity",
     # Image

@@ -1,0 +1,19 @@
+database:
+  driver: postgres
+  ssl: false
+  host: postgres.timestrolls
+  port: 5432
+  name: timestrolls
+  user: user
+  password: password
+
+cdn:
+  path:
+    image: test/timestrolls/images
+    podcast: test/timestrolls/podcasts
+    tile: test/timestrolls/tiles
+  credentials:
+    key: ${SPACES_KEY}
+    secret: ${SPACES_SECRET}
+  bucket: debtray
+  endpoint: https://fra1.digitaloceanspaces.com
