@@ -20,8 +20,8 @@ class PlaceCreate(PlaceBase):
 
 class PlacePublic(PlaceBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 class PlaceUpdate(SQLModel):
     name: Optional[str] = None

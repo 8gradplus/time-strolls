@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import Track from "./Track";
@@ -8,6 +8,7 @@ import LocationMarkers from "./LocationMarkers/LocationMarkers";
 
 // Todo: this should be removed by API
 import { LOCATIONS } from "./testLocations";
+import { api } from "./api";
 
 const HistoricMap = (props) => {
   const { open } = props;
@@ -24,6 +25,22 @@ const CoordinateMap = () => {
   const [locationId, setLocationId] = useState(null);
   const [showMarkers, setShowMarkers] = useState(true);
   const [showHistoricMap, setShowHistoricMap] = useState(false);
+  const [locations, setLocations] = useState(null);
+
+  console.log("Fetching places from", api.places);
+  console.log("Locations from api", locations);
+
+  useEffect(() => {
+    fetch(api.places)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Places response not ok");
+        }
+        return res.json();
+      })
+      .then((data) => setLocations(data))
+      .catch((error) => console.error("Error fetching places:", error));
+  }, []);
 
   const handleInfoOpen = (newOpen) => () => {
     setShowInfo(newOpen);

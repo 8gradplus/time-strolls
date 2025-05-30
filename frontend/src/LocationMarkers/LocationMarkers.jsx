@@ -1,17 +1,16 @@
 import LocationMarker from "./LocationMarker";
-import { LOCATIONS } from "../testLocations";
 
 const LocationMarkers = (props) => {
-  const { open, onClick } = props;
+  const { open, onClick, locations } = props;
   if (!open) return null;
   return (
     <>
-      {LOCATIONS.map((location, idx) => (
+      {locations.map((location, idx) => (
         <LocationMarker
           key={location.id || idx}
           position={location.position}
           label={location.name}
-          // Todo: onClick(location.id) upon API beause this component would call the conent by itsel
+          // Todo: onClick(location.id) upon API beause this component would call the conent by itself
           onClick={onClick(location.id)}
         />
       ))}

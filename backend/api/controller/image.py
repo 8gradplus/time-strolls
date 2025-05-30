@@ -12,7 +12,7 @@ from topothek.crawl import crawl_document_async
 
 router = APIRouter(
     tags=['Images'],
-    prefix='/images'
+    prefix='/api/images'
 )
 
 @router.get('/', response_model=list[ImagePublic])

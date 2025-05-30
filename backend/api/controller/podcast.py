@@ -12,7 +12,7 @@ from config import config
 
 router = APIRouter(
     tags=['Podcasts'],
-    prefix='/podcasts'
+    prefix='/api/podcasts'
 )
 
 @router.get('/', response_model=list[PodcastPublic])
