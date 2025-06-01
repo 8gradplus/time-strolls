@@ -1,4 +1,4 @@
 export const api = {
-  place: (id) => `/api/places/${id}`,
+  locations: (id) => `/api/locations/${id}`,
   places: "/api/places/",
 };

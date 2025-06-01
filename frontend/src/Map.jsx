@@ -5,9 +5,6 @@ import Track from "./Track";
 import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
-
-// Todo: this should be removed by API
-import { LOCATIONS } from "./testLocations";
 import { api } from "./api";
 
 const HistoricMap = (props) => {
@@ -26,9 +23,6 @@ const CoordinateMap = () => {
   const [showMarkers, setShowMarkers] = useState(true);
   const [showHistoricMap, setShowHistoricMap] = useState(false);
   const [locations, setLocations] = useState(null);
-
-  console.log("Fetching places from", api.places);
-  console.log("Locations from api", locations);
 
   useEffect(() => {
     fetch(api.places)
@@ -73,19 +67,21 @@ const CoordinateMap = () => {
         />
         <HistoricMap open={showHistoricMap} />
 
-        <LocationMarkers
-          open={showMarkers}
-          onClick={handleMarkerClick}
-          locations={LOCATIONS}
-        />
+        {locations && (
+          <LocationMarkers
+            open={showMarkers}
+            onClick={handleMarkerClick}
+            locations={locations}
+          />
+        )}
 
-        {/* Todo: Location info should make its own api call  */}
-        {/* So we sould not pass data any more */}
-        <LocationInfo
-          open={showInfo}
-          onClose={handleInfoOpen(false)}
-          id={locationId}
-        />
+        {locationId && (
+          <LocationInfo
+            open={showInfo}
+            onClose={handleInfoOpen(false)}
+            id={locationId}
+          />
+        )}
 
         <Track />
       </MapContainer>

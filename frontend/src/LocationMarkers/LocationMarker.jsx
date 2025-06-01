@@ -3,7 +3,7 @@ import { useState } from "react";
 import { placeIcon } from "../icons";
 
 const LocationMarker = (props) => {
-  const { position, label, onClick } = props;
+  const { lat, lon, label, onClick } = props;
   const [iconSize, setIconSize] = useState(30);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -26,7 +26,7 @@ const LocationMarker = (props) => {
 
   return (
     <Marker
-      position={position}
+      position={[lat, lon]}
       icon={placeIcon(color, haloColor, iconSize)}
       eventHandlers={{
         click: handleMarkerClick,

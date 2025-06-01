@@ -8,7 +8,8 @@ const LocationMarkers = (props) => {
       {locations.map((location, idx) => (
         <LocationMarker
           key={location.id || idx}
-          position={location.position}
+          lat={location.lat}
+          lon={location.lon}
           label={location.name}
           // Todo: onClick(location.id) upon API beause this component would call the conent by itself
           onClick={onClick(location.id)}

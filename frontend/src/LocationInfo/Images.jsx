@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 
 const DisplayImages = (props) => {
   const { images } = props;
-  if (!images || images === []) return null;
+  if (!images || images.length === 0) return null;
   return (
     <>
       {images.map((image, idx) => (

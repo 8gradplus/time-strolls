@@ -1,24 +1,42 @@
+import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
-import Divider from "@mui/material/Divider";
 import Podcast from "./Audio";
 import DisplayImages from "./Images";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import Button from "../Components/Button";
-import { useEffect, useState } from "react";
-// Todo: We should talk at this place to the API via the id
-// => prop 'data' will be redundant!
-import { LOCATIONS } from "../testLocations";
+//import { api } from "../api.js";
 
 // Todo: same as menu -> make css
 
 const LocationInfo = (props) => {
   const { open, onClose, id } = props;
+  const [locationInfo, setLocationInfo] = useState(null);
+  console.log("id", id);
 
-  // simulate api call
-  if (!id) return null;
-  const location = LOCATIONS.filter((item) => item.id === id)[0];
-  console.log("upon enter", location);
+  useEffect(() => {
+    fetch(`/api/locations/${id}`) // todo: rather use api module
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Places response not ok");
+        }
+        return res.json();
+      })
+      .then((data) => setLocationInfo(data))
+      .catch((error) => console.error("Error fetching places:", error));
+  }, [id]);
+
+  console.log("upon enter", locationInfo);
+  if (!locationInfo) {
+    return (
+      <Drawer open={open} onClose={onClose}>
+        <Box sx={{ width: { xs: "100vw", sm: 450 }, p: 3 }}>
+          <p>Loading...</p>
+        </Box>
+      </Drawer>
+    );
+  }
+
   return (
     <Drawer open={open} onClose={onClose}>
       {/* Full width on mobild device */}
@@ -44,17 +62,17 @@ const LocationInfo = (props) => {
                 alignItems: "center",
               }}
             >
-              <h1>{location.name}</h1>
+              <h1>{locationInfo.place.name}</h1>
               <Button onClick={onClose} color={"transparent"}>
                 <HighlightOffIcon style={{ fontSize: "24px", color: "#333" }} />
               </Button>
             </Box>
-            <Podcast podcast={location.podcast} />
+            <Podcast podcast={locationInfo.podcast} />
           </Box>
         </Box>
         {/* <Divider sx={{ mb: 1 }} /> */}
         <Box sx={{ backgroundColor: "white", pt: 1 }}>
-          <DisplayImages images={location.images} />
+          <DisplayImages images={locationInfo.images} />
         </Box>
       </Box>
     </Drawer>

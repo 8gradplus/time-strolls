@@ -12,11 +12,14 @@ from fastapi import FastAPI
 from api.controller import place
 from api.controller import podcast
 from api.controller import image
+from api.controller import location
 
 app = FastAPI()
 app.include_router(place.router)
 app.include_router(podcast.router)
 app.include_router(image.router)
+app.include_router(location.router)
+
 
 @app.get('/ready')
 def ready():
