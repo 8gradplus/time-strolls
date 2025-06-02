@@ -12,7 +12,6 @@ import { api } from "../api";
 const LocationInfo = (props) => {
   const { open, onClose, id } = props;
   const [locationInfo, setLocationInfo] = useState(null);
-  console.log("id", id);
 
   useEffect(() => {
     fetch(api.locationInfo(id)) // todo: rather use api module
@@ -25,7 +24,6 @@ const LocationInfo = (props) => {
       .then((data) => setLocationInfo(data))
       .catch((error) => console.error("Error fetching places:", error));
   }, [id]);
-
   console.log("upon enter", locationInfo);
   if (!locationInfo) {
     return (
