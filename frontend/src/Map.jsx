@@ -25,7 +25,7 @@ const CoordinateMap = () => {
   const [locations, setLocations] = useState(null);
 
   useEffect(() => {
-    fetch(api.places)
+    fetch(api.locations)
       .then((res) => {
         if (!res.ok) {
           throw new Error("Places response not ok");

@@ -5,7 +5,7 @@ import Podcast from "./Audio";
 import DisplayImages from "./Images";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import Button from "../Components/Button";
-//import { api } from "../api.js";
+import { api } from "../api";
 
 // Todo: same as menu -> make css
 
@@ -15,7 +15,7 @@ const LocationInfo = (props) => {
   console.log("id", id);
 
   useEffect(() => {
-    fetch(`/api/locations/${id}`) // todo: rather use api module
+    fetch(api.locationInfo(id)) // todo: rather use api module
       .then((res) => {
         if (!res.ok) {
           throw new Error("Places response not ok");

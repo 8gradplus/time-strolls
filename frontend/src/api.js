@@ -1,4 +1,4 @@
 export const api = {
-  locations: (id) => `/api/locations/${id}`,
-  places: "/api/places/",
+  locationInfo: (id) => `/api/locations/${id}`,
+  locations: "/api/places/",
 };
