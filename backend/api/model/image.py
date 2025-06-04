@@ -29,8 +29,8 @@ class ImageUpdate(SQLModel):
 class ImagePublic(ImageBase):
     id: int
     url: str
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 class ImageCreate(ImageBase):
     url: str

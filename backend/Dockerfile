@@ -18,4 +18,11 @@ RUN uv sync --no-dev
 EXPOSE 8000
 
 # Start the FastAPI server
-CMD uv run gunicorn -k uvicorn.workers.UvicornWorker api.main:app --bind 0.0.0.0:8000 --workers 4
+#CMD uv run gunicorn -k uvicorn.workers.UvicornWorker api.main:app --bind 0.0.0.0:8000 --workers 4 --log-level info   --access-logfile - --error-logfile -
+
+CMD uv run gunicorn -k uvicorn.workers.UvicornWorker api.main:app \
+    --bind 0.0.0.0:8000 \
+    --workers 4 \
+    --log-level info \
+    --access-logfile - \
+    --error-logfile -

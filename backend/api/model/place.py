@@ -1,7 +1,6 @@
-from asyncio.timeouts import Optional
 from sqlmodel import Field, SQLModel
 from datetime import datetime
-
+from typing import Optional
 
 class PlaceBase(SQLModel):
     name: str

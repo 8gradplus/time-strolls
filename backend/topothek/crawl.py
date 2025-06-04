@@ -4,6 +4,10 @@ from selenium.webdriver.chrome.options import Options
 from pydantic import BaseModel
 from typing import Optional
 import asyncio
+from logging import getLogger
+from re import error
+
+logger = getLogger(__name__)
 
 class Image(BaseModel):
     source_url: str
@@ -27,17 +31,20 @@ def get_from_table(driver, prop: str):
     return driver.find_element(By.XPATH, f'//tr[td[1][normalize-space(text())="{prop}"]]/td[2]/div').text
 
 def crawl_document(url):
-    with  get_driver() as driver:
-        driver.get(url)
-        return Image(
-            source_url=url,
-            source_id=get_from_table(driver, 'ID'),
-            url=get_property(driver, 'image'),
-            title=get_property(driver, 'title'),
-            #description=get_property(driver, 'description'),
-            owner = get_from_table(driver, 'Besitzer'),
-            year = int(get_from_table(driver, 'Datum').strip().split()[-1])
-        )
+    try:
+        with  get_driver() as driver:
+            driver.get(url)
+            return Image(
+                source_url=url,
+                source_id=get_from_table(driver, 'ID'),
+                url=get_property(driver, 'image'),
+                title=get_property(driver, 'title'),
+                #description=get_property(driver, 'description'),
+                owner = get_from_table(driver, 'Besitzer'),
+                year = int(get_from_table(driver, 'Datum').strip().split()[-1])
+            )
+    except Exception as e:
+        logger.error(f"Could not crawl Topothek for {url}. {e}")
 
 async def crawl_document_async(url):
     return await asyncio.to_thread(crawl_document, url)

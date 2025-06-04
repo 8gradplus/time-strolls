@@ -19,5 +19,5 @@ def get_location_info(id: int, response_model=LocationInfo):
         if not place:
             raise HTTPException(status_code=404, detail=f"Location information for place{id} not found")
         podcast = session.exec(select(Podcast).where(Podcast.place_id == id)).first()
-        images = session.exec(select(Image).where(Image.place_id == id)).all()
+        images = session.exec(select(Image).where(Image.place_id == id).order_by(Image.year)).all()
         return LocationInfo(place=place, podcast=podcast, images=images)

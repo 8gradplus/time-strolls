@@ -62,9 +62,11 @@ async def post_topothek_document(image: ImageCreate):
         topothek_image = await crawl_document_async(image.url)
     except:
             raise HTTPException(status_code=404, detail=f"Could not parse topothek document {image.url}")
-    print(topothek_image)
     db_image = Image(**dict(topothek_image, place_id=image.place_id, created_at=dt.utcnow()))
     with Session(engine) as session:
+        exists = session.exec(select(Image).where(Image.url == db_image.url)).first()
+        if exists:
+            raise HTTPException(status_code=409,detail=f"Image with URL '{image.url}' already exists.")
         session.add(db_image)
         session.commit()
         session.refresh(db_image)
