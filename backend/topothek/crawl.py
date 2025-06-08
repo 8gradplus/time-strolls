@@ -1,11 +1,11 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
+from urllib.parse import urlparse, parse_qs
+import requests
+from bs4 import BeautifulSoup
 from pydantic import BaseModel
 from typing import Optional
 import asyncio
 from logging import getLogger
-from re import error
+import re
 
 logger = getLogger(__name__)
 
@@ -18,33 +18,51 @@ class Image(BaseModel):
     owner: Optional[str] = None
     year: Optional[int] = None
 
-def get_driver():
-    """Set up google chrome driver for Selenium"""
-    options = Options()
-    options.add_argument("--headless=new")
-    return webdriver.Chrome(options=options)
+def get_ajax_url(url):
+    parsed = urlparse(url)
+    host = f"{parsed.scheme}://{parsed.netloc}"
+    query_params = parse_qs(parsed.query)
+    doc_id = query_params.get("doc", [None])[0]  # returns '742582'
+    return f"{host}/includes/ajax.php?action=document&did={doc_id}&fastOpen=true&vp=false"
 
-def get_property(driver, prop):
-    return driver.find_element(By.XPATH, f'//meta[@property="og:{prop}"]').get_attribute("content")
+def get_property(soup, prop):
+    tag = soup.find("meta", property=f"og:{prop}")
+    return tag["content"] if tag else None
 
-def get_from_table(driver, prop: str):
-    return driver.find_element(By.XPATH, f'//tr[td[1][normalize-space(text())="{prop}"]]/td[2]/div').text
+def get_csrf_token(soup):
+    csrf_token_tag = soup.find("meta", attrs={"name": "csrf-token"})
+    csrf_token = csrf_token_tag["content"] if csrf_token_tag else None
+    return csrf_token
+
+def extract_year(text):
+    if not text:
+        return None
+    match = re.search(r'\b(18|19|20)\d{2}\b', text)
+    if match:
+        return int(match.group(0))
+    return None
 
 def crawl_document(url):
-    try:
-        with  get_driver() as driver:
-            driver.get(url)
-            return Image(
+    with requests.Session() as session:
+        resp = session.get(url)
+        if status := resp.status_code != 200:
+            logger.error(f"Bad reply from Topothek call: {status}, for requested {url}")
+        soup = BeautifulSoup(resp.text, "html.parser")
+        resp_ajax = session.get(get_ajax_url(url), headers={"Csrftoken": get_csrf_token(soup)})
+        if status := resp_ajax.status_code != 200:
+            logger.error(f"Bad request to Topothek Ajax call {status} for requested {url}")
+        ajax = resp_ajax.json()
+        return Image(
                 source_url=url,
-                source_id=get_from_table(driver, 'ID'),
-                url=get_property(driver, 'image'),
-                title=get_property(driver, 'title'),
-                #description=get_property(driver, 'description'),
-                owner = get_from_table(driver, 'Besitzer'),
-                year = int(get_from_table(driver, 'Datum').strip().split()[-1])
+                source_id=ajax.get('id'),
+                url=get_property(soup, 'image'),
+                title=ajax.get('detail').get('Name'),
+                description=get_property(soup, 'description'),
+                owner=ajax.get('detail').get('Besitzer'),
+                year=extract_year(ajax.get('detail').get('Datum'))
             )
-    except Exception as e:
-        logger.error(f"Could not crawl Topothek for {url}. {e}")
+
+
 
 async def crawl_document_async(url):
     return await asyncio.to_thread(crawl_document, url)

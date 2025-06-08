@@ -14,10 +14,11 @@ dependencies = [
     "python-multipart",
     "psycopg2-binary",
     "pydantic",
-    "selenium",
     "sqlmodel",
     "swak",
     "uvicorn",
+    "beautifulsoup4",
+    "requests",
 ]
 
 [project.optional-dependencies]

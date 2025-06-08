@@ -7,7 +7,7 @@ class ImageBase(SQLModel):
     place_id: int
     owner: Optional[str] = None
     year: Optional[int] = None
-    description: Optional[int] = None
+    description: Optional[str] = None
 
 class Image(ImageBase, table=True):
     __table_args__ = {"schema": "timestrolls"}

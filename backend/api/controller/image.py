@@ -4,9 +4,7 @@ from api.db import engine
 from api.model.image import Image, ImageCreate, ImagePublic, ImageUpdate
 from helpers import cdn
 from datetime import datetime as dt
-from topothek.crawl import crawl_document_async
-
-
+from topothek.crawl import crawl_document_async, crawl_document
 # Todo: upload image directly
 # Todo: put image from topothek to cdn. Currently we save some memory. But it should be done at some point
 
@@ -61,7 +59,7 @@ async def post_topothek_document(image: ImageCreate):
     try:
         topothek_image = await crawl_document_async(image.url)
     except:
-            raise HTTPException(status_code=404, detail=f"Could not parse topothek document {image.url}")
+            raise HTTPException(status_code=404, detail=f"Could not parse topothek document {image.url}.")
     db_image = Image(**dict(topothek_image, place_id=image.place_id, created_at=dt.utcnow()))
     with Session(engine) as session:
         exists = session.exec(select(Image).where(Image.url == db_image.url)).first()
