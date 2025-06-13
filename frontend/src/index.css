@@ -16,7 +16,7 @@ code {
   cursor: auto !important; /* or 'auto' for the default arrow */
 }
 
-.custom-tooltip {
+.leaflet-tooltip.location-tooltip {
   background: rgb(219, 226, 190) !important;
   border: none !important;
   box-shadow: none !important;
@@ -24,6 +24,6 @@ code {
   padding: 0;
 }
 
-.custom-tooltip::before {
+.leaflet-tooltip.location-tooltip::before {
   display: none;
 }

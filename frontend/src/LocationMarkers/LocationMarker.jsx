@@ -42,7 +42,7 @@ const LocationMarker = (props) => {
       <Tooltip
         direction="right"
         offset={[20, -10]}
-        className="location-name-tooltip"
+        className="location-tooltip"
       >
         {label}
       </Tooltip>
