@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+
 import { Marker, useMap } from "react-leaflet";
 import { currentLocationIcon } from "./icons"; // adjust path as needed
 
@@ -27,6 +28,7 @@ const Track = () => {
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
+
   }, [map]);
 
   return position === null ? null : (
