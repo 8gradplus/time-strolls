@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 from typing import Optional
 
+class Api(BaseModel):
+    key: str
+    headername: Optional[str] = "X-API-Key"
+
 class DataBase(BaseModel):
     driver: Optional[str] = "postgres"
     ssl: Optional[bool] = True
@@ -36,6 +40,7 @@ class Tile(BaseModel):
     format: Optional[str] = 'png'
 
 class Validator(BaseModel):
+    api: Api
     cdn: Cdn
     tile: Optional[Tile] = Tile()
     database: DataBase
