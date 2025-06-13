@@ -1,3 +1,6 @@
+api:
+  key: secret
+
 database:
   driver: postgres
   ssl: false
