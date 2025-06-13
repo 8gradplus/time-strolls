@@ -24,7 +24,6 @@ const LocationInfo = (props) => {
       .then((data) => setLocationInfo(data))
       .catch((error) => console.error("Error fetching places:", error));
   }, [id]);
-  console.log("upon enter", locationInfo);
   if (!locationInfo) {
     return (
       <Drawer open={open} onClose={onClose}>
