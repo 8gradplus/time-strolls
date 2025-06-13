@@ -4,7 +4,7 @@ api:
 database:
   driver: postgres
   ssl: false
-  host: localhost
+  host: postgres.timestrolls
   port: 5432
   name: timestrolls
   user: user
@@ -20,10 +20,3 @@ cdn:
     secret: ${SPACES_SECRET}
   bucket: debtray
   endpoint: https://fra1.digitaloceanspaces.com
-  #endpoint: /Users/viktor/Work/8gradplus/time-strolls/resources/
-#tile:
-#  zoom:
-#    min: 10
-#    max: 11
-#size: 256
-#format: png

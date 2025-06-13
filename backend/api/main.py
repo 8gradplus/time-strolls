@@ -1,27 +1,29 @@
-from fastapi import FastAPI
-from titiler.core.factory import TilerFactory
+#Todo: https://fastapi.tiangolo.com/tutorial/bigger-applications/#an-example-file-structure
+#Todo: https://fastapi.tiangolo.com/tutorial/bigger-applications/#an-example-file-structure
+#Todo: incorporate Relationships https://sqlmodel.tiangolo.com/tutorial/fastapi/teams/#add-teams-models
+# Todo: config: schema (views)
+# Todo: config: extract DB URI
+#Todo: Maybe this boilerplate should go to api.__init__.py and then just import it?
 
-from starlette.middleware.cors import CORSMiddleware
+# Docs
+#https://timberry.dev/fastapi-with-apikeys
+
+from fastapi import FastAPI
+from api.controller import place
+from api.controller import podcast
+from api.controller import image
+from api.controller import location
+from api.auth.api_key import get_api_key
+from fastapi import Depends
+
 
 app = FastAPI()
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins (for development - be more specific in production)
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Create a TilerFactory for Cloud-Optimized GeoTIFFs
-cog = TilerFactory()
-
-# Register all the COG endpoints automatically
-app.include_router(cog.router, tags=["Cloud Optimized GeoTIFF"])
+app.include_router(place.router, dependencies=[Depends(get_api_key)])
+app.include_router(podcast.router, dependencies=[Depends(get_api_key)])
+app.include_router(image.router, dependencies=[Depends(get_api_key)])
+app.include_router(location.router)
 
 
-# Optional: Add a welcome message for the root endpoint
-@app.get("/")
-def read_index():
-    return {"message": "Welcome to TiTiler"}
+@app.get('/ready')
+def ready():
+    return {"message": "I am ready!"}

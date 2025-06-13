@@ -4,7 +4,7 @@ DROPLET_NAME=timestrolls
 read -r -d '' SSH_COMMAND <<'EOF'
 echo "shut down"
 cd time-strolls-main &&
-docker compose down -v --remove-orphans | true &&
+docker compose down --remove-orphans | true &&
 cd ..&&
 rm -rf time-strolls-main &&
 

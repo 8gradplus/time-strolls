@@ -1,18 +1,11 @@
-from swak.funcflow import Pipe, Map
 from helpers.image import read_image
-from topothek import crawl, save_to
 from transform import create_tiles
 from collections import namedtuple
 from transform import create_tif
 
-
-
-EXAMPLE_TOPOTHEK_URL = 'https://lichtenau.topothek.at/#ipp=500&p=1&searchterm=Atalla%20Margarete%20(geb.%20Eckerstorfer%20Margarete)&t=1%2C2%2C4%2C7&sf=chk_docname%2Cchk_mainkeywords%2Cchk_subkeywords&vp=false&sort=publish_date&sortdir=desc'
 IMAGE_PATH = '../resources/us-army-1945.jpeg'
 AUDIO_PATH = '../resources/test.mp3'
 RASTER_TIF_PATH = '../resources/tifs/geo1945.tif'
-
-
 
 Point = namedtuple('Point', ['x', 'y'])
 # lat / lon convention - assume input taken from google
@@ -46,6 +39,5 @@ GROUND_CONTROL_POINTS = [
 
 if __name__ == '__main__':
     print()
-    #Pipe(crawl, save_to(config.cdn.endpoint + config.cdn.path.imag))(EXAMPLE_TOPOTHEK_URL) # url -> tuple -> none
     create_tif(GROUND_CONTROL_POINTS, read_image(IMAGE_PATH), RASTER_TIF_PATH)
     create_tiles(1945)(RASTER_TIF_PATH)

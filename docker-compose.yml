@@ -1,54 +1,76 @@
+configs:
+  api_config:
+    file: ./deployment/api-config.yml
+
 services:
-  # api:
-  #   # TODO: remove once https://github.com/rasterio/rasterio-wheels/issues/69 is resolved
-  #   # See https://github.com/developmentseed/titiler/discussions/387
-  #   platform: linux/amd64
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8000:8000"
-  #   container_name: api
-  #   command:
-  #     [
-  #       "uvicorn",
-  #       "api.main:app",
-  #       "--host",
-  #       "0.0.0.0",
-  #       "--port",
-  #       "8000",
-  #       "--workers",
-  #       "1",
-  #     ]
-  #   environment:
-  #     # GDAL config
-  #     - CPL_TMPDIR=/tmp
-  #     - GDAL_CACHEMAX=75%
-  #     - GDAL_INGESTED_BYTES_AT_OPEN=32768
-  #     - GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR
-  #     - GDAL_HTTP_MERGE_CONSECUTIVE_RANGES=YES
-  #     - GDAL_HTTP_MULTIPLEX=YES
-  #     - GDAL_HTTP_VERSION=2
-  #     - PYTHONWARNINGS=ignore
-  #     - VSI_CACHE=TRUE
-  #     - VSI_CACHE_SIZE=536870912
-  #   volumes:
-  #     - ./:/tif
-  #     - ./resources/tifs:/resources/tifs
-  #   restart: unless-stopped
-  #   networks:
-  #     - timestrolls
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=timestrolls
+    container_name: postgres
+    hostname: postgres.timestrolls
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d timestrolls"]
+
+  migrate-postgres:
+    image: flyway/flyway:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - migrations_sql:/flyway/sql/db/migration # Import migrations to Flyway
+    environment:
+      FLYWAY_URL: jdbc:postgresql://postgres.timestrolls:5432/timestrolls
+      FLYWAY_USER: postgres
+      FLYWAY_PASSWORD: postgres
+      FLYWAY_PLACEHOLDERS_USER: user
+      FLYWAY_PLACEHOLDERS_PASSWORD: password
+      FLYWAY_SCHEMAS: timestrolls
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+    command: -connectRetries=60 migrate
+
+  api:
+    #image: time-strolls-api:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: api
+    hostname: api.timestrolls
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    volumes:
+      - migrations_sql:/app/migration # Export migrations from API
+    configs:
+      - source: api_config
+        target: /app/config.yml
+        mode: 0444 # read only
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/ready"]
+    depends_on:
+      migrate-postgres:
+        condition: service_completed_successfully
 
   frontend:
+    #image: time-strolls-frontend:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: frontend
+    hostname: frontend.timestrolls
+    depends_on:
+      api:
+        condition: service_healthy
     expose:
       - "3000"
     restart: unless-stopped
-    networks:
-      - timestrolls
 
   caddy:
     image: caddy:2.6.2-alpine
@@ -57,21 +79,16 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - frontend
-      #- api
+      frontend:
+        condition: service_started
     volumes:
       - ./deployment/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     restart: always
-    networks:
-      - timestrolls
 
 volumes:
   caddy_data:
   caddy_config:
-
-networks:
-  timestrolls:
-    name: timestrolls
-    driver: bridge
+  migrations_sql:
+  postgres:

@@ -1,45 +1,68 @@
-import os
-import time
+from urllib.parse import urlparse, parse_qs
 import requests
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from urllib.parse import urljoin
-from urllib.parse import urlparse
-from urllib.parse import unquote
-from tenacity import retry, retry_if_result, wait_fixed, stop_after_attempt
+from bs4 import BeautifulSoup
+from pydantic import BaseModel
+from typing import Optional
+import asyncio
+from logging import getLogger
+import re
 
-def get_driver():
-    """Set up google chrome driver for Selenium"""
-    options = Options()
-    options.headless = False  # Set to True if you want headless mode
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
-    return driver
+logger = getLogger(__name__)
 
-def base_url(url):
+class Image(BaseModel):
+    source_url: str
+    source_id: str
+    url: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    owner: Optional[str] = None
+    year: Optional[int] = None
+
+def get_ajax_url(url):
     parsed = urlparse(url)
-    return f"{parsed.scheme}://{parsed.netloc}"
+    host = f"{parsed.scheme}://{parsed.netloc}"
+    query_params = parse_qs(parsed.query)
+    doc_id = query_params.get("doc", [None])[0]  # returns '742582'
+    return f"{host}/includes/ajax.php?action=document&did={doc_id}&fastOpen=true&vp=false"
 
-is_empty_list = lambda result: isinstance(result, list) and len(result) == 0
+def get_property(soup, prop):
+    tag = soup.find("meta", property=f"og:{prop}")
+    return tag["content"] if tag else None
 
-@retry(retry=retry_if_result(is_empty_list), wait=wait_fixed(2),stop=stop_after_attempt(5))
-def crawl(url):
-    """Get large resolution image urls"""
-    driver = get_driver()
-    driver.get(url)
-    # Wait for the page to load completely
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'img')))
-    image_urls = []
-    image_elements = driver.find_elements(By.TAG_NAME, 'img')
-    for img in image_elements:
-        full_res_url = img.get_attribute('data-large-source')
-        if full_res_url:
-            full_res_url = urljoin(base_url(url), full_res_url)
-            image_urls.append(full_res_url)
-    driver.quit()
-    return image_urls
+def get_csrf_token(soup):
+    csrf_token_tag = soup.find("meta", attrs={"name": "csrf-token"})
+    csrf_token = csrf_token_tag["content"] if csrf_token_tag else None
+    return csrf_token
+
+def extract_year(text):
+    if not text:
+        return None
+    match = re.search(r'\b(18|19|20)\d{2}\b', text)
+    if match:
+        return int(match.group(0))
+    return None
+
+def crawl_document(url):
+    with requests.Session() as session:
+        resp = session.get(url)
+        if status := resp.status_code != 200:
+            logger.error(f"Bad reply from Topothek call: {status}, for requested {url}")
+        soup = BeautifulSoup(resp.text, "html.parser")
+        resp_ajax = session.get(get_ajax_url(url), headers={"Csrftoken": get_csrf_token(soup)})
+        if status := resp_ajax.status_code != 200:
+            logger.error(f"Bad request to Topothek Ajax call {status} for requested {url}")
+        ajax = resp_ajax.json()
+        return Image(
+                source_url=url,
+                source_id=ajax.get('id'),
+                url=get_property(soup, 'image'),
+                title=ajax.get('detail').get('Name'),
+                description=get_property(soup, 'description'),
+                owner=ajax.get('detail').get('Besitzer'),
+                year=extract_year(ajax.get('detail').get('Datum'))
+            )
+
+
+
+async def crawl_document_async(url):
+    return await asyncio.to_thread(crawl_document, url)

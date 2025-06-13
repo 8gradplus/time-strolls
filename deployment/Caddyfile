@@ -1,7 +1,7 @@
 :80 {
 
     route /api/*  {
-        reverse_proxy api:5000
+        reverse_proxy api:8000
     }
     reverse_proxy frontend:3000
 }

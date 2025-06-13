@@ -1,13 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import Track from "./Track";
 import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
-
-// Todo: this should be removed by API
-import { LOCATIONS } from "./testLocations";
+import { api } from "./api";
 
 const HistoricMap = (props) => {
   const { open } = props;
@@ -24,6 +22,19 @@ const CoordinateMap = () => {
   const [locationId, setLocationId] = useState(null);
   const [showMarkers, setShowMarkers] = useState(true);
   const [showHistoricMap, setShowHistoricMap] = useState(false);
+  const [locations, setLocations] = useState(null);
+
+  useEffect(() => {
+    fetch(api.locations)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Places response not ok");
+        }
+        return res.json();
+      })
+      .then((data) => setLocations(data))
+      .catch((error) => console.error("Error fetching places:", error));
+  }, []);
 
   const handleInfoOpen = (newOpen) => () => {
     setShowInfo(newOpen);
@@ -56,19 +67,21 @@ const CoordinateMap = () => {
         />
         <HistoricMap open={showHistoricMap} />
 
-        <LocationMarkers
-          open={showMarkers}
-          onClick={handleMarkerClick}
-          locations={LOCATIONS}
-        />
+        {locations && (
+          <LocationMarkers
+            open={showMarkers}
+            onClick={handleMarkerClick}
+            locations={locations}
+          />
+        )}
 
-        {/* Todo: Location info should make its own api call  */}
-        {/* So we sould not pass data any more */}
-        <LocationInfo
-          open={showInfo}
-          onClose={handleInfoOpen(false)}
-          id={locationId}
-        />
+        {locationId && (
+          <LocationInfo
+            open={showInfo}
+            onClose={handleInfoOpen(false)}
+            id={locationId}
+          />
+        )}
 
         <Track />
       </MapContainer>
