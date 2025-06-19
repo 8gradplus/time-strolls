@@ -24,6 +24,6 @@ app.include_router(image.router, dependencies=[Depends(get_api_key)])
 app.include_router(location.router)
 
 
-@app.get('/ready')
+@app.get('/api/ready')
 def ready():
     return {"message": "I am ready!"}

@@ -1,5 +1,5 @@
 api:
-  key: secret
+  key: ${API_KEY}
 
 database:
   driver: postgres
