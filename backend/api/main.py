@@ -13,6 +13,7 @@ from api.controller import place
 from api.controller import podcast
 from api.controller import image
 from api.controller import location
+from api.controller import track
 from api.auth.api_key import get_api_key
 from fastapi import Depends
 
@@ -21,6 +22,8 @@ app = FastAPI()
 app.include_router(place.router, dependencies=[Depends(get_api_key)])
 app.include_router(podcast.router, dependencies=[Depends(get_api_key)])
 app.include_router(image.router, dependencies=[Depends(get_api_key)])
+app.include_router(track.router, dependencies=[Depends(get_api_key)])
+# Public available + assembled suitable for frontend
 app.include_router(location.router)
 
 

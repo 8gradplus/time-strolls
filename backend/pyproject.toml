@@ -19,6 +19,9 @@ dependencies = [
     "uvicorn",
     "beautifulsoup4",
     "requests",
+    "gpxpy>=1.6.2",
+    "shapely>=2.1.2",
+    "geoalchemy2>=0.18.0",
 ]
 
 [project.optional-dependencies]

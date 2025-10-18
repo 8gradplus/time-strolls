@@ -69,7 +69,7 @@ def patch_podcast(id: int, podcast: PodcastUpdate):
         session.refresh(db_podcast)
     return db_podcast
 
-# As we need a mulitpart from anyway let's not put an pydantic object as input
+# As we need a mulitpart form anyway let's not put an pydantic object as input
 @router.post('/upload/')
 async def upload_podcast(
     file: UploadFile = File(...),
