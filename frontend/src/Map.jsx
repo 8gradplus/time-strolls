@@ -6,6 +6,7 @@ import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
 import { api } from "./api";
+import TrackPath from "./Tracks/TrackPath";
 
 const HistoricMap = (props) => {
   const { open } = props;
@@ -82,6 +83,7 @@ const CoordinateMap = () => {
             id={locationId}
           />
         )}
+        <TrackPath id={8} />
 
         <Track />
       </MapContainer>
