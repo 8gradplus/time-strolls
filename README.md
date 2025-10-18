@@ -1,3 +1,15 @@
+# API Documentation
+Comes with fastapi and is available under
+### Production
+- `https://timestrolls.debtray.com/api/docs`
+- `https://timestrolls.debtray.com/api/openapi.json`
+- `https://timestrolls.debtray.com/api/redoc`
+
+### Locally running api
+- `http://localhost:8000/api/docs`
+- `http://localhost:8000/api/openapi.json`
+- `http://localhost:8000/api/redoc`
+
 # Deployment
 
 Currently we don't use a docker registry (money constraints)

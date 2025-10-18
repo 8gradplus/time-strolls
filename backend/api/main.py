@@ -18,12 +18,21 @@ from api.auth.api_key import get_api_key
 from fastapi import Depends
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Timestrolls API",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
+)
 app.include_router(place.router, dependencies=[Depends(get_api_key)])
 app.include_router(podcast.router, dependencies=[Depends(get_api_key)])
 app.include_router(image.router, dependencies=[Depends(get_api_key)])
 app.include_router(track.router, dependencies=[Depends(get_api_key)])
+app.include_router(track.router_public)
+
 # Public available + assembled suitable for frontend
+# This is currently easier for the frontend.
+# One could alternatively define public and private routers as for the track endpoints.
 app.include_router(location.router)
 
 

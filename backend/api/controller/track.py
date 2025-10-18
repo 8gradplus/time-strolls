@@ -15,13 +15,18 @@ router = APIRouter(
     prefix='/api/tracks'
 )
 
-@router.get('/', response_model=list[TrackPublic])
+router_public = APIRouter(
+    tags=['Tracks'],
+    prefix='/api/tracks'
+)
+
+@router_public.get('/', response_model=list[TrackPublic])
 def get_places():
     with Session(engine) as session:
         return session.exec(select(Track)).all()
 
 
-@router.get('/{id}', response_model=TrackPublic)
+@router_public.get('/{id}', response_model=TrackPublic)
 def get_track(id: int):
     with Session(engine) as session:
         place = session.get(Track, id)

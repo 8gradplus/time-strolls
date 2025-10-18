@@ -10,7 +10,7 @@ from api.model.image import Image
 from api.controller.place import get_places
 
 router = APIRouter(
-    tags=['Images'],
+    tags=['Locations'],
     prefix='/api/locations'
 )
 
