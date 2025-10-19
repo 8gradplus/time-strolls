@@ -181,7 +181,9 @@ const Menu = (props) => {
                 }
               >
                 <HikeIcon />
-                <Box sx={{ flexGrow: 1 }}>{tour.name}</Box>
+                <Box sx={{ flexGrow: 1 }}>
+                  {`${tour.name} · ${tour.length.toFixed(1)} km`}
+                </Box>
                 <Radio checked={itemState.tourId === tour.id} />
               </ClickableBox>
             ))}
