@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
 import Drawer from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
-import { FormControlLabel, Switch } from "@mui/material";
+import MapIcon from "@mui/icons-material/Map";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import DirectionsWalkRoundedIcon from "@mui/icons-material/DirectionsWalkRounded";
 import Button from "./Components/Button";
 import { api } from "./api";
+import { Radio } from "@mui/material";
+import LocationPinIcon from "@mui/icons-material/LocationPin";
 
 // Styling should go to css or theming (tailwind, mui)
 const menuButtonStyle = {
@@ -14,6 +16,38 @@ const menuButtonStyle = {
   top: "10px",
   right: "10px",
   zIndex: 1000,
+};
+
+const sectionBoxStyle = {
+  width: "85%",
+  backgroundColor: "white",
+  borderRadius: 3,
+  mt: 3,
+  p: 2, // padding
+  mx: "auto", // center box
+  display: "flex",
+  flexDirection: "column", // vertical layout
+  gap: 1, // spacing between items
+};
+
+const IconBorder = ({ children }) => {
+  return (
+    <Box
+      sx={{
+        width: 30,
+        height: 30,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "white",
+        color: "black",
+        borderRadius: 2,
+        border: "2px solid black",
+      }}
+    >
+      {children}
+    </Box>
+  );
 };
 
 const HikeIcon = () => {
@@ -27,11 +61,32 @@ const HikeIcon = () => {
         justifyContent: "center",
         backgroundColor: "rgb(219, 226, 190)",
         color: "gray",
-        borderRadius: "50%", // 👈 makes it a circle
-        //boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+        borderRadius: "50%", // Circle
       }}
     >
       <DirectionsWalkRoundedIcon sx={{ fontSize: 25 }} />
+    </Box>
+  );
+};
+
+const ClickableBox = ({ checked, onClick, children }) => {
+  return (
+    <Box
+      onClick={onClick}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        cursor: "pointer",
+        paddingLeft: 1,
+        borderRadius: 2,
+        bgcolor: checked ? "grey.200" : "transparent",
+        "&:hover": {
+          bgcolor: "grey.100",
+        },
+      }}
+    >
+      {children}
     </Box>
   );
 };
@@ -88,68 +143,47 @@ const Menu = (props) => {
             </Box>
           </Box>
 
-          <Box
-            sx={{
-              width: "85%",
-              backgroundColor: "white",
-              borderRadius: 3,
-              p: 2, // padding
-              mx: "auto", // center box
-              display: "flex",
-              flexDirection: "column", // vertical layout
-              gap: 1, // spacing between items
-            }}
-          >
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={itemState.showHistoricMap}
-                  onChange={onItemClick("showHistoricMap")}
-                />
-              }
-              label="Luftbild 1945"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={itemState.showMarkers}
-                  onChange={onItemClick("showMarkers")}
-                />
-              }
-              label="Show locations"
-            />
+          {/* Layer menu */}
+          <Box sx={sectionBoxStyle}>
+            <ClickableBox
+              checked={itemState.showHistoricMap}
+              onClick={onItemClick("showHistoricMap")}
+            >
+              <IconBorder>
+                <MapIcon sx={{ fontSize: 25 }} />
+              </IconBorder>
+              <Box sx={{ flexGrow: 1 }}>{"Show Map 1945"}</Box>
+              <Radio checked={itemState.showHistoricMap} />
+            </ClickableBox>
+
+            <ClickableBox
+              checked={itemState.showMarkers}
+              onClick={onItemClick("showMarkers")}
+            >
+              <IconBorder>
+                <LocationPinIcon sx={{ fontSize: 25 }} />
+              </IconBorder>
+              <Box sx={{ flexGrow: 1 }}>{"Show locations"}</Box>
+              <Radio checked={itemState.showMarkers} />
+            </ClickableBox>
           </Box>
 
-          <Box
-            sx={{
-              width: "85%",
-              backgroundColor: "white",
-              borderRadius: 3,
-              p: 2, // padding
-              mx: "auto", // center box
-              mt: 5,
-              display: "flex",
-              flexDirection: "column", // vertical layout
-              gap: 1, // spacing between items
-            }}
-          >
+          {/* Tours */}
+          <Box sx={sectionBoxStyle}>
             {tours.map((tour) => (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center", // vertically center icon and text
-                  gap: 1, // small spacing between icon and text
-                }}
+              <ClickableBox
+                key={tour.id}
+                checked={itemState.tourId === tour.id}
+                onClick={() =>
+                  onItemClick("tour")(
+                    itemState.tourId === tour.id ? null : tour.id,
+                  )
+                }
               >
                 <HikeIcon />
-                {tour.name}
-                <Switch
-                  checked={itemState.tourId === tour.id}
-                  onChange={(e) =>
-                    onItemClick("tour")(e.target.checked ? tour.id : null)
-                  }
-                />
-              </Box>
+                <Box sx={{ flexGrow: 1 }}>{tour.name}</Box>
+                <Radio checked={itemState.tourId === tour.id} />
+              </ClickableBox>
             ))}
           </Box>
         </Box>
