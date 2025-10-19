@@ -6,7 +6,7 @@ import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
 import { api } from "./api";
-import TrackPath from "./Tracks/TrackPath";
+import Tour from "./Tours/Tour";
 
 const HistoricMap = (props) => {
   const { open } = props;
@@ -24,12 +24,13 @@ const CoordinateMap = () => {
   const [showMarkers, setShowMarkers] = useState(true);
   const [showHistoricMap, setShowHistoricMap] = useState(false);
   const [locations, setLocations] = useState(null);
+  const [tourId, setTourId] = useState(null);
 
   useEffect(() => {
     fetch(api.locations)
       .then((res) => {
         if (!res.ok) {
-          throw new Error("Places response not ok");
+          throw new Error("Locations response not ok");
         }
         return res.json();
       })
@@ -43,10 +44,13 @@ const CoordinateMap = () => {
 
   const handleMenuItemClick = (item) => {
     if (item === "showHistoricMap") {
-      setShowHistoricMap((prev) => !prev);
+      return () => setShowHistoricMap((prev) => !prev);
     } else if (item === "showMarkers") {
-      setShowMarkers((prev) => !prev); // assuming setShowMarkers exists
+      return () => setShowMarkers((prev) => !prev);
+    } else if (item === "tour") {
+      return (id) => setTourId(id);
     } else {
+      return () => {}; // no-op fallback
     }
   };
 
@@ -83,7 +87,8 @@ const CoordinateMap = () => {
             id={locationId}
           />
         )}
-        <TrackPath id={8} />
+
+        {tourId && <Tour id={tourId} />}
 
         <Track />
       </MapContainer>
@@ -92,6 +97,7 @@ const CoordinateMap = () => {
         itemState={{
           showHistoricMap: showHistoricMap,
           showMarkers: showMarkers,
+          tourId: tourId,
         }}
       />
     </div>
