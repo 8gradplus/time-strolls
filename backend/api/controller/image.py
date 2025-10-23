@@ -4,9 +4,7 @@ from api.db import engine
 from api.model.image import Image, ImageCreate, ImagePublic, ImageUpdate
 from helpers import cdn
 from datetime import datetime as dt
-from topothek.crawl import crawl_document_async, crawl_document
 # Todo: upload image directly
-# Todo: put image from topothek to cdn. Currently we save some memory. But it should be done at some point
 
 router = APIRouter(
     tags=['Images'],

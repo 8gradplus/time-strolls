@@ -7,8 +7,8 @@ database:
   host: postgres.timestrolls
   port: 5432
   name: timestrolls
-  user: user
-  password: password
+  user: ${POSTGRES_USER}
+  password: ${POSTGRES_USER_PASSWORD}
 
 cdn:
   path:

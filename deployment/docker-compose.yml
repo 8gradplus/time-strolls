@@ -1,13 +1,15 @@
 configs:
   api_config:
-    file: ./deployment/api-config.yml
+    file: ./api-config.yml
+  caddy:
+    file: ./Caddyfile.prod
 
 services:
   postgres:
     image: postgis/postgis:13-3.3
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=${POSTGRES_ADMIN}
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
       - POSTGRES_DB=timestrolls
     container_name: postgres
     hostname: postgres.timestrolls
@@ -15,8 +17,6 @@ services:
       - postgres:/var/lib/postgresql/data
     expose:
       - "5432"
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d timestrolls"]
 
@@ -29,27 +29,30 @@ services:
       - migrations_sql:/flyway/sql/db/migration # Import migrations to Flyway
     environment:
       FLYWAY_URL: jdbc:postgresql://postgres.timestrolls:5432/timestrolls
-      FLYWAY_USER: postgres
-      FLYWAY_PASSWORD: postgres
-      FLYWAY_PLACEHOLDERS_USER: user
-      FLYWAY_PLACEHOLDERS_PASSWORD: password
+      FLYWAY_USER: ${POSTGRES_ADMIN}
+      FLYWAY_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      FLYWAY_PLACEHOLDERS_USER: ${POSTGRES_USER}
+      FLYWAY_PLACEHOLDERS_PASSWORD: ${POSTGRES_USER_PASSWORD}
       FLYWAY_SCHEMAS: timestrolls
       FLYWAY_LOCATIONS: filesystem:/flyway/sql
     command: -connectRetries=60 migrate
 
   api:
-    #image: time-strolls-api:latest
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     container_name: api
     hostname: api.timestrolls
-    #ports:
-    #  - "8000:8000"
     expose:
       - "8000"
     volumes:
       - migrations_sql:/app/migration # Export migrations from API
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_USER_PASSWORD=${POSTGRES_USER_PASSWORD}
+      - SPACES_KEY=${SPACES_KEY}
+      - SPACES_SECRET=${SPACES_SECRET}
+      - API_KEY=${API_KEY}
     configs:
       - source: api_config
         target: /app/config.yml
@@ -61,9 +64,8 @@ services:
         condition: service_completed_successfully
 
   frontend:
-    #image: time-strolls-frontend:latest
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
     container_name: frontend
     hostname: frontend.timestrolls
@@ -83,8 +85,10 @@ services:
     depends_on:
       frontend:
         condition: service_started
+    configs:
+      - source: caddy # overridden in prod if needed
+        target: /etc/caddy/Caddyfile:ro
     volumes:
-      - ./deployment/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     restart: always

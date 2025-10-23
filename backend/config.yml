@@ -1,5 +1,5 @@
 api:
-  key: secret
+  key: ${API_KEY}
 
 database:
   driver: postgres
@@ -7,8 +7,8 @@ database:
   host: localhost
   port: 5432
   name: timestrolls
-  user: user
-  password: password
+  user: ${POSTGRES_USER}
+  password: ${POSTGRES_USER_PASSWORD}
 
 cdn:
   path:

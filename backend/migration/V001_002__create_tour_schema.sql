@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS timestrolls.track (
+CREATE TABLE IF NOT EXISTS timestrolls.tour (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
@@ -14,5 +14,5 @@ CREATE TABLE IF NOT EXISTS timestrolls.track (
     ) STORED
 );
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE timestrolls.track TO "${user}";
-GRANT USAGE, SELECT ON SEQUENCE timestrolls.track_id_seq TO "${user}";
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE timestrolls.tour TO "${user}";
+GRANT USAGE, SELECT ON SEQUENCE timestrolls.tour_id_seq TO "${user}";
