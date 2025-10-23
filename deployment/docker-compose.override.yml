@@ -1,5 +1,5 @@
 configs:
-  caddy:
+  caddy_config_file:
     file: ./Caddyfile.local
 
 services:

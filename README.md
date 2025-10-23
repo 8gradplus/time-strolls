@@ -27,8 +27,9 @@ Comes with fastapi and is available under
 ### Live Docker
 - Just use docker compose (no override)
 - `docker compose -f docker-compose.yml --env-file credentials.local up --build`
-- Needs `credentials.prod` ENV file
 - Run `deploy_production.sh` for digital ocean deployment.
+  - Needs `credentials.prod` ENV file. Located in root of server
+  - Will be copied to `deployment` folder upon running deployment script `deploy_production.sh`
 
 ### Local Docker
 - Uses overrides (no need for -f flag).

@@ -8,4 +8,4 @@ run-prod:
 	docker compose -f docker-compose.yml --env-file credentials.prod up -d --build
 
 stop-prod:
-	docker compose -f docker-compose.yml down
+	docker compose -f docker-compose.yml down --remove-orphans | true

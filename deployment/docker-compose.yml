@@ -1,7 +1,7 @@
 configs:
   api_config:
     file: ./api-config.yml
-  caddy:
+  cadd_config_file:
     file: ./Caddyfile.prod
 
 services:
@@ -46,7 +46,7 @@ services:
     expose:
       - "8000"
     volumes:
-      - migrations_sql:/app/migration # Export migrations from API
+      - migrations_sql:/app/migration
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_USER_PASSWORD=${POSTGRES_USER_PASSWORD}
@@ -86,8 +86,9 @@ services:
       frontend:
         condition: service_started
     configs:
-      - source: caddy # overridden in prod if needed
+      - source: caddy_config_file
         target: /etc/caddy/Caddyfile:ro
+        mode: 0444
     volumes:
       - caddy_data:/data
       - caddy_config:/config
