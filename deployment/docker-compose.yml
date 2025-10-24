@@ -87,7 +87,7 @@ services:
         condition: service_started
     configs:
       - source: caddy_config_file
-        target: /etc/caddy/Caddyfile:ro
+        target: /etc/caddy/Caddyfile
         mode: 0444
     volumes:
       - caddy_data:/data
