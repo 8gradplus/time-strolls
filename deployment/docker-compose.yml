@@ -1,7 +1,7 @@
 configs:
   api_config:
     file: ./api-config.yml
-  cadd_config_file:
+  caddy_config_file:
     file: ./Caddyfile.prod
 
 services:
