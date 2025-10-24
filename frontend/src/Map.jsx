@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import Track from "./Track";
 import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
 import { api } from "./api";
 import Tour from "./Tours/Tour";
+import TrackControl from "./Track/TrackControl";
+import Track from "./Track/Track";
+
+const fallbackCenter = [48.629371, 14.079059];
 
 const HistoricMap = (props) => {
   const { open } = props;
@@ -17,14 +20,17 @@ const HistoricMap = (props) => {
 };
 
 const CoordinateMap = () => {
-  // Todo set center to current postion - Keep this for dev
-  const fallbackCenter = [48.61017, 14.044]; // Unterurasch - default map center
+  const [trackingMode, setTrackingMode] = useState("none"); // none | follow | navigate
+  const [currentPosition, setCurrentPosition] = useState(null); // lifted state for future expansion (currently not used)
   const [showInfo, setShowInfo] = useState(false);
   const [locationId, setLocationId] = useState(null);
   const [showMarkers, setShowMarkers] = useState(true);
   const [showHistoricMap, setShowHistoricMap] = useState(false);
   const [locations, setLocations] = useState(null);
   const [tourId, setTourId] = useState(null);
+
+  console.log("Tracking Mode", trackingMode);
+  console.log("Current Position", currentPosition);
 
   useEffect(() => {
     fetch(api.locations)
@@ -63,7 +69,7 @@ const CoordinateMap = () => {
     <div id="map" style={{ position: "relative", height: "100vh" }}>
       <MapContainer
         center={fallbackCenter} // Will be overwritten by track upon location found
-        zoom={16}
+        zoom={14}
         style={{ height: "100vh", width: "100%" }}
       >
         <TileLayer
@@ -71,6 +77,11 @@ const CoordinateMap = () => {
           attribution="Timestrolls"
         />
         <HistoricMap open={showHistoricMap} />
+        <Track
+          trackingMode={trackingMode}
+          fallbackCenter={fallbackCenter}
+          onPositionUpdate={setCurrentPosition}
+        />
 
         {locations && (
           <LocationMarkers
@@ -89,8 +100,6 @@ const CoordinateMap = () => {
         )}
 
         {tourId && <Tour id={tourId} />}
-
-        <Track />
       </MapContainer>
       <Menu
         onItemClick={handleMenuItemClick}
@@ -100,6 +109,7 @@ const CoordinateMap = () => {
           tourId: tourId,
         }}
       />
+      <TrackControl mode={trackingMode} onModeChange={setTrackingMode} />
     </div>
   );
 };
