@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { useMap } from "react-leaflet";
 
 // smooth heading hook
 export const useSmoothHeading = (targetHeading) => {

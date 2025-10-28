@@ -29,9 +29,6 @@ const CoordinateMap = () => {
   const [locations, setLocations] = useState(null);
   const [tourId, setTourId] = useState(null);
 
-  console.log("Tracking Mode", trackingMode);
-  console.log("Current Position", currentPosition);
-
   useEffect(() => {
     fetch(api.locations)
       .then((res) => {
