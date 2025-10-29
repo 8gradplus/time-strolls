@@ -22,12 +22,14 @@ const HistoricMap = (props) => {
 const CoordinateMap = () => {
   const [trackingMode, setTrackingMode] = useState("none"); // none | follow | navigate
   const [currentPosition, setCurrentPosition] = useState(null); // lifted state for future expansion (currently not used)
+  const [userInteracted, setUserInteracted] = useState(null);
   const [showInfo, setShowInfo] = useState(false);
   const [locationId, setLocationId] = useState(null);
   const [showMarkers, setShowMarkers] = useState(true);
   const [showHistoricMap, setShowHistoricMap] = useState(false);
   const [locations, setLocations] = useState(null);
   const [tourId, setTourId] = useState(null);
+  console.log("Map user interacted", trackingMode, userInteracted);
 
   useEffect(() => {
     fetch(api.locations)
@@ -78,6 +80,7 @@ const CoordinateMap = () => {
           trackingMode={trackingMode}
           fallbackCenter={fallbackCenter}
           onPositionUpdate={setCurrentPosition}
+          onUserInteraction={setUserInteracted}
         />
 
         {locations && (
@@ -106,7 +109,11 @@ const CoordinateMap = () => {
           tourId: tourId,
         }}
       />
-      <TrackControl mode={trackingMode} onModeChange={setTrackingMode} />
+      <TrackControl
+        mode={trackingMode}
+        onModeChange={setTrackingMode}
+        userInteracted={userInteracted}
+      />
     </div>
   );
 };
