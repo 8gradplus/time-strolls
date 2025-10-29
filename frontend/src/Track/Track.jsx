@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Marker } from "react-leaflet";
 import { currentLocationIcon, currentLocationIconNavigate } from "../icons";
 import { useTrack } from "./useTrack";
@@ -23,8 +23,30 @@ const TrackMarker = ({ position, trackingMode, heading }) => {
 };
 
 const Track = ({ trackingMode, fallbackCenter, onPositionUpdate }) => {
+  const [userInteracted, setUserInteracted] = useState(false);
   const map = useMap(); // map instance is available here
   const { position, smoothHeading } = useTrack(trackingMode, onPositionUpdate);
+  console.log("User interacted", userInteracted);
+
+  const follow = (bool) => () => {
+    setUserInteracted(bool);
+  };
+
+  // Prevent automatic recentering upon dragging/zooming manually
+  // Detect manual map movement (drag/zoom)
+  useEffect(() => {
+    map.on("dragstart", follow(false));
+    map.on("zoomstart", follow(false));
+    return () => {
+      map.off("dragstart", follow(false));
+      map.off("zoomstart", follow(false));
+    };
+  }, [map]);
+
+  // Recenter upon tracking mode change
+  useEffect(() => {
+    follow(true);
+  }, [trackingMode]);
 
   // handle map movement
   useEffect(() => {
@@ -34,11 +56,12 @@ const Track = ({ trackingMode, fallbackCenter, onPositionUpdate }) => {
       map.setView(fallbackCenter, 14);
     } else if (
       position &&
-      (trackingMode === "follow" || trackingMode === "navigate")
+      (trackingMode === "follow" || trackingMode === "navigate") &&
+      !userInteracted
     ) {
       map.flyTo(position, 16);
     }
-  }, [trackingMode, position, map, fallbackCenter]);
+  }, [trackingMode, position, map, fallbackCenter, userInteracted]);
 
   return (
     <TrackMarker
