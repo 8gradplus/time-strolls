@@ -1,4 +1,17 @@
 @import url("https://fonts.googleapis.com/css2?family=Merriweather&display=swap");
+/* Import Google Material Symbols font - Specify names  (in alphabetical order!) at end of url*/
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=assistant_navigation,location_searching,map,my_location");
+
+/* Default styling for material symbols */
+.material-symbols-outlined {
+  display: inline-block;
+  vertical-align: middle;
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
 
 body {
   margin: 0;
@@ -81,4 +94,41 @@ code {
 .middot {
   padding: 0 4px;
   font-weight: bold;
+}
+
+.pulsating-icon {
+  overflow: visible;
+}
+
+/* Outer blue circle */
+.pulsating-location .outer {
+  fill-opacity: 0.9;
+}
+
+/* White halo ring */
+.pulsating-location .halo {
+  fill: white;
+  opacity: 0.9;
+}
+
+/* Inner core — pulsating animation */
+.pulsating-location .core {
+  transform-origin: center;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+/* Pulse animation — change radius + slight opacity */
+@keyframes pulse {
+  0% {
+    r: 6;
+    opacity: 1;
+  }
+  50% {
+    r: 8;
+    opacity: 0.7;
+  }
+  100% {
+    r: 6;
+    opacity: 1;
+  }
 }

@@ -1,3 +1,15 @@
+# Development
+
+### setupProxy.js
+Specify the API endpoint
+- Production running api `target: "https://timestrolls.debtray.com",`
+- Local running api `target: "http://127.0.0.1:8000"`
+
+### Testing locally running frontend on mobile phone
+- 1. Run frontend. `npm run`
+- 2. Create SSH Tunnel using local tunnel  `lt --port 3000`
+- 3. Surf the associated address (password is public ip adress `ipconfig getifaddr en0`)
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

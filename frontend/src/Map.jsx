@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import Track from "./Track";
 import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
 import { api } from "./api";
 import Tour from "./Tours/Tour";
+import TrackControl from "./Track/TrackControl";
+import Track from "./Track/Track";
+
+const fallbackCenter = [48.629371, 14.079059];
 
 const HistoricMap = (props) => {
   const { open } = props;
@@ -17,8 +20,8 @@ const HistoricMap = (props) => {
 };
 
 const CoordinateMap = () => {
-  // Todo set center to current postion - Keep this for dev
-  const fallbackCenter = [48.61017, 14.044]; // Unterurasch - default map center
+  const [trackingMode, setTrackingMode] = useState("area"); // area | follow
+  const [userInteracted, setUserInteracted] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [locationId, setLocationId] = useState(null);
   const [showMarkers, setShowMarkers] = useState(true);
@@ -63,7 +66,7 @@ const CoordinateMap = () => {
     <div id="map" style={{ position: "relative", height: "100vh" }}>
       <MapContainer
         center={fallbackCenter} // Will be overwritten by track upon location found
-        zoom={16}
+        zoom={14}
         style={{ height: "100vh", width: "100%" }}
       >
         <TileLayer
@@ -71,6 +74,12 @@ const CoordinateMap = () => {
           attribution="Timestrolls"
         />
         <HistoricMap open={showHistoricMap} />
+        <Track
+          trackingMode={trackingMode}
+          fallbackCenter={fallbackCenter}
+          onUserInteraction={setUserInteracted}
+          userInteracted={userInteracted}
+        />
 
         {locations && (
           <LocationMarkers
@@ -89,8 +98,6 @@ const CoordinateMap = () => {
         )}
 
         {tourId && <Tour id={tourId} />}
-
-        <Track />
       </MapContainer>
       <Menu
         onItemClick={handleMenuItemClick}
@@ -99,6 +106,12 @@ const CoordinateMap = () => {
           showMarkers: showMarkers,
           tourId: tourId,
         }}
+      />
+      <TrackControl
+        mode={trackingMode}
+        onModeChange={setTrackingMode}
+        onRecenterRequest={() => setUserInteracted(false)}
+        userInteracted={userInteracted}
       />
     </div>
   );
