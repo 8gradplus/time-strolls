@@ -24,7 +24,6 @@ const Track = ({
   // Non-manual map movements are triggert by changes in trackMode
   useEffect(() => {
     const stopFollowing = () => {
-      console.log("Stop following called");
       if (programmaticMove.current) {
         // skip if move was triggered by code
         programmaticMove.current = false;
@@ -32,30 +31,26 @@ const Track = ({
       }
       onUserInteraction(true);
     };
+
     map.on("dragstart", stopFollowing);
     map.on("zoomstart", stopFollowing);
+    map.on("movestart", stopFollowing);
+    map.on("touchstart", stopFollowing);
     return () => {
       map.off("dragstart", stopFollowing);
       map.off("zoomstart", stopFollowing);
+      map.off("movestart", stopFollowing);
+      map.off("touchstart", stopFollowing);
     };
   }, [map, onUserInteraction]);
-
-  console.log(
-    "Track User interacted",
-    userInteracted,
-    "Tracking Mode",
-    trackingMode,
-    "programmatic move",
-    programmaticMove.current,
-  );
 
   // handle map movement
   useEffect(() => {
     if (!map) return;
 
-    if (trackingMode === "none" && !userInteracted) {
+    if (trackingMode === "area" && !userInteracted) {
       programmaticMove.current = true;
-      map.setView(fallbackCenter, 14);
+      map.setView(fallbackCenter, 12);
     }
     if (trackingMode === "follow" && position && !userInteracted) {
       programmaticMove.current = true;

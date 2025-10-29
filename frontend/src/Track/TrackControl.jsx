@@ -10,10 +10,6 @@ const buttonStyle = (top = "100px") => {
   };
 };
 
-//suggest_following: <GoogleMaterialIcon name={"my_location"} fill={0} />,
-//following: <GoogleMaterialIcon name={"my_location"} fill={1} />,
-//search_location: <GoogleMaterialIcon name={"location_searching"} fill={0} />,
-
 const handleTrackingIcons = (mode, userInteracted) => {
   if (mode === "follow" && userInteracted === false) {
     return <GoogleMaterialIcon name="my_location" fill={1} />;
@@ -24,7 +20,7 @@ const handleTrackingIcons = (mode, userInteracted) => {
 };
 
 const handleAreaIcons = (mode, userInteracted) => {
-  if (mode === "none" && userInteracted === false) {
+  if (mode === "area" && userInteracted === false) {
     return <GoogleMaterialIcon name="map" fill={0} />;
   }
   return <GoogleMaterialIcon name="map" fill={0} color={"black"} />;
@@ -32,6 +28,7 @@ const handleAreaIcons = (mode, userInteracted) => {
 
 const TrackControl = (props) => {
   const { mode, onModeChange, userInteracted, onRecenterRequest } = props;
+
   const handleClick = (mode) => () => {
     onRecenterRequest();
     onModeChange(mode);
@@ -40,7 +37,7 @@ const TrackControl = (props) => {
   return (
     <>
       <div style={buttonStyle("55px")}>
-        <Button onClick={handleClick("none")}>
+        <Button onClick={handleClick("area")}>
           {handleAreaIcons(mode, userInteracted)}
         </Button>
       </div>

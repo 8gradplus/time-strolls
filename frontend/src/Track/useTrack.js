@@ -47,48 +47,6 @@ export const useTrack = () => {
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  // Device orientation fallback for stationary heading
-  /*
-  useEffect(() => {
-    if (trackingMode !== "navigate") return;
-
-    const handleOrientation = (event) => {
-      const alpha = event.alpha; // rotation around z-axis in degrees
-      if (alpha != null) {
-        setHeading(alpha);
-      }
-    };
-
-    window.addEventListener(
-      "deviceorientationabsolute",
-      handleOrientation,
-      true,
-    );
-
-    return () =>
-      window.removeEventListener(
-        "deviceorientationabsolute",
-        handleOrientation,
-      );
-  }, [trackingMode]);
-  */
-
-  // simulation - remove this
-  /*
-  useEffect(() => {
-    if (
-      trackingMode === "navigate" &&
-      !("ondeviceorientationabsolute" in window)
-    ) {
-      // simulate rotation on desktop
-      const id = setInterval(() => {
-        setHeading((prev) => (prev + 5) % 360);
-      }, 200);
-      return () => clearInterval(id);
-    }
-  }, [trackingMode]);
-  */
   const smoothHeading = useSmoothHeading(heading);
-  console.log("Heading / smooth heading", heading, smoothHeading);
   return { position, smoothHeading };
 };

@@ -20,7 +20,7 @@ const HistoricMap = (props) => {
 };
 
 const CoordinateMap = () => {
-  const [trackingMode, setTrackingMode] = useState("none"); // none | follow | navigate
+  const [trackingMode, setTrackingMode] = useState("area"); // area | follow
   const [userInteracted, setUserInteracted] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [locationId, setLocationId] = useState(null);
@@ -28,7 +28,6 @@ const CoordinateMap = () => {
   const [showHistoricMap, setShowHistoricMap] = useState(false);
   const [locations, setLocations] = useState(null);
   const [tourId, setTourId] = useState(null);
-  console.log("Map user interacted", trackingMode, userInteracted);
 
   useEffect(() => {
     fetch(api.locations)
