@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Marker } from "react-leaflet";
 import { currentLocationIcon } from "../icons";
 import { useTrack } from "./useTrack";
@@ -12,19 +12,24 @@ const TrackMarker = ({ position, trackingMode }) => {
 const Track = ({
   trackingMode,
   fallbackCenter,
-  onPositionUpdate,
   onUserInteraction,
+  userInteracted,
 }) => {
-  const [userInteracted, setUserInteracted] = useState(false);
   const map = useMap(); // map instance is available here
+  const programmaticMove = useRef(false);
   // todo use smoothHeading (or heading from useTrack) for orintation lateron
-  const { position, smoothHeading } = useTrack(trackingMode, onPositionUpdate);
+  const { position, smoothHeading } = useTrack();
 
-  // Prevent automatic recentering upon dragging/zooming manually
-  // Detect manual map movement (drag/zoom)
+  // Detect manual map movements (drag/zoom) only
+  // Non-manual map movements are triggert by changes in trackMode
   useEffect(() => {
     const stopFollowing = () => {
-      setUserInteracted(true);
+      console.log("Stop following called");
+      if (programmaticMove.current) {
+        // skip if move was triggered by code
+        programmaticMove.current = false;
+        return;
+      }
       onUserInteraction(true);
     };
     map.on("dragstart", stopFollowing);
@@ -35,29 +40,28 @@ const Track = ({
     };
   }, [map, onUserInteraction]);
 
-  console.log("User interacted", userInteracted, "Tracking Mode", trackingMode);
+  console.log(
+    "Track User interacted",
+    userInteracted,
+    "Tracking Mode",
+    trackingMode,
+    "programmatic move",
+    programmaticMove.current,
+  );
 
   // handle map movement
   useEffect(() => {
     if (!map) return;
 
-    if (trackingMode === "none") {
+    if (trackingMode === "none" && !userInteracted) {
+      programmaticMove.current = true;
       map.setView(fallbackCenter, 14);
-      setUserInteracted(false);
-      onUserInteraction(false);
-    } else if (position && trackingMode === "follow" && !userInteracted) {
-      map.flyTo(position, 16);
-      setUserInteracted(false);
-      onUserInteraction(false);
     }
-  }, [
-    trackingMode,
-    position,
-    map,
-    fallbackCenter,
-    userInteracted,
-    onUserInteraction,
-  ]);
+    if (trackingMode === "follow" && position && !userInteracted) {
+      programmaticMove.current = true;
+      map.flyTo(position, 16);
+    }
+  }, [map, trackingMode, position, fallbackCenter, userInteracted]);
 
   return <TrackMarker position={position} trackingMode={trackingMode} />;
 };

@@ -21,8 +21,7 @@ const HistoricMap = (props) => {
 
 const CoordinateMap = () => {
   const [trackingMode, setTrackingMode] = useState("none"); // none | follow | navigate
-  const [currentPosition, setCurrentPosition] = useState(null); // lifted state for future expansion (currently not used)
-  const [userInteracted, setUserInteracted] = useState(null);
+  const [userInteracted, setUserInteracted] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [locationId, setLocationId] = useState(null);
   const [showMarkers, setShowMarkers] = useState(true);
@@ -79,8 +78,8 @@ const CoordinateMap = () => {
         <Track
           trackingMode={trackingMode}
           fallbackCenter={fallbackCenter}
-          onPositionUpdate={setCurrentPosition}
           onUserInteraction={setUserInteracted}
+          userInteracted={userInteracted}
         />
 
         {locations && (
@@ -112,6 +111,7 @@ const CoordinateMap = () => {
       <TrackControl
         mode={trackingMode}
         onModeChange={setTrackingMode}
+        onRecenterRequest={() => setUserInteracted(false)}
         userInteracted={userInteracted}
       />
     </div>

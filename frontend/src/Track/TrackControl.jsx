@@ -17,38 +17,35 @@ const buttonStyle = (top = "100px") => {
 const handleTrackingIcons = (mode, userInteracted) => {
   if (mode === "follow" && userInteracted === false) {
     return <GoogleMaterialIcon name="my_location" fill={1} />;
-  } else {
-    return (
-      <GoogleMaterialIcon name="location_searching" fill={0} color={"black"} />
-    );
   }
+  return (
+    <GoogleMaterialIcon name="location_searching" fill={0} color={"black"} />
+  );
 };
 
-const handleAreaIcons = (mode) => {
-  if (mode === "none") {
+const handleAreaIcons = (mode, userInteracted) => {
+  if (mode === "none" && userInteracted === false) {
     return <GoogleMaterialIcon name="map" fill={0} />;
   }
   return <GoogleMaterialIcon name="map" fill={0} color={"black"} />;
 };
 
 const TrackControl = (props) => {
-  //
-  const { mode, onModeChange, userInteracted } = props;
-  const handleTrackingClick = () => {
-    onModeChange("follow");
+  const { mode, onModeChange, userInteracted, onRecenterRequest } = props;
+  const handleClick = (mode) => () => {
+    onRecenterRequest();
+    onModeChange(mode);
   };
-  const handleAreaClick = () => {
-    onModeChange("none");
-  };
+
   return (
     <>
       <div style={buttonStyle("55px")}>
-        <Button onClick={handleAreaClick}>
+        <Button onClick={handleClick("none")}>
           {handleAreaIcons(mode, userInteracted)}
         </Button>
       </div>
       <div style={buttonStyle("100px")}>
-        <Button onClick={handleTrackingClick}>
+        <Button onClick={handleClick("follow")}>
           {handleTrackingIcons(mode, userInteracted)}
         </Button>
       </div>

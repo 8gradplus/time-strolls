@@ -26,7 +26,7 @@ export const useSmoothHeading = (targetHeading) => {
   return smoothHeading;
 };
 
-export const useTrack = (trackingMode, onPositionUpdate) => {
+export const useTrack = () => {
   const [position, setPosition] = useState(null);
   const [heading, setHeading] = useState(0);
 
@@ -35,9 +35,8 @@ export const useTrack = (trackingMode, onPositionUpdate) => {
       (pos) => {
         const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setPosition(latlng);
-        onPositionUpdate?.(latlng);
 
-        if (pos.coords.heading != null && trackingMode === "navigate") {
+        if (pos.coords.heading != null) {
           setHeading(pos.coords.heading);
         }
       },
@@ -46,7 +45,7 @@ export const useTrack = (trackingMode, onPositionUpdate) => {
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [trackingMode, onPositionUpdate]);
+  }, []);
 
   // Device orientation fallback for stationary heading
   /*
