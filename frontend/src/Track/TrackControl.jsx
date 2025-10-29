@@ -1,7 +1,5 @@
 import Button from "../Components/Button";
-import ExploreIcon from "@mui/icons-material/Explore";
-import NavigationIcon from "@mui/icons-material/Navigation";
-import CropIcon from "@mui/icons-material/Crop";
+import { GoogleMaterialIcon } from "../icons";
 
 const modes = ["none", "follow", "navigate"];
 
@@ -13,9 +11,9 @@ const trackButtonStyle = {
 };
 
 const modeIcons = {
-  none: <CropIcon style={{ fontSize: 24, color: "#4285F4" }} />,
-  follow: <ExploreIcon style={{ fontSize: 24, color: "#4285F4" }} />,
-  navigate: <NavigationIcon style={{ fontSize: 24, color: "#4285F4" }} />,
+  none: <GoogleMaterialIcon name={"map"} fill={0} />,
+  follow: <GoogleMaterialIcon name={"my_location"} fill={1} />,
+  navigate: <GoogleMaterialIcon name={"assistant_navigation"} fill={1} />,
 };
 
 const TrackControl = (props) => {
