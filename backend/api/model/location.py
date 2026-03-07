@@ -14,6 +14,7 @@ class Place(SQLModel):
 class Image(SQLModel):
     title: Optional[str] = None
     url: str
+    source_url: Optional[str] = None
     owner: Optional[str] = None
     year: Optional[int] = None
 
