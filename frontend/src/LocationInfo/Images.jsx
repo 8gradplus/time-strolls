@@ -4,6 +4,7 @@ import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/counter.css";
 import Counter from "yet-another-react-lightbox/plugins/counter";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
 
 const DisplayImages = (props) => {
   const { images } = props;
@@ -67,7 +68,18 @@ const DisplayImages = (props) => {
           index={currentIndex}
           animation={{ fade: 450, swipe: 350 }}
           slides={slides}
-          plugins={[Counter]}
+          plugins={[Counter, Zoom]}
+          zoom={{
+            maxZoomPixelRatio: 3,
+            scrollToZoom: true,
+            zoomInMultiplier: 2,
+            doubleTapDelay: 300,
+            doubleClickDelay: 300,
+            doubleClickMaxStops: 2,
+          }}
+          toolbar={{
+            buttons: ["close"],
+          }}
           render={{
             slideHeader: ({ slide }) => (
               <div className="image-slide-footer">
