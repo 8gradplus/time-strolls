@@ -1,11 +1,14 @@
 import React from "react";
+import { BrowserRouter } from "react-router-dom";
 import CoordinateMap from "./Map";
 import "./App.css";
 
 function App() {
   return (
     <div className="App">
-      <CoordinateMap />
+      <BrowserRouter>
+        <CoordinateMap />
+      </BrowserRouter>
     </div>
   );
 }

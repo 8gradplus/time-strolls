@@ -132,3 +132,25 @@ code {
     opacity: 1;
   }
 }
+
+/* Custom cluster styling */
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background-color: rgb(219, 226, 190) !important;
+}
+
+/* Hide zoom control buttons in lightbox */
+.yarl__button[aria-label*="Zoom in"],
+.yarl__button[aria-label*="Zoom out"] {
+  display: none !important;
+}
+
+/* Maximize image space by overriding lightbox CSS variables */
+.yarl__root {
+  --yarl__carousel_padding_px: 0;
+  --yarl__carousel_padding_percent: 0;
+  --yarl__toolbar_padding: 4px;
+  --yarl__button_padding: 4px;
+  --yarl__navigation_button_padding: 8px;
+}

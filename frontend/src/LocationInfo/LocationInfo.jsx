@@ -10,11 +10,13 @@ import { api } from "../api";
 // Todo: same as menu -> make css
 
 const LocationInfo = (props) => {
-  const { open, onClose, id } = props;
+  const { open, onClose, slug } = props;
   const [locationInfo, setLocationInfo] = useState(null);
 
   useEffect(() => {
-    fetch(api.locationInfo(id)) // todo: rather use api module
+    if (!slug) return;
+
+    fetch(api.locationInfo(slug))
       .then((res) => {
         if (!res.ok) {
           throw new Error("Places response not ok");
@@ -23,7 +25,7 @@ const LocationInfo = (props) => {
       })
       .then((data) => setLocationInfo(data))
       .catch((error) => console.error("Error fetching places:", error));
-  }, [id]);
+  }, [slug]);
   if (!locationInfo) {
     return (
       <Drawer open={open} onClose={onClose}>

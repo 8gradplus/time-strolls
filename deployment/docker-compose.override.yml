@@ -2,14 +2,24 @@ configs:
   caddy_config_file:
     file: ./Caddyfile.local
 
+volumes:
+  # Don't create named volume in local dev - we'll use bind mounts
+  migrations_sql: {}
+
 services:
   postgres:
     ports:
       - "5432:5432"
 
+  migrate-postgres:
+    volumes:
+      - ../backend/migration:/flyway/sql:ro
+
   api:
     ports:
       - "8000:8000"
+    volumes:
+      - ../backend/migration:/app/migration:ro
 
   frontend:
     ports:

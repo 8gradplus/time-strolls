@@ -11,6 +11,7 @@ class PlaceBase(SQLModel):
 class Place(PlaceBase, table=True):
     __table_args__ = {"schema": "timestrolls"}
     id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    slug: str = Field(unique=True, index=True)
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)
 
@@ -19,6 +20,7 @@ class PlaceCreate(PlaceBase):
 
 class PlacePublic(PlaceBase):
     id: int
+    slug: str
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -27,3 +29,4 @@ class PlaceUpdate(SQLModel):
     type: Optional[str] = None
     lat: Optional[float] = None
     lon: Optional[float] = None
+    slug: Optional[str] = None
