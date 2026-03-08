@@ -1,5 +1,5 @@
 export const api = {
-  locationInfo: (id) => `/api/locations/${id}`,
+  locationInfo: (slug) => `/api/locations/${slug}`,
   locations: "/api/locations/",
   tour: (id) => `/api/tours/${id}`,
   tours: "/api/tours/",

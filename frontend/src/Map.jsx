@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import Menu from "./Menu";
@@ -20,14 +21,22 @@ const HistoricMap = (props) => {
 };
 
 const CoordinateMap = () => {
-  const [trackingMode, setTrackingMode] = useState("area"); // area | follow
-  const [userInteracted, setUserInteracted] = useState(false);
-  const [showInfo, setShowInfo] = useState(false);
-  const [locationId, setLocationId] = useState(null);
-  const [showMarkers, setShowMarkers] = useState(true);
-  const [showHistoricMap, setShowHistoricMap] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [locations, setLocations] = useState(null);
-  const [tourId, setTourId] = useState(null);
+
+  // Derive state from URL - single source of truth
+  const locationSlug = searchParams.get("location");
+  const tourIdParam = searchParams.get("tour");
+  const tourId = tourIdParam ? parseInt(tourIdParam, 10) : null;
+  const showInfo = !!locationSlug;
+
+  // Layer visibility from URL (default to true for markers, false for historic map)
+  const showMarkers = searchParams.get("markers") !== "false";
+  const showHistoricMap = searchParams.get("historic") === "true";
+
+  // Tracking mode from URL (default: "area")
+  const trackingMode = searchParams.get("track") || "area";
+  const userInteracted = searchParams.get("centered") === "false";
 
   useEffect(() => {
     fetch(api.locations)
@@ -41,25 +50,65 @@ const CoordinateMap = () => {
       .catch((error) => console.error("Error fetching places:", error));
   }, []);
 
-  const handleInfoOpen = (newOpen) => () => {
-    setShowInfo(newOpen);
+  const handleInfoClose = () => {
+    setSearchParams((params) => {
+      params.delete("location");
+      return params;
+    });
   };
 
   const handleMenuItemClick = (item) => {
     if (item === "showHistoricMap") {
-      return () => setShowHistoricMap((prev) => !prev);
+      return () => {
+        setSearchParams((params) => {
+          if (showHistoricMap) {
+            params.delete("historic");
+          } else {
+            params.set("historic", "true");
+          }
+          return params;
+        });
+      };
     } else if (item === "showMarkers") {
-      return () => setShowMarkers((prev) => !prev);
+      return () => {
+        setSearchParams((params) => {
+          if (showMarkers) {
+            params.set("markers", "false");
+          } else {
+            params.delete("markers");
+          }
+          return params;
+        });
+      };
     } else if (item === "tour") {
-      return (id) => setTourId(id);
+      return (id) => {
+        setSearchParams((params) => {
+          if (id) {
+            params.set("tour", id);
+          } else {
+            params.delete("tour");
+          }
+          return params;
+        });
+      };
     } else {
       return () => {}; // no-op fallback
     }
   };
 
   const handleMarkerClick = (id) => (toggle) => {
-    setLocationId(id);
-    setShowInfo(toggle);
+    // Find the location to get its slug
+    const location = locations?.find((loc) => loc.id === id);
+    if (!location) return;
+
+    setSearchParams((params) => {
+      if (toggle) {
+        params.set("location", location.slug);
+      } else {
+        params.delete("location");
+      }
+      return params;
+    });
   };
 
   return (
@@ -77,7 +126,16 @@ const CoordinateMap = () => {
         <Track
           trackingMode={trackingMode}
           fallbackCenter={fallbackCenter}
-          onUserInteraction={setUserInteracted}
+          onUserInteraction={(interacted) => {
+            setSearchParams((params) => {
+              if (interacted) {
+                params.set("centered", "false");
+              } else {
+                params.delete("centered");
+              }
+              return params;
+            });
+          }}
           userInteracted={userInteracted}
         />
 
@@ -89,11 +147,11 @@ const CoordinateMap = () => {
           />
         )}
 
-        {locationId && (
+        {locationSlug && (
           <LocationInfo
             open={showInfo}
-            onClose={handleInfoOpen(false)}
-            id={locationId}
+            onClose={handleInfoClose}
+            slug={locationSlug}
           />
         )}
 
@@ -109,8 +167,23 @@ const CoordinateMap = () => {
       />
       <TrackControl
         mode={trackingMode}
-        onModeChange={setTrackingMode}
-        onRecenterRequest={() => setUserInteracted(false)}
+        onModeChange={(newMode) => {
+          setSearchParams((params) => {
+            if (newMode === "area") {
+              params.delete("track");
+            } else {
+              params.set("track", newMode);
+            }
+            params.delete("centered");
+            return params;
+          });
+        }}
+        onRecenterRequest={() => {
+          setSearchParams((params) => {
+            params.delete("centered");
+            return params;
+          });
+        }}
         userInteracted={userInteracted}
       />
     </div>
