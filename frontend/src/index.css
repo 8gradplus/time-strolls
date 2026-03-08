@@ -132,3 +132,10 @@ code {
     opacity: 1;
   }
 }
+
+/* Custom cluster styling */
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background-color: rgb(219, 226, 190) !important;
+}
