@@ -1,12 +1,10 @@
 from sqlmodel import SQLModel
 from typing import List, Optional
 
-from api.model.image import ImagePublic
-from api.model.podcast import PodcastPublic
-
 class Place(SQLModel):
     name: str
     id: int
+    slug: str
     type: str
     lat: float
     lon: float
@@ -25,5 +23,5 @@ class Podcast(SQLModel):
 
 class Location(SQLModel):
     place: Place
-    podcast: Optional[PodcastPublic] = None
+    podcast: Optional[Podcast] = None
     images: List[Image]

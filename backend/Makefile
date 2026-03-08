@@ -16,3 +16,19 @@ docker-run:
 
 docker-stop:
 	docker rm -f $$(docker ps -q --filter label=time-strolls-api)
+
+# Testing
+test:
+	uv run pytest
+
+test-verbose:
+	uv run pytest -vv
+
+test-cov:
+	uv run pytest --cov=helpers --cov=api --cov-report=term-missing --cov-report=html
+
+test-watch:
+	uv run pytest --watch
+
+test-slug:
+	uv run pytest tests/test_slug.py -v

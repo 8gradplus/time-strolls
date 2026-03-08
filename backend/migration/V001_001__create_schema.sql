@@ -3,6 +3,7 @@ CREATE SCHEMA IF NOT EXISTS timestrolls;
 CREATE TABLE IF NOT EXISTS timestrolls.place
 (
     id SERIAL PRIMARY KEY,
+    slug TEXT NOT NULL UNIQUE,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
     lat DOUBLE PRECISION NOT NULL,
     lon DOUBLE PRECISION NOT NULL,
@@ -46,6 +47,7 @@ CREATE TABLE IF NOT EXISTS timestrolls.podcast
 
 -- Indexes for foreign keys
 CREATE INDEX IF NOT EXISTS idx_place_id ON timestrolls.place (id);
+CREATE INDEX IF NOT EXISTS idx_place_slug ON timestrolls.place (slug);
 CREATE INDEX IF NOT EXISTS idx_image_place_id ON timestrolls.image (place_id);
 CREATE INDEX IF NOT EXISTS idx_podcast_place_id ON timestrolls.podcast (place_id);
 

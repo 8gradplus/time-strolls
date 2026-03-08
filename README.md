@@ -44,3 +44,11 @@ Upon development we don't always want to inspect api changes via docker but from
 3. Run API development server
   - `cd backend`
   - `make run-api`
+
+
+
+### Content Sources
+- Topothek
+- https://www.znicenekostely.cz/objekt/detail/13352
+- https://www.zanikleobce.cz/
+
