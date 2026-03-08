@@ -13,12 +13,13 @@ const DisplayImages = (props) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   if (!images || images.length === 0) return null;
 
+  console.log(images);
   const slides = images.map((img) => ({
     src: img.url,
+    origin: img.source_url,
     title: img.title,
     year: img.year,
     owner: img.owner,
-    url: img.url,
   }));
 
   const openLightbox = (index) => {
@@ -78,7 +79,7 @@ const DisplayImages = (props) => {
                       <strong className="middot">&middot;</strong> {slide.owner}
                       <strong className="middot">&middot;</strong>{" "}
                       <a
-                        href={slide.src}
+                        href={slide.origin}
                         className="footer-link"
                         target="_blank"
                         rel="noopener noreferrer"
