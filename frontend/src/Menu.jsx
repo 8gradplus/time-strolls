@@ -188,6 +188,37 @@ const Menu = (props) => {
               </ClickableBox>
             ))}
           </Box>
+
+          {/* With support from */}
+          <Box
+            sx={{
+              width: "85%",
+              mt: 8,
+              mb: 3,
+              mx: "auto",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              textAlign: "left",
+              gap: 2,
+            }}
+          >
+            <Box sx={{ color: "text.secondary", fontSize: 20 }}>
+              {"With support from"}
+            </Box>
+            <Box
+              component="img"
+              src="/interreg-logo.png"
+              alt="Supporter logo"
+              sx={{
+                maxWidth: "85%",
+                height: "auto",
+                objectFit: "contain",
+                // Blends a white logo background into the menu background
+                mixBlendMode: "multiply",
+              }}
+            />
+          </Box>
         </Box>
       </Drawer>
     </div>
