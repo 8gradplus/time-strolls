@@ -119,7 +119,7 @@ const CoordinateMap = () => {
         style={{ height: "100vh", width: "100%" }}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url="https://tile.openstreetmap.de/{z}/{x}/{y}.png"
           attribution="Timestrolls"
         />
         <HistoricMap open={showHistoricMap} />

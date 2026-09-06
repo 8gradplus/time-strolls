@@ -9,6 +9,7 @@ import Button from "./Components/Button";
 import { api } from "./api";
 import { Radio } from "@mui/material";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
+import { useLanguage } from "./LanguageContext";
 
 // Styling should go to css or theming (tailwind, mui)
 const menuButtonStyle = {
@@ -91,10 +92,47 @@ const ClickableBox = ({ checked, onClick, children }) => {
   );
 };
 
+const langLabels = { de: "De", cz: "Cz", en: "En" };
+
+const LanguageSwitch = () => {
+  const { language, setLanguage } = useLanguage();
+  const options = ["de", "cz", "en"];
+
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1 }}>
+      {options.map((lang, i) => (
+        <Box key={lang} sx={{ display: "flex", alignItems: "center" }}>
+          <Box
+            component="span"
+            onClick={() => setLanguage(lang)}
+            sx={{
+              cursor: "pointer",
+              color: language === lang ? "black" : "grey.500",
+              fontSize: 14,
+              userSelect: "none",
+              "&:hover": { color: "black" },
+            }}
+          >
+            {langLabels[lang]}
+          </Box>
+          {i < options.length - 1 && (
+            <Box
+              component="span"
+              sx={{ mx: 0.5, color: "grey.400", fontSize: 14, userSelect: "none" }}
+            >
+              {"|"}            </Box>
+          )}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 const Menu = (props) => {
   const { onItemClick, itemState } = props;
   const [open, setOpen] = useState(false);
   const [tours, setTours] = useState([]);
+  const { t } = useLanguage();
 
   const handleOpen = (open) => () => {
     setOpen(open);
@@ -136,7 +174,10 @@ const Menu = (props) => {
                 alignItems: "center",
               }}
             >
-              <h1>Menu</h1>
+              <Box>
+                <h1 style={{ marginBottom: 0 }}>Menu</h1>
+                <LanguageSwitch />
+              </Box>
               <Button onClick={handleOpen(false)} color={"transparent"}>
                 <HighlightOffIcon style={{ fontSize: "24px", color: "#333" }} />
               </Button>
@@ -152,7 +193,7 @@ const Menu = (props) => {
               <IconBorder>
                 <MapIcon sx={{ fontSize: 25 }} />
               </IconBorder>
-              <Box sx={{ flexGrow: 1 }}>{"Show Map 1945"}</Box>
+              <Box sx={{ flexGrow: 1 }}>{t.showMap1945}</Box>
               <Radio checked={itemState.showHistoricMap} />
             </ClickableBox>
 
@@ -163,7 +204,7 @@ const Menu = (props) => {
               <IconBorder>
                 <LocationPinIcon sx={{ fontSize: 25 }} />
               </IconBorder>
-              <Box sx={{ flexGrow: 1 }}>{"Show locations"}</Box>
+              <Box sx={{ flexGrow: 1 }}>{t.showLocations}</Box>
               <Radio checked={itemState.showMarkers} />
             </ClickableBox>
           </Box>
@@ -204,7 +245,7 @@ const Menu = (props) => {
             }}
           >
             <Box sx={{ color: "text.secondary", fontSize: 20 }}>
-              {"With support from"}
+              {t.withSupportFrom}
             </Box>
             <Box
               component="img"
