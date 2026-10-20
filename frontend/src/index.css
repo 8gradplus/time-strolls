@@ -20,6 +20,27 @@
   cursor: auto !important; /* or 'auto' for the default arrow */
 }
 
+/* The stock OSM raster as a light, neutral grey, so it stays in the background
+   in both colour modes.
+   Only the base map pane; historic imagery stays untouched. A stopgap until
+   our own vector style (ROADMAP step 3). */
+.leaflet-container {
+  background: #eeeeee;
+}
+
+.base-map {
+  filter: grayscale(1) contrast(1) brightness(1.06);
+}
+
+/* The relief is an SVG filter, which browsers render on the CPU and redo on
+   every frame of a pinch zoom. Only devices with a mouse or trackpad get it, so
+   phones stay smooth. */
+@media (hover: hover) and (pointer: fine) {
+  .base-map {
+    filter: url(#base-map-relief) contrast(1) brightness(1.06);
+  }
+}
+
 .leaflet-tooltip.location-tooltip {
   background: var(--mui-palette-background-paper) !important;
   color: var(--mui-palette-text-primary);

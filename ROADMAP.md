@@ -23,7 +23,7 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 | 0 | CI basics, Vite migration, repo cleanup (ETL out) | CI and Vite done (#7). Removing the ETL waits for aerial-timeline step 6. |
 | 1 | CDN years and time selection | Done (#7) |
 | 2 | Theme, logo, mobile layout | Done (branch `theme-and-logo`, not pushed yet) |
-| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | **Next**, see below |
+| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | In progress: 1 (base map) done; next is 2 (colours on map and imagery) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -62,8 +62,15 @@ favicon (white tile) and the README image; see `frontend/design/logo/`.
    (`tile.openstreetmap.de`), whose saturated greens fight the warm theme.
    Options: a calmer raster style now (e.g. a muted/grey provider, or a CSS
    filter as a quick test), or design our own vector style right away as part of
-   step 3 (Protomaps PMTiles + MapLibre), which offline needs anyway. Decide which
-   before building.
+   step 3 (Protomaps PMTiles + MapLibre), which offline needs anyway.
+   **Done (2026-10-20):** a CSS filter on the OSM layer only (`.base-map` in
+   `index.css`): a light, neutral grey in both colour modes (the user wants it
+   quiet and light, not warm or dark), with a slight emboss relief (SVG filter
+   `#base-map-relief` in `index.html`) on mouse/trackpad devices only; SVG
+   filters render on the CPU, so touch devices get the plain grey (no pinch-zoom
+   stutter). Historic imagery is unfiltered. Possible later: test the relief on
+   a real phone and enable it there if it stays smooth. Our own vector style stays in
+   step 3.
 2. **Colour theme on map and imagery.** Accent, dots, clusters, tour line, map
    buttons and tooltips must read on the base map *and* on the grey historic
    aerial images (1949/1952) and the colour orthophotos (2023/2025). Check light

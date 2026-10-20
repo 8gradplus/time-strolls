@@ -146,6 +146,7 @@ const CoordinateMap = () => {
         style={{ height: "100vh", width: "100%" }}
       >
         <TileLayer
+          className="base-map"
           url="https://tile.openstreetmap.de/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           maxNativeZoom={18}
