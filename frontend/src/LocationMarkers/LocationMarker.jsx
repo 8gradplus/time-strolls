@@ -1,24 +1,24 @@
 import { Marker, Tooltip } from "react-leaflet";
 import { useState } from "react";
-import { scrapIcon } from "../icons";
+import { placeIcon } from "../icons";
 
 const LocationMarker = (props) => {
-  const { lat, lon, label, rotation, onClick } = props;
-  const [iconSize, setIconSize] = useState(30);
+  const { lat, lon, label, onClick } = props;
+  const [iconSize, setIconSize] = useState(18);
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMarkerClick = () => {
     onClick(true);
-    setIconSize(30); // set back icon size once menu is opened
+    setIconSize(18); // set back icon size once menu is opened
   };
 
   const handleHoverStart = () => {
-    setIconSize(40);
+    setIconSize(24);
     setIsHovered(true); // Increase size on hover
   };
 
   const handleHoverEnd = () => {
-    setIconSize(30);
+    setIconSize(18);
     setIsHovered(false); // Reset size when mouse leaves
   };
 
@@ -27,7 +27,7 @@ const LocationMarker = (props) => {
     // Probably it's better to remove hover over functionality at all - this would be consistent with mobile devices
     <Marker
       position={[lat, lon]}
-      icon={scrapIcon(iconSize, rotation)}
+      icon={placeIcon(iconSize)}
       eventHandlers={{
         click: handleMarkerClick,
         mouseover: handleHoverStart,

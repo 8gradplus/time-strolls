@@ -25,13 +25,12 @@ export const GoogleMaterialIcon = ({
   );
 };
 
-// A place is a small scrap of the logo, turned by `rotation` degrees so
-// neighbouring places don't look stamped.
-export const scrapIcon = (size = 30, rotation = 0) => {
+// A place: one plain dot in the accent colour with a thin paper ring.
+export const placeIcon = (size = 18) => {
   const center = size / 2;
 
   return L.divIcon({
-    html: `<img src="/logo.svg" alt="" width="${size}" height="${size}" class="place-scrap" style="transform: rotate(${rotation}deg)" />`,
+    html: `<span class="place-dot" style="width:${size}px;height:${size}px"></span>`,
     className: "",
     iconSize: [size, size],
     iconAnchor: [center, center],

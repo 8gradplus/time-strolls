@@ -137,25 +137,17 @@ const Menu = (props) => {
         open={open}
         onClose={handleOpen(false)}
         header={
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              component="img"
-              src="/logo.svg"
-              alt=""
-              sx={{ width: 48, height: 48, flexShrink: 0 }}
-            />
-            <Box>
-              <Typography
-                sx={{ fontFamily: serif, fontWeight: 700, fontSize: 22 }}
-              >
-                <Box component="i" sx={{ fontWeight: 400 }}>
-                  Time
-                </Box>{" "}
-                Strolls
-              </Typography>
-              <LanguageSwitch />
-            </Box>
-          </Box>
+          <>
+            <Typography
+              sx={{ fontFamily: serif, fontWeight: 700, fontSize: 22 }}
+            >
+              <Box component="i" sx={{ fontWeight: 400 }}>
+                Time
+              </Box>{" "}
+              Strolls
+            </Typography>
+            <LanguageSwitch />
+          </>
         }
       >
         {/* Historic aerial imagery */}

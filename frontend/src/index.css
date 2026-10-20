@@ -87,9 +87,13 @@
   font-weight: bold;
 }
 
-.place-scrap {
+.place-dot {
   display: block;
-  filter: drop-shadow(0 1px 1.5px rgba(43, 39, 36, 0.35));
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--mui-palette-primary-main);
+  border: 2px solid var(--mui-palette-background-paper);
+  box-shadow: 0 0 0 1px rgba(43, 39, 36, 0.25);
 }
 
 .pulsating-icon {
