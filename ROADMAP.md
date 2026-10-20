@@ -22,7 +22,8 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 |---|---|---|
 | 0 | CI basics, Vite migration, repo cleanup (ETL out) | CI and Vite done (#7). Removing the ETL waits for aerial-timeline step 6. |
 | 1 | CDN years and time selection | Done (#7) |
-| 2 | Theme, logo, mobile layout | Done (branch `theme-and-logo`) |
+| 2 | Theme, logo, mobile layout | Done (branch `theme-and-logo`, not pushed yet) |
+| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | **Next**, see below |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -38,6 +39,7 @@ via ground control points, step 7 enhancement layers.
 | 0 | Foundation; cheap now, expensive later |
 | 1 | Spec ready; visible win |
 | 2 | Needed before PWA icons and the app |
+| 2b | The look has to hold on the real map and imagery before offline and the app |
 | 3 | Core museum-guide value |
 | 4 | Before more people touch prod |
 | 5 | Replaces Swagger and notebooks |
@@ -45,6 +47,48 @@ via ground control points, step 7 enhancement layers.
 | 7 | Optional |
 
 ---
+
+## Next: step 2b, styling polish (agreed 2026-10-20)
+All styling work, on top of step 2. One topic per session; order as listed.
+
+**State at the end of 2026-10-20:** branch `theme-and-logo` (not pushed, no PR,
+`main` untouched). The theme lives in `frontend/src/theme.js` (MUI light/dark,
+red accent `#b8412f`, warm greys, warm browns in dark mode). The menu and the
+place panel share `Components/Sheet.jsx` (bottom sheet on phones). Places are
+plain accent-coloured dots (`.place-dot` in `index.css`). The logo is only the
+favicon (white tile) and the README image; see `frontend/design/logo/`.
+
+1. **Underlying map design.** Today the base map is the stock OSM raster
+   (`tile.openstreetmap.de`), whose saturated greens fight the warm theme.
+   Options: a calmer raster style now (e.g. a muted/grey provider, or a CSS
+   filter as a quick test), or design our own vector style right away as part of
+   step 3 (Protomaps PMTiles + MapLibre), which offline needs anyway. Decide which
+   before building.
+2. **Colour theme on map and imagery.** Accent, dots, clusters, tour line, map
+   buttons and tooltips must read on the base map *and* on the grey historic
+   aerial images (1949/1952) and the colour orthophotos (2023/2025). Check light
+   and dark mode; light mode has not been looked at in the browser yet.
+3. **Fonts.** Merriweather (bold, italic) for names and the wordmark plus the
+   system sans for UI; review the pairing, sizes and weights. Self-host the
+   fonts (no Google Fonts request) so they work offline in step 3.
+4. **Usability.** Touch targets and thumb reach on phones; how people discover
+   the menu and the time travel; marker visibility outdoors (dots are 18 px);
+   hover-only behaviour (tooltips do not work on touch); readable attribution;
+   loading and empty states; the chosen language is not remembered yet.
+5. **Time slider instead of the year radio list.** Replace the per-year rows in
+   the menu with a slider (or slider-like strip) over the years whose `bounds`
+   touch the *current view* (`yearsInBounds`, already computed in `Map.jsx`),
+   plus "today" (no overlay). `year=` in the URL stays the single source of
+   truth. Keep the real date labels (`yearLabel`), the enhanced/AI flags and the
+   attribution. Mockup idea: a compact strip at the bottom of the map with the
+   chosen year as a red chip.
+
+**Open questions for the user:**
+- Home-screen/PWA icons (`logo192.png`, `logo512.png`, maskable,
+  `apple-touch-icon.png`) still show the logo on a paper tile. Keep, or change?
+- `public/logo-tile.svg` and `logo-tile-dark.svg` are no longer used. Remove or
+  keep as sources?
+- Push `theme-and-logo` and open a PR to `main` (deploys on merge)?
 
 ## 1. CDN imagery (aerial-timeline manifest) — done
 Specified in `CLAUDE.md` ("Historic imagery"). Implemented in `src/historic/`:
