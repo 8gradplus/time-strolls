@@ -49,7 +49,7 @@ Monorepo layout: `backend/` (FastAPI + SQLModel, Python ≥3.13, managed with `u
 
 **Media/CDN:** Images, podcasts and map tiles are stored in DigitalOcean Spaces (S3-compatible, via boto3 in `helpers/cdn.py`, uploaded `public-read`), under the paths in `config.cdn.path`. The DB stores only the `url`/`path` and a content `hash`. Deleting a DB record should also delete the CDN object. Images can be imported from Topothek (`topothek/crawl.py`, `POST /api/images/topothek/`).
 
-**Frontend (`frontend/src/`):** `Map.jsx` is the root view. **The URL query string is the single source of truth for UI state**: `location` (slug of the open info panel), `tour`, `markers`, `year` (historic aerial imagery; an old `historic=true` is rewritten to a year), `track`, `centered`. Change state with `setSearchParams` instead of local state, so that views stay deep-linkable. API paths are centralized in `api.js`. Historic imagery lives in `src/historic/`: `manifest.js` (pure functions, unit-tested), `useManifest.js` and `HistoricLayers.jsx` (tile layers and `ViewBounds`); see "Historic imagery" below. UI strings live in `LanguageContext.jsx` (`de` default, `cz`, `en`); add every new string to all three languages.
+**Frontend (`frontend/src/`):** `Map.jsx` is the root view. **The URL query string is the single source of truth for UI state**: `location` (slug of the open info panel), `tour`, `markers`, `year` (historic aerial imagery; an old `historic=true` is rewritten to a year), `track`, `centered`. Change state with `setSearchParams` instead of local state, so that views stay deep-linkable. API paths are centralized in `api.js`. Historic imagery lives in `src/historic/`: `manifest.js` (pure functions, unit-tested), `useManifest.js`, `HistoricLayers.jsx` (tile layers and `ViewBounds`) and `TimeSlider.jsx` (the year timeline at the bottom of the map, with an "Aus" button); see "Historic imagery" below. Colours and typography live in `src/theme.js` (MUI, light and dark); `Components/Sheet.jsx` is the bottom sheet / side panel used by the menu and the place panel. The logo files in `public/` are generated: `frontend/design/logo/build-icons.sh` (seeded, reproducible) — don't edit them by hand. UI strings live in `LanguageContext.jsx` (`de` default, `cz`, `en`); add every new string to all three languages.
 
 ## Historic imagery (aerial-timeline tiles, planned frontend work)
 
@@ -129,12 +129,14 @@ points (its roadmap step 6), remove these files in one commit.
   - Once `best/` exists, use one layer per year: `best/{year}/{z}/{x}/{y}.webp`,
     with the year's `max_native_zoom` and `attribution`.
 - **Labels and attribution:**
-  - Show the real date (`datetime`, e.g. "June 1953", "1952") rather than just the
-    year key.
+  - The time slider shows only the year key, no months (decided 2026-10-20);
+    above the line it shows the sources of the chosen year.
   - Mark `enhanced` / `ai_generated` layers visibly (none so far).
   - Licences require attribution (CC BY 4.0), so always show it.
   - Add every new UI string to all three languages in `LanguageContext.jsx`.
 - **Offline caching** (`OFFLINE_CACHING_STRATEGY.md`): tile URLs are immutable, so
   they cache well. Re-fetch the manifest; don't cache it long.
+
+**Roadmap:** `ROADMAP.md` holds the agreed plan and the status of each step. Read it when asked what's next, and update its status table when a step lands.
 
 **Planned work:** `OFFLINE_CACHING_STRATEGY.md` is a design doc (not yet implemented) for user-initiated, viewport-based offline downloads using the Cache API and a service worker. Read it before working on offline or PWA features.

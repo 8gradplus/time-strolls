@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Polyline } from "react-leaflet";
 import { api } from "../api";
+import { tokens } from "../theme";
 
 const Tour = (props) => {
   const { id } = props;
@@ -21,8 +22,19 @@ const Tour = (props) => {
   }, [id]);
 
   if (!tour) return null;
-  const lineOptions = { color: "#4285F4" };
-  return <Polyline positions={tour} pathOptions={lineOptions} />;
+  // The map accent on a white casing, so the line reads on the aerials too
+  return (
+    <>
+      <Polyline
+        positions={tour}
+        pathOptions={{ color: "#fff", weight: 7, opacity: 0.9 }}
+      />
+      <Polyline
+        positions={tour}
+        pathOptions={{ color: tokens.light.accent, weight: 4 }}
+      />
+    </>
+  );
 };
 
 export default Tour;

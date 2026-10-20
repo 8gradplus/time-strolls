@@ -10,6 +10,9 @@ import Tour from "./Tours/Tour";
 import TrackControl from "./Track/TrackControl";
 import Track from "./Track/Track";
 import HistoricLayers, { ViewBounds } from "./historic/HistoricLayers";
+import TimeSlider from "./historic/TimeSlider";
+import Notice from "./Components/Notice";
+import { useLanguage } from "./LanguageContext";
 import { useManifest } from "./historic/useManifest";
 import {
   MAX_ZOOM,
@@ -23,6 +26,9 @@ const fallbackCenter = [48.629371, 14.079059];
 const CoordinateMap = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [locations, setLocations] = useState(null);
+  const [locationsFailed, setLocationsFailed] = useState(false);
+  const [locationsRequest, setLocationsRequest] = useState(0);
+  const { t } = useLanguage();
   const manifest = useManifest();
   const [viewBounds, setViewBounds] = useState(REGION_BOUNDS);
 
@@ -37,7 +43,7 @@ const CoordinateMap = () => {
   const year = searchParams.get("year");
   const legacyHistoric = searchParams.get("historic") === "true";
 
-  // Years offered in the menu: those in view, plus the selected one
+  // Years offered on the time slider: those in view, plus the selected one
   const yearsInView = yearsInBounds(manifest, viewBounds);
   const years =
     year && manifest?.times[year] && !yearsInView.includes(year)
@@ -49,6 +55,7 @@ const CoordinateMap = () => {
   const userInteracted = searchParams.get("centered") === "false";
 
   useEffect(() => {
+    setLocationsFailed(false);
     fetch(api.locations)
       .then((res) => {
         if (!res.ok) {
@@ -57,8 +64,11 @@ const CoordinateMap = () => {
         return res.json();
       })
       .then((data) => setLocations(data))
-      .catch((error) => console.error("Error fetching places:", error));
-  }, []);
+      .catch((error) => {
+        console.error("Error fetching places:", error);
+        setLocationsFailed(true);
+      });
+  }, [locationsRequest]);
 
   // Old deep links used historic=true (1945 overlay); map them to a manifest year
   useEffect(() => {
@@ -146,6 +156,7 @@ const CoordinateMap = () => {
         style={{ height: "100vh", width: "100%" }}
       >
         <TileLayer
+          className="base-map"
           url="https://tile.openstreetmap.de/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           maxNativeZoom={18}
@@ -174,6 +185,7 @@ const CoordinateMap = () => {
             open={showMarkers}
             onClick={handleMarkerClick}
             locations={locations}
+            activeSlug={locationSlug}
           />
         )}
 
@@ -187,15 +199,26 @@ const CoordinateMap = () => {
 
         {tourId && <Tour id={tourId} />}
       </MapContainer>
+      {locationsFailed && (
+        <Notice
+          message={t.placesFailed}
+          actionLabel={t.retry}
+          onAction={() => setLocationsRequest((n) => n + 1)}
+        />
+      )}
       <Menu
         onItemClick={handleMenuItemClick}
-        years={years}
-        times={manifest?.times}
         itemState={{
           year: year,
           showMarkers: showMarkers,
           tourId: tourId,
         }}
+      />
+      <TimeSlider
+        years={years}
+        times={manifest?.times}
+        year={year}
+        onChange={handleMenuItemClick("year")}
       />
       <TrackControl
         mode={trackingMode}

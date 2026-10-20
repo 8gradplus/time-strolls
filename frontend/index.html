@@ -1,17 +1,46 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#c8372b" />
     <meta name="description" content="Stroll through space and time" />
-    <link rel="apple-touch-icon" href="/logo192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
-    <title>Timestrolls</title>
+    <title>Time Strolls</title>
+    <!-- Set light or dark before the first paint: the user's choice from the
+         menu (stored by MUI as mui-mode), otherwise the device setting -->
+    <script>
+      try {
+        var mode = localStorage.getItem("mui-mode") || "system";
+        var dark =
+          mode === "dark" ||
+          (mode === "system" &&
+            matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.setAttribute(
+          "data-mui-color-scheme",
+          dark ? "dark" : "light",
+        );
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <!-- Relief for the base map (.base-map in src/index.css): grey, then a light
+         emboss so areas and roads look raised. Kept at half strength: a
+         stronger one doubles the edges of the map lettering -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <filter id="base-map-relief">
+        <feColorMatrix type="saturate" values="0" />
+        <feConvolveMatrix
+          order="3"
+          kernelMatrix="-0.5 -0.25 0  -0.25 1 0.25  0 0.25 0.5"
+          preserveAlpha="true"
+        />
+      </filter>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -2,7 +2,7 @@ import L from "leaflet";
 
 export const GoogleMaterialIcon = ({
   name, // icon name as given imported in index.css
-  color = "#4285F4",
+  color = "currentColor",
   size = 24,
   fill = 0,
   weight = 400,
@@ -25,23 +25,19 @@ export const GoogleMaterialIcon = ({
   );
 };
 
-export const placeIcon = (color = "gray", haloColor = "yellow", size = 30) => {
-  const center = size / 2;
-  const outerRadius = size * 0.46875;
-  const haloRadius = size * 0.32; // ~10 for default 32
-  const coreRadius = size * 0.11; // ~5 for default 32
+// A place: one plain dot in the map accent with a white ring (.place-dot in
+// index.css), inside a larger transparent area that is easy to tap. The open
+// place gets a halo.
+const PLACE_TAP_SIZE = 44;
+
+export const placeIcon = (active = false) => {
+  const className = active ? "place-dot active" : "place-dot";
 
   return L.divIcon({
-    html: `
-      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="${center}" cy="${center}" r="${outerRadius}" fill="${color}" stroke="black" stroke-width="0.2" />
-        <circle cx="${center}" cy="${center}" r="${haloRadius}" fill="${haloColor}" />
-        <circle cx="${center}" cy="${center}" r="${coreRadius}" fill="${color}" />
-      </svg>
-    `,
-    className: "",
-    iconSize: [size, size],
-    iconAnchor: [center, center],
+    html: `<span class="${className}"></span>`,
+    className: "place-marker",
+    iconSize: [PLACE_TAP_SIZE, PLACE_TAP_SIZE],
+    iconAnchor: [PLACE_TAP_SIZE / 2, PLACE_TAP_SIZE / 2],
   });
 };
 
