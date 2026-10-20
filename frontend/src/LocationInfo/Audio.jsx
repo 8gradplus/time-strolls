@@ -1,18 +1,18 @@
-import React, { useState, useRef } from "react";
-import PlayButton from "../Components/PlayButton";
-import PlayCircleOutlineOutlinedIcon from "@mui/icons-material/PlayCircleOutlineOutlined";
+import { useState, useRef } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
+import { useLanguage } from "../LanguageContext";
 
 const Podcast = (props) => {
   const { podcast } = props;
   const [isExpanded, setIsExpanded] = useState(false);
   const audioRef = useRef(null);
+  const { t } = useLanguage();
 
   // don't show anything if url is not present
   if (!podcast?.url) return null;
-
-  const handleClick = () => {
-    setIsExpanded(true); // Expand the player
-  };
 
   const handlePlay = () => {
     if (audioRef.current) {
@@ -21,27 +21,33 @@ const Podcast = (props) => {
   };
 
   return (
-    <div>
+    <Box sx={{ px: 2.5, pb: 2 }}>
       {!isExpanded ? (
-        <PlayButton onClick={handleClick}>
-          Play
-          <PlayCircleOutlineOutlinedIcon
-            style={{ fontSize: "30px", color: "#333" }}
-          />
-        </PlayButton>
+        <Button
+          variant="contained"
+          size="large"
+          startIcon={<PlayArrowRoundedIcon />}
+          onClick={() => setIsExpanded(true)}
+        >
+          {t.listen}
+        </Button>
       ) : (
-        // Expanded Audio Player
-
         <audio
           controls
           controlsList="nodownload noplaybackrate"
           ref={audioRef}
           onCanPlay={handlePlay} // Play when the audio is ready to play
+          style={{ width: "100%" }}
         >
           <source src={podcast.url} type="audio/mpeg" />
         </audio>
       )}
-    </div>
+      {podcast.title && (
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          {[podcast.title, podcast.owner].filter(Boolean).join(" · ")}
+        </Typography>
+      )}
+    </Box>
   );
 };
 

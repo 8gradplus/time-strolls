@@ -1,6 +1,7 @@
 import { Marker, Tooltip } from "react-leaflet";
 import { useState } from "react";
 import { placeIcon } from "../icons";
+import { tokens } from "../theme";
 
 const LocationMarker = (props) => {
   const { lat, lon, label, onClick } = props;
@@ -8,7 +9,7 @@ const LocationMarker = (props) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const color = "white";
-  const haloColor = "rgb(219, 226, 190)";
+  const haloColor = tokens.light.accent;
   const handleMarkerClick = () => {
     onClick(true);
     setIconSize(30); // set back icon size once menu is opened

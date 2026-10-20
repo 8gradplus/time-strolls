@@ -2,7 +2,7 @@ import L from "leaflet";
 
 export const GoogleMaterialIcon = ({
   name, // icon name as given imported in index.css
-  color = "#4285F4",
+  color = "currentColor",
   size = 24,
   fill = 0,
   weight = 400,

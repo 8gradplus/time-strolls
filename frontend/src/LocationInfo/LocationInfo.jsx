@@ -1,13 +1,19 @@
 import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
-import Drawer from "@mui/material/Drawer";
+import Typography from "@mui/material/Typography";
 import Podcast from "./Audio";
 import DisplayImages from "./Images";
-import HighlightOffIcon from "@mui/icons-material/HighlightOff";
-import Button from "../Components/Button";
+import Sheet from "../Components/Sheet";
 import { api } from "../api";
 
-// Todo: same as menu -> make css
+// "1910 – 1965" from the image years, or null
+const yearRange = (images) => {
+  const years = images.map((img) => img.year).filter(Boolean);
+  if (years.length === 0) return null;
+  const min = Math.min(...years);
+  const max = Math.max(...years);
+  return min === max ? `${min}` : `${min} – ${max}`;
+};
 
 const LocationInfo = (props) => {
   const { open, onClose, slug } = props;
@@ -26,55 +32,36 @@ const LocationInfo = (props) => {
       .then((data) => setLocationInfo(data))
       .catch((error) => console.error("Error fetching places:", error));
   }, [slug]);
-  if (!locationInfo) {
-    return (
-      <Drawer open={open} onClose={onClose}>
-        <Box sx={{ width: { xs: "100vw", sm: 450 }, p: 3 }}>
-          <p>Loading...</p>
-        </Box>
-      </Drawer>
-    );
-  }
+
+  // Until the new slug has loaded, don't show the previous place
+  const info = locationInfo?.place.slug === slug ? locationInfo : null;
+  const years = info && yearRange(info.images);
 
   return (
-    <Drawer open={open} onClose={onClose}>
-      {/* Full width on mobild device */}
-      <Box
-        sx={{
-          width: { xs: "100vw", sm: 450 },
-          backgroundColor: "rgb(219, 226, 190)",
-        }}
-        role="presentation"
-      >
-        <Box
-          sx={{
-            paddingBottom: 2,
-            paddingTop: 1,
-            my: 0,
-          }}
-        >
-          <Box sx={{ mx: 2 }}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <h1>{locationInfo.place.name}</h1>
-              <Button onClick={onClose} color={"transparent"}>
-                <HighlightOffIcon style={{ fontSize: "24px", color: "#333" }} />
-              </Button>
-            </Box>
-            <Podcast podcast={locationInfo.podcast} />
-          </Box>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      loading={!info}
+      header={
+        info && (
+          <>
+            <Typography variant="h1">{info.place.name}</Typography>
+            {years && (
+              <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                {years}
+              </Typography>
+            )}
+          </>
+        )
+      }
+    >
+      {info && (
+        <Box sx={{ py: 2 }}>
+          <Podcast podcast={info.podcast} />
+          <DisplayImages images={info.images} />
         </Box>
-        {/* <Divider sx={{ mb: 1 }} /> */}
-        <Box sx={{ backgroundColor: "white", pt: 1 }}>
-          <DisplayImages images={locationInfo.images} />
-        </Box>
-      </Box>
-    </Drawer>
+      )}
+    </Sheet>
   );
 };
 

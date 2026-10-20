@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Polyline } from "react-leaflet";
 import { api } from "../api";
+import { tokens } from "../theme";
 
 const Tour = (props) => {
   const { id } = props;
@@ -21,7 +22,7 @@ const Tour = (props) => {
   }, [id]);
 
   if (!tour) return null;
-  const lineOptions = { color: "#4285F4" };
+  const lineOptions = { color: tokens.light.accent, weight: 4 };
   return <Polyline positions={tour} pathOptions={lineOptions} />;
 };
 

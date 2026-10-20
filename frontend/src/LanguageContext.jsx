@@ -10,6 +10,12 @@ const translations = {
     aiGenerated: "KI-generiert",
     showLocations: "Orte anzeigen",
     withSupportFrom: "Mit Unterstützung von",
+    menu: "Menü",
+    map: "Karte",
+    tours: "Touren",
+    listen: "Anhören",
+    showArea: "Gebiet zeigen",
+    followMe: "Meinem Standort folgen",
   },
   cz: {
     historicImagery: "Historické letecké snímky",
@@ -18,6 +24,12 @@ const translations = {
     aiGenerated: "Vytvořeno umělou inteligencí",
     showLocations: "Zobrazit místa",
     withSupportFrom: "S podporou",
+    menu: "Nabídka",
+    map: "Mapa",
+    tours: "Trasy",
+    listen: "Poslechnout",
+    showArea: "Zobrazit oblast",
+    followMe: "Sledovat moji polohu",
   },
   en: {
     historicImagery: "Historic aerial imagery",
@@ -26,6 +38,12 @@ const translations = {
     aiGenerated: "AI-generated",
     showLocations: "Show locations",
     withSupportFrom: "With support from",
+    menu: "Menu",
+    map: "Map",
+    tours: "Tours",
+    listen: "Listen",
+    showArea: "Show the area",
+    followMe: "Follow my location",
   },
 };
 

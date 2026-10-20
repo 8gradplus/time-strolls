@@ -5,6 +5,7 @@ import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/counter.css";
 import Counter from "yet-another-react-lightbox/plugins/counter";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import { serif } from "../theme";
 
 const DisplayImages = (props) => {
   const { images } = props;
@@ -14,7 +15,6 @@ const DisplayImages = (props) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   if (!images || images.length === 0) return null;
 
-  console.log(images);
   const slides = images.map((img) => ({
     src: img.url,
     origin: img.source_url,
@@ -46,20 +46,76 @@ const DisplayImages = (props) => {
 
   return (
     <>
-      {images.map((image, idx) => (
-        <Box
-          key={`img-${idx}-${image.url}`}
-          sx={{ mb: 1 }}
-          onClick={() => openLightbox(idx)}
-        >
-          <img
-            src={image.url}
-            alt={`img-${idx}-${image.url}`}
-            loading="lazy"
-            style={{ width: "100%", height: "auto", display: "block" }}
-          />
-        </Box>
-      ))}
+      {/* Image strip: swipe sideways, tap to open full screen */}
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1.5,
+          overflowX: "auto",
+          scrollSnapType: "x mandatory",
+          px: 2.5,
+          pb: 1,
+          scrollPaddingInline: 20,
+        }}
+      >
+        {images.map((image, idx) => (
+          <Box
+            component="figure"
+            key={`img-${idx}-${image.url}`}
+            onClick={() => openLightbox(idx)}
+            sx={{
+              m: 0,
+              flex: "0 0 auto",
+              maxWidth: "85%",
+              scrollSnapAlign: "start",
+              cursor: "pointer",
+            }}
+          >
+            <Box
+              component="img"
+              src={image.url}
+              alt={image.title || `img-${idx}`}
+              loading="lazy"
+              sx={{
+                display: "block",
+                height: 220,
+                maxWidth: "100%",
+                objectFit: "cover",
+                borderRadius: 1,
+                border: 1,
+                borderColor: "divider",
+              }}
+            />
+            <Box
+              component="figcaption"
+              // As wide as the image, not the text
+              sx={{
+                mt: 0.75,
+                fontSize: 14,
+                width: 0,
+                minWidth: "100%",
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {image.year && (
+                <Box
+                  component="span"
+                  sx={{ fontFamily: serif, fontWeight: 700 }}
+                >
+                  {image.year}
+                </Box>
+              )}
+              {image.year && image.title && " · "}
+              <Box component="span" sx={{ color: "text.secondary" }}>
+                {image.title}
+              </Box>
+            </Box>
+          </Box>
+        ))}
+      </Box>
       {/* Image Slides */}
       {lightboxOpen && (
         <Lightbox
