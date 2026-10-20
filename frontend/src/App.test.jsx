@@ -1,4 +1,10 @@
-import { cleanup, render, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { vi } from "vitest";
 import App from "./App";
 import { MANIFEST_URL } from "./historic/manifest";
@@ -47,4 +53,25 @@ test("maps an old historic=true link to the earliest year in our region", async 
     expect(params.has("historic")).toBe(false);
     expect(params.get("markers")).toBe("false");
   });
+});
+
+test("offers a retry when the places fail to load", async () => {
+  localStorage.setItem("language", "de");
+  fetch.mockImplementation((url) =>
+    url === "/api/locations/"
+      ? Promise.resolve({ ok: false })
+      : json(url === MANIFEST_URL ? manifest : []),
+  );
+  vi.spyOn(console, "error").mockImplementation(() => {});
+  render(<App />);
+  const retry = await screen.findByRole("button", { name: "Erneut versuchen" });
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Die Orte konnten nicht geladen werden.",
+  );
+
+  fetch.mockImplementation((url) => json(url === MANIFEST_URL ? manifest : []));
+  fireEvent.click(retry);
+  await waitFor(() =>
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
+  );
 });

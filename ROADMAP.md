@@ -29,7 +29,7 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 | 0 | CI basics, Vite migration, repo cleanup (ETL out) | CI and Vite done (#7). Removing the ETL waits for aerial-timeline step 6. |
 | 1 | CDN years and time selection | Done (#7) |
 | 2 | Theme, logo, mobile layout | Done (branch `theme-and-logo`, not pushed yet) |
-| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | In progress: 1 (base map) done; Wall label theme, fonts, light/dark switch and the place panel as a wall label done; 2 (colours on the map) done; 4 (usability) partly done; 5 (time slider) done. Open: the rest of 4 |
+| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (branch `theme-and-logo`, not pushed yet) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -96,12 +96,13 @@ favicon (white tile) and the README image; see `frontend/design/logo/`.
    the menu and the time travel; marker visibility outdoors (dots are 18 px);
    hover-only behaviour (tooltips do not work on touch); readable attribution;
    loading and empty states; the chosen language is not remembered yet.
-   **Partly done (2026-10-20):** the language is remembered on the device and
+   **Done (2026-10-20):** the language is remembered on the device and
    defaults to the device language (cs → cz, en, else de); places have a 44 px
    tap area around a 20 px dot, hover is CSS only; the +/– zoom buttons are
-   hidden on touch screens. Still open: discovering the time travel (item 5
-   solves it), loading and error states (a failed `/api/locations` shows
-   nothing), place names on touch screens (only in the panel today).
+   hidden on touch screens. From zoom 15 on, place names show next to the dots
+   on every device. A failed `/api/locations` shows a notice with "Erneut
+   versuchen"; a place that fails to load says so in its panel. The time
+   travel is found through the slider (item 5).
 5. **Time slider instead of the year radio list.** Replace the per-year rows in
    the menu with a slider (or slider-like strip) over the years whose `bounds`
    touch the *current view* (`yearsInBounds`, already computed in `Map.jsx`),

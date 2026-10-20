@@ -6,6 +6,10 @@ const translations = {
   de: {
     timeTravel: "Zeitreise durch historische Luftbilder",
     off: "Aus",
+    placesFailed: "Die Orte konnten nicht geladen werden.",
+    placeFailed:
+      "Dieser Ort konnte nicht geladen werden. Bitte schließen und noch einmal versuchen.",
+    retry: "Erneut versuchen",
     imageryOff: "Ohne Luftbild",
     noImageryInView: "Keine Luftbilder in diesem Kartenausschnitt",
     enhanced: "Nachbearbeitet",
@@ -27,6 +31,10 @@ const translations = {
   cz: {
     timeTravel: "Cesta časem po historických leteckých snímcích",
     off: "Vyp.",
+    placesFailed: "Místa se nepodařilo načíst.",
+    placeFailed:
+      "Toto místo se nepodařilo načíst. Zavřete ho a zkuste to znovu.",
+    retry: "Zkusit znovu",
     imageryOff: "Bez leteckého snímku",
     noImageryInView: "V tomto výřezu mapy nejsou žádné letecké snímky",
     enhanced: "Upraveno",
@@ -48,6 +56,9 @@ const translations = {
   en: {
     timeTravel: "Time travel through historic aerial imagery",
     off: "Off",
+    placesFailed: "The places could not be loaded.",
+    placeFailed: "This place could not be loaded. Close it and try again.",
+    retry: "Try again",
     imageryOff: "No aerial imagery",
     noImageryInView: "No aerial imagery in this map view",
     enhanced: "Enhanced",
