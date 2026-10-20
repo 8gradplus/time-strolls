@@ -137,4 +137,6 @@ points (its roadmap step 6), remove these files in one commit.
 - **Offline caching** (`OFFLINE_CACHING_STRATEGY.md`): tile URLs are immutable, so
   they cache well. Re-fetch the manifest; don't cache it long.
 
+**Roadmap:** `ROADMAP.md` holds the agreed plan and the status of each step. Read it when asked what's next, and update its status table when a step lands.
+
 **Planned work:** `OFFLINE_CACHING_STRATEGY.md` is a design doc (not yet implemented) for user-initiated, viewport-based offline downloads using the Cache API and a service worker. Read it before working on offline or PWA features.
