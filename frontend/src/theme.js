@@ -1,27 +1,29 @@
 import { createTheme } from "@mui/material/styles";
 
-// Outdoor-museum look, taken from the logo (public/logo.svg): warm paper and
-// grey surfaces, one red accent, 1 px hairlines instead of shadows, a serif
-// only for place names. Dark mode uses warm browns (the logo's clay tile is
-// #6b5a4e), never black.
+// "Wall label" look of a gallery: near-white or near-black surfaces, one red
+// accent (the logo red, slightly deeper) used only for what is active, 1 px
+// hairlines instead of shadows. Cormorant Garamond only for names at display
+// size, Jost for everything else. The historic photos are mostly black and
+// white, so the surfaces stay neutral. Light or dark follows the device unless
+// the user picks one in the menu (useColorScheme, stored by MUI).
 export const tokens = {
   light: {
-    accent: "#b8412f",
-    accentSoft: "#f3ddd6",
-    paper: "#faf7f3",
-    surface: "#efe9e3",
-    text: "#2b2724",
-    textMuted: "#7a716a",
-    hairline: "rgba(43, 39, 36, 0.13)",
+    accent: "#a8231b",
+    accentSoft: "#f4e4e2",
+    paper: "#fbfbfa",
+    surface: "#f3f3f1",
+    text: "#171716",
+    textMuted: "#6f6e6b",
+    hairline: "rgba(23, 23, 22, 0.12)",
   },
   dark: {
-    accent: "#e2705b",
-    accentSoft: "#4a302a",
-    paper: "#2e2723",
-    surface: "#25201d",
-    text: "#efe8e1",
-    textMuted: "#a99f97",
-    hairline: "rgba(239, 232, 225, 0.13)",
+    accent: "#e3574b",
+    accentSoft: "#3a2523",
+    paper: "#1d1c1b",
+    surface: "#161615",
+    text: "#f0efec",
+    textMuted: "#a4a29e",
+    hairline: "rgba(240, 239, 236, 0.13)",
   },
 };
 
@@ -35,18 +37,23 @@ const scheme = (t) => ({
   },
 });
 
-export const serif = '"Merriweather", Georgia, "Times New Roman", serif';
+export const serif = '"Cormorant Garamond", Garamond, Georgia, serif';
+const sans = '"Jost Variable", Futura, "Helvetica Neue", Arial, sans-serif';
 
 const theme = createTheme({
-  cssVariables: { colorSchemeSelector: "media" },
+  cssVariables: { colorSchemeSelector: "data-mui-color-scheme" },
   colorSchemes: { light: scheme(tokens.light), dark: scheme(tokens.dark) },
-  shape: { borderRadius: 10 },
+  shape: { borderRadius: 4 },
   typography: {
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    h1: { fontFamily: serif, fontSize: "1.6rem", fontWeight: 700 },
-    h2: { fontFamily: serif, fontSize: "1.25rem", fontWeight: 700 },
-    overline: { fontWeight: 600, letterSpacing: "0.08em", lineHeight: 2 },
+    fontFamily: sans,
+    h1: {
+      fontFamily: serif,
+      fontSize: "2rem",
+      fontWeight: 600,
+      lineHeight: 1.1,
+    },
+    h2: { fontFamily: serif, fontSize: "1.5rem", fontWeight: 600 },
+    overline: { fontWeight: 500, letterSpacing: "0.09em", lineHeight: 2 },
   },
   components: {
     MuiPaper: {
@@ -56,6 +63,9 @@ const theme = createTheme({
     MuiButton: {
       defaultProps: { disableElevation: true },
       styleOverrides: { root: { textTransform: "none", borderRadius: 999 } },
+    },
+    MuiToggleButton: {
+      styleOverrides: { root: { textTransform: "none" } },
     },
     MuiListItemButton: {
       styleOverrides: {

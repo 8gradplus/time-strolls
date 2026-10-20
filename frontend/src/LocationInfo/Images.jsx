@@ -5,7 +5,6 @@ import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/counter.css";
 import Counter from "yet-another-react-lightbox/plugins/counter";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
-import { serif } from "../theme";
 
 const DisplayImages = (props) => {
   const { images } = props;
@@ -74,7 +73,7 @@ const DisplayImages = (props) => {
                 {image.year && (
                   <Box
                     component="span"
-                    sx={{ fontFamily: serif, fontWeight: 700 }}
+                    sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}
                   >
                     {image.year}
                   </Box>

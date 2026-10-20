@@ -16,6 +16,10 @@ const translations = {
     listen: "Anhören",
     showArea: "Gebiet zeigen",
     followMe: "Meinem Standort folgen",
+    appearance: "Darstellung",
+    modeSystem: "Automatisch",
+    modeLight: "Hell",
+    modeDark: "Dunkel",
   },
   cz: {
     historicImagery: "Historické letecké snímky",
@@ -30,6 +34,10 @@ const translations = {
     listen: "Poslechnout",
     showArea: "Zobrazit oblast",
     followMe: "Sledovat moji polohu",
+    appearance: "Vzhled",
+    modeSystem: "Automaticky",
+    modeLight: "Světlý",
+    modeDark: "Tmavý",
   },
   en: {
     historicImagery: "Historic aerial imagery",
@@ -44,6 +52,10 @@ const translations = {
     listen: "Listen",
     showArea: "Show the area",
     followMe: "Follow my location",
+    appearance: "Appearance",
+    modeSystem: "Automatic",
+    modeLight: "Light",
+    modeDark: "Dark",
   },
 };
 

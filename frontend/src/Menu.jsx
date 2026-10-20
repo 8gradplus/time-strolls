@@ -7,7 +7,10 @@ import ListItemText from "@mui/material/ListItemText";
 import ListSubheader from "@mui/material/ListSubheader";
 import Radio from "@mui/material/Radio";
 import Switch from "@mui/material/Switch";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
+import { useColorScheme } from "@mui/material/styles";
 import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import DirectionsWalkRoundedIcon from "@mui/icons-material/DirectionsWalkRounded";
@@ -105,6 +108,28 @@ const LanguageSwitch = () => {
   );
 };
 
+// Light, dark, or the device setting ("system"); MUI stores the choice
+const AppearanceSwitch = () => {
+  const { mode, setMode } = useColorScheme();
+  const { t } = useLanguage();
+  if (!mode) return null;
+
+  return (
+    <ToggleButtonGroup
+      exclusive
+      fullWidth
+      size="small"
+      value={mode}
+      onChange={(event, value) => value && setMode(value)}
+      sx={{ px: 1 }}
+    >
+      <ToggleButton value="system">{t.modeSystem}</ToggleButton>
+      <ToggleButton value="light">{t.modeLight}</ToggleButton>
+      <ToggleButton value="dark">{t.modeDark}</ToggleButton>
+    </ToggleButtonGroup>
+  );
+};
+
 const Menu = (props) => {
   const { onItemClick, itemState, years, times } = props;
   const [open, setOpen] = useState(false);
@@ -139,9 +164,9 @@ const Menu = (props) => {
         header={
           <>
             <Typography
-              sx={{ fontFamily: serif, fontWeight: 700, fontSize: 22 }}
+              sx={{ fontFamily: serif, fontWeight: 600, fontSize: 28 }}
             >
-              <Box component="i" sx={{ fontWeight: 400 }}>
+              <Box component="i" sx={{ fontWeight: 500 }}>
                 Time
               </Box>{" "}
               Strolls
@@ -209,6 +234,11 @@ const Menu = (props) => {
             ))}
           </Section>
         )}
+
+        {/* Light or dark */}
+        <Section title={t.appearance}>
+          <AppearanceSwitch />
+        </Section>
 
         {/* With support from */}
         <Box

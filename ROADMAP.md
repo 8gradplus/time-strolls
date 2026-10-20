@@ -13,8 +13,14 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 - App: a PWA first, then Capacitor for Android.
 - Order: the foundation comes first (CI, Vite, removing the ETL).
 - Logo (2026-10-20): a circle torn by hand from paper painted in Rothko-like
-  fields (grey, red, ochre), cut clean. Warm theme: red accent `#b8412f`, warm
-  greys; dark mode in warm browns (clay `#6b5a4e` for the dark tile), never black.
+  fields (grey, red, ochre), cut clean.
+- Look (2026-10-20, replaces the warm theme): "Wall label", like a gallery.
+  Near-white `#fbfbfa` / near-black `#1d1c1b` surfaces, the logo red slightly
+  deeper as the only accent (`#a8231b`, dark `#e3574b`), Cormorant Garamond
+  (600) for names, Jost for everything else. The historic photos are mostly
+  black and white, so the surfaces stay neutral. Light and dark are equals:
+  the device setting by default, overridable in the menu ("Darstellung").
+  Directions compared: https://claude.ai/artifact/TWELJnNxYqrj2zEsLGv9ac
 
 ## Status
 
@@ -23,7 +29,7 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 | 0 | CI basics, Vite migration, repo cleanup (ETL out) | CI and Vite done (#7). Removing the ETL waits for aerial-timeline step 6. |
 | 1 | CDN years and time selection | Done (#7) |
 | 2 | Theme, logo, mobile layout | Done (branch `theme-and-logo`, not pushed yet) |
-| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | In progress: 1 (base map) done; next is 2 (colours on map and imagery) |
+| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | In progress: 1 (base map) done; Wall label theme, fonts and light/dark switch done; next: place panel as a wall label, then 2 (colours on the map) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -75,9 +81,12 @@ favicon (white tile) and the README image; see `frontend/design/logo/`.
    buttons and tooltips must read on the base map *and* on the grey historic
    aerial images (1949/1952) and the colour orthophotos (2023/2025). Check light
    and dark mode; light mode has not been looked at in the browser yet.
-3. **Fonts.** Merriweather (bold, italic) for names and the wordmark plus the
-   system sans for UI; review the pairing, sizes and weights. Self-host the
-   fonts (no Google Fonts request) so they work offline in step 3.
+3. **Fonts.** **Done (2026-10-20):** Cormorant Garamond for names and the
+   wordmark, Jost for UI, self-hosted via `@fontsource` (bundled by Vite,
+   Latin and Latin Extended loaded on demand). Merriweather is gone. Still on
+   Google: the Material Symbols icon font in `index.css`.
+   **Next:** the place panel as a wall label, as in the mockup: name, dates,
+   audio, then per photo the year, title and a credit line (`owner`).
 4. **Usability.** Touch targets and thumb reach on phones; how people discover
    the menu and the time travel; marker visibility outdoors (dots are 18 px);
    hover-only behaviour (tooltips do not work on touch); readable attribution;
