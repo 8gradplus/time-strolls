@@ -25,7 +25,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Lightweight extra for CI: tests and lint only, without the geo/notebook stack.
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff",
+]
 dev = [
+    "timestrolls[test]",
     "matplotlib",
     "jupyter",
     "folium",
@@ -43,7 +50,10 @@ dev = [
     "tenacity",
     # Image
     "opencv-python",
-    # Testing
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
 ]
+
+[tool.ruff]
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
