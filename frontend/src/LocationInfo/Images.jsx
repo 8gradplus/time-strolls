@@ -87,7 +87,7 @@ const WallLabel = ({ slide }) => {
             rel="noopener noreferrer"
             sx={{ color: "inherit" }}
           >
-            Topothek ↗
+            Topothek
           </Box>
         )}
       </Box>
