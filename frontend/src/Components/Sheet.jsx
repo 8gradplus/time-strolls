@@ -16,6 +16,8 @@ const Sheet = (props) => {
       open={open}
       onClose={onClose}
       slotProps={{
+        // A light veil instead of MUI's dark backdrop, so the map stays visible
+        backdrop: { sx: { bgcolor: "rgba(23, 23, 22, 0.15)" } },
         paper: {
           sx: mobile
             ? { maxHeight: "85dvh", borderRadius: "16px 16px 0 0" }

@@ -175,6 +175,7 @@ const CoordinateMap = () => {
             open={showMarkers}
             onClick={handleMarkerClick}
             locations={locations}
+            activeSlug={locationSlug}
           />
         )}
 

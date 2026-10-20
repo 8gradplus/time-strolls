@@ -2,7 +2,7 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import LocationMarker from "./LocationMarker";
 
 const LocationMarkers = (props) => {
-  const { open, onClick, locations } = props;
+  const { open, onClick, locations, activeSlug } = props;
   if (!open) return null;
 
   return (
@@ -19,6 +19,7 @@ const LocationMarkers = (props) => {
           lat={location.lat}
           lon={location.lon}
           label={location.name}
+          active={location.slug === activeSlug}
           onClick={onClick(location.id)}
         />
       ))}

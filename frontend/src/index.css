@@ -25,6 +25,7 @@
    our own vector style (ROADMAP step 3). */
 .leaflet-container {
   background: #eeeeee;
+  font-family: inherit;
 }
 
 .base-map {
@@ -107,13 +108,24 @@
   font-weight: bold;
 }
 
+/* Places, clusters and tours are the same in light and dark mode, because the
+   base map is always light grey: the map accent with a white ring and a thin
+   dark edge, so they read on the grey map, the grey 1949/1952 aerials and the
+   colour orthophotos alike. */
 .place-dot {
   display: block;
   box-sizing: border-box;
   border-radius: 50%;
-  background: var(--mui-palette-primary-main);
-  border: 2px solid var(--mui-palette-background-paper);
-  box-shadow: 0 0 0 1px rgba(43, 39, 36, 0.25);
+  background: var(--mui-palette-mapAccent);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+/* The place whose panel is open */
+.place-dot.active {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 6px color-mix(in srgb, var(--mui-palette-mapAccent) 35%, transparent);
 }
 
 .pulsating-icon {
@@ -153,23 +165,60 @@
   }
 }
 
-/* Custom cluster styling */
-.marker-cluster-small div,
-.marker-cluster-medium div,
-.marker-cluster-large div {
-  background-color: var(--mui-palette-primary-main) !important;
-  color: #fff;
-  font-weight: 600;
-}
-
+/* Clusters: a bigger place dot with the count */
 .marker-cluster-small,
 .marker-cluster-medium,
 .marker-cluster-large {
-  background-color: color-mix(
+  background: none !important;
+}
+
+.marker-cluster div {
+  box-sizing: border-box;
+  background-color: var(--mui-palette-mapAccent) !important;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.marker-cluster span {
+  line-height: 26px;
+}
+
+/* Leaflet's zoom buttons and attribution in the theme: paper surface,
+   hairline, no shadow */
+.leaflet-bar {
+  border: 1px solid var(--mui-palette-divider) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+.leaflet-bar a {
+  background: var(--mui-palette-background-paper);
+  color: var(--mui-palette-text-primary);
+  border-bottom-color: var(--mui-palette-divider);
+}
+
+.leaflet-bar a:hover {
+  background: var(--mui-palette-background-default);
+}
+
+.leaflet-container .leaflet-control-attribution {
+  background: color-mix(
     in srgb,
-    var(--mui-palette-primary-main) 30%,
+    var(--mui-palette-background-paper) 85%,
     transparent
-  ) !important;
+  );
+  color: var(--mui-palette-text-secondary);
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.leaflet-control-attribution a {
+  color: var(--mui-palette-text-primary);
 }
 
 /* Hide zoom control buttons in lightbox */

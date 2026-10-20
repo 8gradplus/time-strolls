@@ -29,7 +29,7 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 | 0 | CI basics, Vite migration, repo cleanup (ETL out) | CI and Vite done (#7). Removing the ETL waits for aerial-timeline step 6. |
 | 1 | CDN years and time selection | Done (#7) |
 | 2 | Theme, logo, mobile layout | Done (branch `theme-and-logo`, not pushed yet) |
-| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | In progress: 1 (base map) done; Wall label theme, fonts, light/dark switch and the place panel as a wall label done; next: 2 (colours on the map) |
+| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | In progress: 1 (base map) done; Wall label theme, fonts, light/dark switch and the place panel as a wall label done; 2 (colours on the map) done; next: 4 (usability) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -80,7 +80,12 @@ favicon (white tile) and the README image; see `frontend/design/logo/`.
 2. **Colour theme on map and imagery.** Accent, dots, clusters, tour line, map
    buttons and tooltips must read on the base map *and* on the grey historic
    aerial images (1949/1952) and the colour orthophotos (2023/2025). Check light
-   and dark mode; light mode has not been looked at in the browser yet.
+   and dark mode.
+   **Done (2026-10-20):** everything on the map is the same in both modes (the
+   map is always light grey): `palette.mapAccent` (= the light accent) with a
+   white ring and a thin dark edge for places and clusters, a halo for the open
+   place, the tour line on a white casing. Leaflet's zoom buttons and
+   attribution use the theme; the backdrop behind open panels is a light veil.
 3. **Fonts.** **Done (2026-10-20):** Cormorant Garamond for names and the
    wordmark, Jost for UI, self-hosted via `@fontsource` (bundled by Vite,
    Latin and Latin Extended loaded on demand). Merriweather is gone. Still on

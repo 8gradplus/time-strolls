@@ -25,12 +25,14 @@ export const GoogleMaterialIcon = ({
   );
 };
 
-// A place: one plain dot in the accent colour with a thin paper ring.
-export const placeIcon = (size = 18) => {
+// A place: one plain dot in the map accent with a white ring (.place-dot in
+// index.css); the open place gets a halo.
+export const placeIcon = (size = 18, active = false) => {
   const center = size / 2;
+  const className = active ? "place-dot active" : "place-dot";
 
   return L.divIcon({
-    html: `<span class="place-dot" style="width:${size}px;height:${size}px"></span>`,
+    html: `<span class="${className}" style="width:${size}px;height:${size}px"></span>`,
     className: "",
     iconSize: [size, size],
     iconAnchor: [center, center],

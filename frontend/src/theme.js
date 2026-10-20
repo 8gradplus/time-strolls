@@ -34,6 +34,9 @@ const scheme = (t) => ({
     text: { primary: t.text, secondary: t.textMuted },
     divider: t.hairline,
     accentSoft: t.accentSoft,
+    // The base map is light grey in both modes, so everything drawn on it
+    // (places, clusters, tours) uses the light accent in dark mode too.
+    mapAccent: tokens.light.accent,
   },
 });
 

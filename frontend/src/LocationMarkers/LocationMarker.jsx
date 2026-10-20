@@ -3,7 +3,7 @@ import { useState } from "react";
 import { placeIcon } from "../icons";
 
 const LocationMarker = (props) => {
-  const { lat, lon, label, onClick } = props;
+  const { lat, lon, label, active, onClick } = props;
   const [iconSize, setIconSize] = useState(18);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -27,7 +27,7 @@ const LocationMarker = (props) => {
     // Probably it's better to remove hover over functionality at all - this would be consistent with mobile devices
     <Marker
       position={[lat, lon]}
-      icon={placeIcon(iconSize)}
+      icon={placeIcon(active ? 22 : iconSize, active)}
       eventHandlers={{
         click: handleMarkerClick,
         mouseover: handleHoverStart,
