@@ -1,14 +1,19 @@
 import { createTheme } from "@mui/material/styles";
 
 // "Wall label" look of a gallery: near-white or near-black surfaces, one red
-// accent (the logo red, slightly deeper) used only for what is active, 1 px
-// hairlines instead of shadows. Cormorant Garamond only for names at display
-// size, Jost for everything else. The historic photos are mostly black and
-// white, so the surfaces stay neutral. Light or dark follows the device unless
-// the user picks one in the menu (useColorScheme, stored by MUI).
+// accent used only for what is active, 1 px hairlines instead of shadows.
+// Cormorant Garamond only for names at display size, Jost for everything else.
+// The historic photos are mostly black and white, so the surfaces stay
+// neutral. Light or dark follows the device unless the user picks one in the
+// menu (useColorScheme, stored by MUI).
+
+// One red in both modes, for the UI and everything on the map: bright enough
+// to stand out on the dark aerial images, dark enough for white text on it.
+const ACCENT = "#c8372b";
+
 export const tokens = {
   light: {
-    accent: "#a8231b",
+    accent: ACCENT,
     accentSoft: "#f4e4e2",
     paper: "#fbfbfa",
     surface: "#f3f3f1",
@@ -17,7 +22,7 @@ export const tokens = {
     hairline: "rgba(23, 23, 22, 0.12)",
   },
   dark: {
-    accent: "#e3574b",
+    accent: ACCENT,
     accentSoft: "#3a2523",
     paper: "#1d1c1b",
     surface: "#161615",
@@ -34,9 +39,6 @@ const scheme = (t) => ({
     text: { primary: t.text, secondary: t.textMuted },
     divider: t.hairline,
     accentSoft: t.accentSoft,
-    // The base map is light grey in both modes, so everything drawn on it
-    // (places, clusters, tours) uses the light accent in dark mode too.
-    mapAccent: tokens.light.accent,
   },
 });
 

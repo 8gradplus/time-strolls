@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import Box from "@mui/material/Box";
 import { useLanguage } from "../LanguageContext";
-import { yearLabel } from "./manifest";
 
 // Stops sit between 8% and 92% of the track, so the end labels stay inside.
 const stopPosition = (index, count) =>
@@ -9,9 +8,9 @@ const stopPosition = (index, count) =>
 
 // The aerial years in view as stops on a timeline at the bottom of the map,
 // plus an "Off" button at the end that removes the imagery. Above the line:
-// the real date and the sources of the chosen year.
+// the sources of the chosen year. Only years are shown, no months.
 const TimeSlider = ({ years, times, year, onChange }) => {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const trackRef = useRef(null);
   if (!times || (years.length === 0 && !year)) return null;
 
@@ -59,32 +58,22 @@ const TimeSlider = ({ years, times, year, onChange }) => {
         borderRadius: 1.5,
       }}
     >
+      {/* The year is on the line already; above it only the sources */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          gap: 1,
-          minHeight: 22,
+          minHeight: 20,
+          fontSize: 13,
+          color: flags.length ? "warning.main" : "text.secondary",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
         }}
       >
-        <Box component="b" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
-          {time ? yearLabel(time, language) : t.imageryOff}
-        </Box>
-        <Box
-          component="span"
-          sx={{
-            fontSize: 12,
-            color: flags.length ? "warning.main" : "text.secondary",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {time
-            ? [...flags, ...time.layers.map((l) => l.title)].join(" · ")
-            : years.length === 0 && t.noImageryInView}
-        </Box>
+        {time
+          ? [...flags, ...time.layers.map((l) => l.title)].join(" · ")
+          : years.length === 0
+            ? t.noImageryInView
+            : t.imageryOff}
       </Box>
 
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
@@ -129,7 +118,6 @@ const TimeSlider = ({ years, times, year, onChange }) => {
                 component="button"
                 type="button"
                 aria-pressed={selected}
-                aria-label={yearLabel(times[y], language)}
                 onClick={() => onChange(y)}
                 sx={{
                   all: "unset",

@@ -23,16 +23,17 @@ beforeEach(() => localStorage.setItem("language", "de"));
 afterEach(cleanup);
 
 describe("TimeSlider", () => {
-  test("shows the real date and source of the chosen year", () => {
+  test("shows only years, and the source of the chosen one", () => {
     renderSlider({ year: "2025", onChange: vi.fn() });
-    expect(screen.getByText("Juni 2025")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "2025" })).toBeInTheDocument();
+    expect(screen.queryByText(/Juni/)).not.toBeInTheDocument();
     expect(screen.getByText("Ortofoto ČR")).toBeInTheDocument();
   });
 
   test("picks a year and switches the imagery off", () => {
     const onChange = vi.fn();
     renderSlider({ year: "1952", onChange });
-    fireEvent.click(screen.getByRole("button", { name: "Juni 2025" }));
+    fireEvent.click(screen.getByRole("button", { name: "2025" }));
     expect(onChange).toHaveBeenCalledWith("2025");
     fireEvent.click(screen.getByRole("button", { name: "Aus" }));
     expect(onChange).toHaveBeenCalledWith(null);

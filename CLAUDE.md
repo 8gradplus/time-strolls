@@ -129,8 +129,8 @@ points (its roadmap step 6), remove these files in one commit.
   - Once `best/` exists, use one layer per year: `best/{year}/{z}/{x}/{y}.webp`,
     with the year's `max_native_zoom` and `attribution`.
 - **Labels and attribution:**
-  - Show the real date (`datetime`, e.g. "June 1953", "1952") rather than just the
-    year key.
+  - The time slider shows only the year key, no months (decided 2026-10-20);
+    above the line it shows the sources of the chosen year.
   - Mark `enhanced` / `ai_generated` layers visibly (none so far).
   - Licences require attribution (CC BY 4.0), so always show it.
   - Add every new UI string to all three languages in `LanguageContext.jsx`.

@@ -55,59 +55,6 @@
   display: none;
 }
 
-.image-slide-footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  text-align: center;
-  color: white;
-  padding: 10px;
-  background: rgb(0, 0, 0, 0.5);
-  font-size: 18px;
-  z-index: 10;
-  font-family: "Cormorant Garamond", Garamond, Georgia, serif;
-}
-
-.footer-title-row {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 18px;
-}
-
-.footer-year {
-  font-weight: bold;
-  font-size: 60px;
-  white-space: nowrap;
-}
-
-.footer-title {
-  margin-top: 10px;
-  text-align: left;
-  font-weight: bold;
-}
-
-.footer-owner {
-  margin-top: 10px;
-  text-align: left;
-}
-
-.footer-link {
-  color: white;
-  text-decoration: none;
-  transition: font-weight 0.2s ease;
-}
-
-.footer-link:hover {
-  font-weight: bold;
-}
-
-.middot {
-  padding: 0 4px;
-  font-weight: bold;
-}
-
 /* Places, clusters and tours are the same in light and dark mode, because the
    base map is always light grey: the map accent with a white ring and a thin
    dark edge, so they read on the grey map, the grey 1949/1952 aerials and the
@@ -123,7 +70,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--mui-palette-mapAccent);
+  background: var(--mui-palette-primary-main);
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
   transition: transform 0.15s ease;
@@ -139,7 +86,8 @@
   height: 24px;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 0 0 6px color-mix(in srgb, var(--mui-palette-mapAccent) 35%, transparent);
+    0 0 0 6px
+      color-mix(in srgb, var(--mui-palette-primary-main) 35%, transparent);
 }
 
 .pulsating-icon {
@@ -188,7 +136,7 @@
 
 .marker-cluster div {
   box-sizing: border-box;
-  background-color: var(--mui-palette-mapAccent) !important;
+  background-color: var(--mui-palette-primary-main) !important;
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
   color: #fff;
@@ -242,17 +190,42 @@
   color: var(--mui-palette-text-primary);
 }
 
-/* Hide zoom control buttons in lightbox */
-.yarl__button[aria-label*="Zoom in"],
-.yarl__button[aria-label*="Zoom out"] {
-  display: none !important;
+/* Photo viewer (yet-another-react-lightbox) in the app's surface: a white
+   gallery wall in light mode, near-black in dark mode. The wall label
+   (.viewer-label, Images.jsx) sits below the photo, so the slides leave room
+   for it. */
+.yarl__root.viewer {
+  --yarl__color_backdrop: var(--mui-palette-background-paper);
+  --yarl__color_button: var(--mui-palette-text-primary);
+  --yarl__color_button_active: var(--mui-palette-primary-main);
+  --yarl__color_button_disabled: var(--mui-palette-text-disabled);
+  --yarl__button_filter: none;
+  --yarl__counter_filter: none;
+  --yarl__counter_color: var(--mui-palette-text-secondary);
+  --yarl__slide_icon_loading_color: var(--mui-palette-text-secondary);
+  --yarl__toolbar_padding: 4px;
+  --yarl__button_padding: 10px;
+  font-family: inherit;
 }
 
-/* Maximize image space by overriding lightbox CSS variables */
-.yarl__root {
-  --yarl__carousel_padding_px: 0;
-  --yarl__carousel_padding_percent: 0;
-  --yarl__toolbar_padding: 4px;
-  --yarl__button_padding: 4px;
-  --yarl__navigation_button_padding: 8px;
+.viewer .yarl__counter {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.viewer .yarl__slide {
+  padding: 56px 0 150px;
+}
+
+/* Phones swipe; the arrows only add clutter there */
+@media (hover: none) and (pointer: coarse) {
+  .viewer .yarl__navigation_prev,
+  .viewer .yarl__navigation_next {
+    display: none;
+  }
+}
+
+/* Zoom is pinch, double-tap or scroll; no extra buttons */
+.viewer .yarl__button[aria-label*="Zoom"] {
+  display: none;
 }

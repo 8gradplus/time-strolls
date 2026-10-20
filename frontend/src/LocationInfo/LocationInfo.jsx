@@ -1,12 +1,31 @@
 import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import Podcast from "./Audio";
+import Podcasts from "./Audio";
 import DisplayImages from "./Images";
 import Sheet from "../Components/Sheet";
 import { api } from "../api";
 import { useLanguage } from "../LanguageContext";
 import { formatCoordinates } from "./coordinates";
+
+// Small caps heading with a count, e.g. "HÖREN 1" or "BILDER 70"
+const SectionLabel = ({ title, count }) => (
+  <Typography
+    variant="overline"
+    component="h3"
+    color="text.secondary"
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      px: 2.5,
+      pt: 1.5,
+      pb: 0.5,
+    }}
+  >
+    <span>{title}</span>
+    <span>{count}</span>
+  </Typography>
+);
 
 // "1910 – 1965" from the image years, or null
 const yearRange = (images) => {
@@ -44,6 +63,8 @@ const LocationInfo = (props) => {
   const info = locationInfo?.place.slug === slug ? locationInfo : null;
   const years = info && yearRange(info.images);
   const failed = !info && failedSlug === slug;
+  // The API has one podcast per place today; the panel already takes a list
+  const podcasts = info?.podcast?.url ? [info.podcast] : [];
 
   return (
     <Sheet
@@ -76,9 +97,19 @@ const LocationInfo = (props) => {
       }
     >
       {info && (
-        <Box sx={{ py: 2 }}>
-          <Podcast podcast={info.podcast} />
-          <DisplayImages images={info.images} />
+        <Box sx={{ pt: 0.5, pb: 2.5 }}>
+          {podcasts.length > 0 && (
+            <>
+              <SectionLabel title={t.audio} count={podcasts.length} />
+              <Podcasts podcasts={podcasts} />
+            </>
+          )}
+          {info.images.length > 0 && (
+            <>
+              <SectionLabel title={t.photos} count={info.images.length} />
+              <DisplayImages images={info.images} />
+            </>
+          )}
         </Box>
       )}
       {failed && (

@@ -90,8 +90,14 @@ favicon (white tile) and the README image; see `frontend/design/logo/`.
    wordmark, Jost for UI, self-hosted via `@fontsource` (bundled by Vite,
    Latin and Latin Extended loaded on demand). Merriweather is gone. Still on
    Google: the Material Symbols icon font in `index.css`.
-   The place panel is laid out as a wall label: coordinates, name, dates, a
-   round play button, then per photo the year, title and credit line.
+   The place panel is laid out as a wall label: coordinates, name, dates, then
+   "Hören" (one row per podcast, ready for several) and "Bilder" (one column,
+   the year inside each photo, no captions). Tapping a photo opens the viewer
+   in the app's light or dark surface, with a wall label below the photo
+   (year, title, credit, Topothek link); pinch or double-tap zooms. Mockups:
+   https://claude.ai/artifact/S2FeBzpxubnHXxvdJBgm63
+   One accent red (`#c8372b`) for the UI and the map in both modes; the time
+   slider shows only years.
 4. **Usability.** Touch targets and thumb reach on phones; how people discover
    the menu and the time travel; marker visibility outdoors (dots are 18 px);
    hover-only behaviour (tooltips do not work on touch); readable attribution;
