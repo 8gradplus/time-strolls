@@ -28,8 +28,8 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 |---|---|---|
 | 0 | CI basics, Vite migration, repo cleanup (ETL out) | CI and Vite done (#7). Removing the ETL waits for aerial-timeline step 6. |
 | 1 | CDN years and time selection | Done (#7) |
-| 2 | Theme, logo, mobile layout | Done (branch `theme-and-logo`, not pushed yet) |
-| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (branch `theme-and-logo`, not pushed yet) |
+| 2 | Theme, logo, mobile layout | Done (#8) |
+| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -54,15 +54,16 @@ via ground control points, step 7 enhancement layers.
 
 ---
 
-## Next: step 2b, styling polish (agreed 2026-10-20)
-All styling work, on top of step 2. One topic per session; order as listed.
+## 2b. Styling polish — done (#8)
+All styling work, on top of step 2; merged into `main` as #8 on 2026-10-20.
+Merging does not deploy: CI only checks and builds, production is deployed by
+hand with `deployment/deploy_production.sh`.
 
-**State at the end of 2026-10-20:** branch `theme-and-logo` (not pushed, no PR,
-`main` untouched). The theme lives in `frontend/src/theme.js` (MUI light/dark,
-red accent `#b8412f`, warm greys, warm browns in dark mode). The menu and the
-place panel share `Components/Sheet.jsx` (bottom sheet on phones). Places are
-plain accent-coloured dots (`.place-dot` in `index.css`). The logo is only the
-favicon (white tile) and the README image; see `frontend/design/logo/`.
+**State:** the theme lives in `frontend/src/theme.js` ("Wall label": MUI
+light/dark, one accent red `#c8372b`, neutral surfaces). The menu and the place
+panel share `Components/Sheet.jsx` (bottom sheet on phones). Places are plain
+red dots (`.place-dot` in `index.css`). The logo is only the favicon (white
+tile) and the README image; see `frontend/design/logo/`.
 
 1. **Underlying map design.** Today the base map is the stock OSM raster
    (`tile.openstreetmap.de`), whose saturated greens fight the warm theme.
@@ -82,19 +83,20 @@ favicon (white tile) and the README image; see `frontend/design/logo/`.
    aerial images (1949/1952) and the colour orthophotos (2023/2025). Check light
    and dark mode.
    **Done (2026-10-20):** everything on the map is the same in both modes (the
-   map is always light grey): `palette.mapAccent` (= the light accent) with a
-   white ring and a thin dark edge for places and clusters, a halo for the open
+   map is always light grey): the accent red with a white ring and a thin dark
+   edge for places and clusters, a halo for the open
    place, the tour line on a white casing. Leaflet's zoom buttons and
    attribution use the theme; the backdrop behind open panels is a light veil.
 3. **Fonts.** **Done (2026-10-20):** Cormorant Garamond for names and the
    wordmark, Jost for UI, self-hosted via `@fontsource` (bundled by Vite,
    Latin and Latin Extended loaded on demand). Merriweather is gone. Still on
-   Google: the Material Symbols icon font in `index.css`.
-   The place panel is laid out as a wall label: coordinates, name, dates, then
+   Google: the Material Symbols icon font in `index.css` (move it in step 3).
+   **Place panel:** laid out as a wall label: coordinates, name, dates, then
    "Hören" (one row per podcast, ready for several) and "Bilder" (one column,
    the year inside each photo, no captions). Tapping a photo opens the viewer
-   in the app's light or dark surface, with a wall label below the photo
-   (year, title, credit, Topothek link); pinch or double-tap zooms. Mockups:
+   in the app's light or dark surface; on phones the photo gets the whole
+   screen and the wall label (year, title, credit, Topothek link) lies over its
+   bottom edge, a tap leaves only the photo; pinch or double-tap zooms. Mockups:
    https://claude.ai/artifact/S2FeBzpxubnHXxvdJBgm63
    One accent red (`#c8372b`) for the UI and the map in both modes; the time
    slider shows only years.
@@ -118,16 +120,17 @@ favicon (white tile) and the README image; see `frontend/design/logo/`.
    chosen year as a red chip.
    **Done (2026-10-20):** `src/historic/TimeSlider.jsx`, variant B of
    https://claude.ai/artifact/HhvdAusywgkszurx89MmkG: the years in view as stops
-   on a line (tap or drag), the real date and sources above it, and a separate
-   "Aus" button at the end that switches the imagery off. No gap labels (the
-   user's call). The year list in the menu is gone.
+   on a line (tap or drag), only years (no months), the sources above it, and
+   a separate "Aus" button at the end that switches the imagery off. No gap
+   labels (the user's call). The year list in the menu is gone.
 
 **Open questions for the user:**
 - Home-screen/PWA icons (`logo192.png`, `logo512.png`, maskable,
   `apple-touch-icon.png`) still show the logo on a paper tile. Keep, or change?
 - `public/logo-tile.svg` and `logo-tile-dark.svg` are no longer used. Remove or
   keep as sources?
-- Push `theme-and-logo` and open a PR to `main` (deploys on merge)?
+- Still to test on a real phone: pinch zoom and tap vs. double-tap in the photo
+  viewer, dragging the time slider, the base-map relief (off on touch today).
 
 ## 1. CDN imagery (aerial-timeline manifest) — done
 Specified in `CLAUDE.md` ("Historic imagery"). Implemented in `src/historic/`:
@@ -137,8 +140,9 @@ layer until `best/` exists. Once aerial-timeline publishes `best/`, switch
 `HistoricLayers.jsx` to one layer per year.
 
 ## 2. Logo and UI design — done
-The palette and logo below were the starting plan; the result is the warm, red
-scheme in the decisions above. Places on the map are small scraps of the logo.
+The palette and logo below were the starting plan; the result is the logo and
+the "Wall label" look in the decisions above (reworked in 2b). Places on the
+map are plain red dots; the logo is only the favicon.
 
 - Take the *feel* from edward-tells, not the exact values:
   - quiet surfaces, one accent, 1 px hairlines, no shadows
