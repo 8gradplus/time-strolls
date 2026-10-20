@@ -46,30 +46,14 @@ const DisplayImages = (props) => {
 
   return (
     <>
-      {/* Image strip: swipe sideways, tap to open full screen */}
-      <Box
-        sx={{
-          display: "flex",
-          gap: 1.5,
-          overflowX: "auto",
-          scrollSnapType: "x mandatory",
-          px: 2.5,
-          pb: 1,
-          scrollPaddingInline: 20,
-        }}
-      >
+      {/* Images one below the other, tap to open full screen */}
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, px: 2.5 }}>
         {images.map((image, idx) => (
           <Box
             component="figure"
             key={`img-${idx}-${image.url}`}
             onClick={() => openLightbox(idx)}
-            sx={{
-              m: 0,
-              flex: "0 0 auto",
-              maxWidth: "85%",
-              scrollSnapAlign: "start",
-              cursor: "pointer",
-            }}
+            sx={{ m: 0, cursor: "pointer" }}
           >
             <Box
               component="img"
@@ -78,41 +62,29 @@ const DisplayImages = (props) => {
               loading="lazy"
               sx={{
                 display: "block",
-                height: 220,
-                maxWidth: "100%",
-                objectFit: "cover",
+                width: "100%",
+                height: "auto",
                 borderRadius: 1,
                 border: 1,
                 borderColor: "divider",
               }}
             />
-            <Box
-              component="figcaption"
-              // As wide as the image, not the text
-              sx={{
-                mt: 0.75,
-                fontSize: 14,
-                width: 0,
-                minWidth: "100%",
-                display: "-webkit-box",
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}
-            >
-              {image.year && (
-                <Box
-                  component="span"
-                  sx={{ fontFamily: serif, fontWeight: 700 }}
-                >
-                  {image.year}
+            {(image.year || image.title) && (
+              <Box component="figcaption" sx={{ mt: 0.75, fontSize: 14 }}>
+                {image.year && (
+                  <Box
+                    component="span"
+                    sx={{ fontFamily: serif, fontWeight: 700 }}
+                  >
+                    {image.year}
+                  </Box>
+                )}
+                {image.year && image.title && " · "}
+                <Box component="span" sx={{ color: "text.secondary" }}>
+                  {image.title}
                 </Box>
-              )}
-              {image.year && image.title && " · "}
-              <Box component="span" sx={{ color: "text.secondary" }}>
-                {image.title}
               </Box>
-            </Box>
+            )}
           </Box>
         ))}
       </Box>
