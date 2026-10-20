@@ -30,8 +30,10 @@ const YearBadge = ({ year }) => (
   </Box>
 );
 
-// Below the photo in the viewer, like a wall label: year, title, credit and
-// the source on the Topothek.
+// The viewer's wall label: year, title, credit and the source on the
+// Topothek. On phones it lies over the bottom of the photo, which gets the
+// whole screen; on large screens it sits below the photo (.viewer in
+// index.css).
 const WallLabel = ({ slide }) => {
   const { t } = useLanguage();
 
@@ -43,17 +45,13 @@ const WallLabel = ({ slide }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        // Full width with its own surface, so a zoomed photo passes under it;
-        // the text stays in a centred column of at most 680 px
-        px: "max(20px, calc((100% - 680px) / 2))",
-        pt: 1.75,
-        pb: "max(20px, env(safe-area-inset-bottom, 0px))",
+        // The text stays in a centred column of at most 680 px
+        px: "max(16px, calc((100% - 680px) / 2))",
+        pt: 1.25,
+        pb: "max(14px, env(safe-area-inset-bottom, 0px))",
         display: "grid",
-        gap: 0.5,
-        bgcolor: "background.paper",
+        gap: 0.25,
         color: "text.primary",
-        borderTop: 1,
-        borderColor: "divider",
       }}
     >
       {slide.year && (
@@ -62,7 +60,7 @@ const WallLabel = ({ slide }) => {
           sx={{
             fontFamily: serif,
             fontWeight: 600,
-            fontSize: 28,
+            fontSize: 24,
             lineHeight: 1,
           }}
         >
@@ -70,7 +68,11 @@ const WallLabel = ({ slide }) => {
         </Box>
       )}
       {slide.title && (
-        <Box component="span" sx={{ fontSize: 15, lineHeight: 1.4 }}>
+        <Box
+          component="span"
+          className="viewer-title"
+          sx={{ fontSize: 14, lineHeight: 1.4 }}
+        >
           {slide.title}
         </Box>
       )}
@@ -98,6 +100,8 @@ const DisplayImages = (props) => {
   const { t } = useLanguage();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  // A tap on the photo hides the label and buttons: only the photo is left
+  const [photoOnly, setPhotoOnly] = useState(false);
   if (!images || images.length === 0) return null;
 
   const slides = images.map((img) => ({
@@ -111,6 +115,7 @@ const DisplayImages = (props) => {
 
   const openLightbox = (index) => {
     setCurrentIndex(index);
+    setPhotoOnly(false);
     setLightboxOpen(true);
     // Full screen where the browser allows it, for the most room on phones
     const root = document.documentElement;
@@ -174,7 +179,8 @@ const DisplayImages = (props) => {
             index={currentIndex}
             slides={slides}
             plugins={[Counter, Zoom]}
-            className="viewer"
+            className={photoOnly ? "viewer photo-only" : "viewer"}
+            on={{ click: () => setPhotoOnly((only) => !only) }}
             animation={{ fade: 250, swipe: 300 }}
             carousel={{ padding: 0 }}
             zoom={{

@@ -191,9 +191,11 @@
 }
 
 /* Photo viewer (yet-another-react-lightbox) in the app's surface: a white
-   gallery wall in light mode, near-black in dark mode. The wall label
-   (.viewer-label, Images.jsx) sits below the photo, so the slides leave room
-   for it. */
+   gallery wall in light mode, near-black in dark mode. On phones the photo
+   gets the whole screen, with no borders, and the wall label (.viewer-label,
+   Images.jsx) lies over its bottom edge; on large screens the slides leave
+   room for the label below the photo. A tap on the photo (.photo-only) hides
+   the label and the buttons. */
 .yarl__root.viewer {
   --yarl__color_backdrop: var(--mui-palette-background-paper);
   --yarl__color_button: var(--mui-palette-text-primary);
@@ -214,7 +216,58 @@
 }
 
 .viewer .yarl__slide {
-  padding: 56px 0 150px;
+  padding: 0;
+}
+
+.viewer .viewer-label {
+  background: color-mix(
+    in srgb,
+    var(--mui-palette-background-paper) 88%,
+    transparent
+  );
+}
+
+/* Long titles take two lines at most over the photo */
+.viewer .viewer-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (min-width: 700px) and (hover: hover) {
+  .viewer .yarl__slide {
+    padding: 56px 0 140px;
+  }
+
+  .viewer .viewer-label {
+    background: var(--mui-palette-background-paper);
+  }
+
+  .viewer .viewer-title {
+    display: block;
+  }
+}
+
+.viewer .viewer-label,
+.viewer .yarl__toolbar,
+.viewer .yarl__counter {
+  transition: opacity 0.2s ease;
+}
+
+.viewer.photo-only .viewer-label,
+.viewer.photo-only .yarl__toolbar,
+.viewer.photo-only .yarl__counter {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewer .viewer-label,
+  .viewer .yarl__toolbar,
+  .viewer .yarl__counter {
+    transition: none;
+  }
 }
 
 /* Phones swipe; the arrows only add clutter there */
