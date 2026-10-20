@@ -17,6 +17,12 @@ docker-run:
 docker-stop:
 	docker rm -f $$(docker ps -q --filter label=time-strolls-api)
 
+lint:
+	uv run ruff check .
+
+# Same checks as CI
+check: lint test
+
 # Testing
 test:
 	uv run pytest

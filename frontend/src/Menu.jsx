@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
 import Drawer from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
-import MapIcon from "@mui/icons-material/Map";
+import HistoryIcon from "@mui/icons-material/History";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import DirectionsWalkRoundedIcon from "@mui/icons-material/DirectionsWalkRounded";
 import Button from "./Components/Button";
@@ -10,6 +10,7 @@ import { api } from "./api";
 import { Radio } from "@mui/material";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
 import { useLanguage } from "./LanguageContext";
+import { yearLabel } from "./historic/manifest";
 
 // Styling should go to css or theming (tailwind, mui)
 const menuButtonStyle = {
@@ -92,6 +93,35 @@ const ClickableBox = ({ checked, onClick, children }) => {
   );
 };
 
+// One row per year: the real acquisition date(s), then the sources.
+const YearItem = ({ time, checked, onClick }) => {
+  const { language, t } = useLanguage();
+  const flags = [
+    time.layers.some((l) => l.enhanced) && t.enhanced,
+    time.layers.some((l) => l.ai_generated) && t.aiGenerated,
+  ].filter(Boolean);
+
+  return (
+    <ClickableBox checked={checked} onClick={onClick}>
+      <IconBorder>
+        <HistoryIcon sx={{ fontSize: 25 }} />
+      </IconBorder>
+      <Box sx={{ flexGrow: 1 }}>
+        <Box>{yearLabel(time, language)}</Box>
+        <Box sx={{ fontSize: 12, color: "text.secondary" }}>
+          {time.layers.map((l) => l.title).join(" · ")}
+        </Box>
+        {flags.length > 0 && (
+          <Box sx={{ fontSize: 12, color: "warning.dark" }}>
+            {flags.join(" · ")}
+          </Box>
+        )}
+      </Box>
+      <Radio checked={checked} />
+    </ClickableBox>
+  );
+};
+
 const langLabels = { de: "De", cz: "Cz", en: "En" };
 
 const LanguageSwitch = () => {
@@ -118,9 +148,15 @@ const LanguageSwitch = () => {
           {i < options.length - 1 && (
             <Box
               component="span"
-              sx={{ mx: 0.5, color: "grey.400", fontSize: 14, userSelect: "none" }}
+              sx={{
+                mx: 0.5,
+                color: "grey.400",
+                fontSize: 14,
+                userSelect: "none",
+              }}
             >
-              {"|"}            </Box>
+              {"|"}{" "}
+            </Box>
           )}
         </Box>
       ))}
@@ -129,7 +165,7 @@ const LanguageSwitch = () => {
 };
 
 const Menu = (props) => {
-  const { onItemClick, itemState } = props;
+  const { onItemClick, itemState, years, times } = props;
   const [open, setOpen] = useState(false);
   const [tours, setTours] = useState([]);
   const { t } = useLanguage();
@@ -184,19 +220,28 @@ const Menu = (props) => {
             </Box>
           </Box>
 
+          {/* Historic aerial imagery */}
+          <Box sx={sectionBoxStyle}>
+            <Box sx={{ fontWeight: 500 }}>{t.historicImagery}</Box>
+            {years.length === 0 && (
+              <Box sx={{ fontSize: 14, color: "text.secondary" }}>
+                {t.noImageryInView}
+              </Box>
+            )}
+            {years.map((year) => (
+              <YearItem
+                key={year}
+                time={times[year]}
+                checked={itemState.year === year}
+                onClick={() =>
+                  onItemClick("year")(itemState.year === year ? null : year)
+                }
+              />
+            ))}
+          </Box>
+
           {/* Layer menu */}
           <Box sx={sectionBoxStyle}>
-            <ClickableBox
-              checked={itemState.showHistoricMap}
-              onClick={onItemClick("showHistoricMap")}
-            >
-              <IconBorder>
-                <MapIcon sx={{ fontSize: 25 }} />
-              </IconBorder>
-              <Box sx={{ flexGrow: 1 }}>{t.showMap1945}</Box>
-              <Radio checked={itemState.showHistoricMap} />
-            </ClickableBox>
-
             <ClickableBox
               checked={itemState.showMarkers}
               onClick={onItemClick("showMarkers")}

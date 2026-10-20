@@ -40,7 +40,7 @@ async def delete_podcast(id: int):
         session.commit()
     try:
         await cdn.delete(podcast.path)
-    except:
+    except Exception:
         raise HTTPException(status_code=404, detail=f"Could not delete podcast {podcast.id} (title: {podcast.title}) on cdn")
     return {f"Deleted podcast {id}": True}
 
@@ -87,7 +87,7 @@ async def upload_podcast(
     path = f'{config.cdn.path.podcast}/{str(uuid.uuid4())}.mp3'
     try:
         await cdn.write(file.file, path, file.content_type)
-    except:
+    except Exception:
         raise HTTPException(status_code=404, detail=f"Could not upload file {file.filename} to cdn")
 
     db_podcast = Podcast(

@@ -3,12 +3,25 @@ install:
 
 build: install
 	rm -rf build/
-	npm run build --if-present
+	npm run build
 
 run:
 	npm start
 
-docker-build: build
+test:
+	npx vitest run
+
+format:
+	npm run format
+
+# Same checks as CI
+check:
+	npm run format:check
+	npx vitest run
+	npm run build
+
+# The Dockerfile builds the app itself
+docker-build:
 	docker build -t time-strolls .
 
 docker-run:

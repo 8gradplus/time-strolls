@@ -36,7 +36,7 @@ async def delete_image(id: int):
     if image.path:
         try:
             await cdn.delete(image.path)
-        except:
+        except Exception:
             raise HTTPException(status_code=404, detail=f"Could not delete image {image.title} (title: {image.title}) on cdn")
     return {f"Deleted Image {id}": True}
 
@@ -57,7 +57,7 @@ def patch_podcast(id: int, image: ImageUpdate):
 async def post_topothek_document(image: ImageCreate):
     try:
         topothek_image = await crawl_document_async(image.url)
-    except:
+    except Exception:
             raise HTTPException(status_code=404, detail=f"Could not parse topothek document {image.url}.")
     db_image = Image(**dict(topothek_image, place_id=image.place_id, created_at=dt.utcnow()))
     with Session(engine) as session:

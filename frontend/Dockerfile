@@ -1,25 +1,13 @@
 # Build stage
-FROM node:16-slim AS builder
+FROM node:24-slim AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
-RUN npm run build --if-present
+RUN npm run build
 
-# Production stage
-# Production stage
-FROM node:16-slim AS runner
-WORKDIR /app
-
-# Only install production dependencies
-COPY package*.json ./
-RUN npm install --omit=dev
-
-# Copy built output from builder
-COPY --from=builder /app/build ./build
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/src ./src
-
-
+# Serve the static build on :3000; the outer Caddy proxies to it.
+FROM caddy:2-alpine
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY --from=builder /app/build /srv
 EXPOSE 3000
-CMD ["npm", "start"]

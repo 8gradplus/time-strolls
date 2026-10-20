@@ -4,17 +4,26 @@ const LanguageContext = createContext();
 
 const translations = {
   de: {
-    showMap1945: "Karte 1945 anzeigen",
+    historicImagery: "Historische Luftbilder",
+    noImageryInView: "Keine Luftbilder in diesem Kartenausschnitt",
+    enhanced: "Nachbearbeitet",
+    aiGenerated: "KI-generiert",
     showLocations: "Orte anzeigen",
     withSupportFrom: "Mit Unterstützung von",
   },
   cz: {
-    showMap1945: "Zobrazit mapu 1945",
+    historicImagery: "Historické letecké snímky",
+    noImageryInView: "V tomto výřezu mapy nejsou žádné letecké snímky",
+    enhanced: "Upraveno",
+    aiGenerated: "Vytvořeno umělou inteligencí",
     showLocations: "Zobrazit místa",
     withSupportFrom: "S podporou",
   },
   en: {
-    showMap1945: "Show Map 1945",
+    historicImagery: "Historic aerial imagery",
+    noImageryInView: "No aerial imagery in this map view",
+    enhanced: "Enhanced",
+    aiGenerated: "AI-generated",
     showLocations: "Show locations",
     withSupportFrom: "With support from",
   },

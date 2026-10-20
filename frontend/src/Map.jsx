@@ -9,20 +9,22 @@ import { api } from "./api";
 import Tour from "./Tours/Tour";
 import TrackControl from "./Track/TrackControl";
 import Track from "./Track/Track";
+import HistoricLayers, { ViewBounds } from "./historic/HistoricLayers";
+import { useManifest } from "./historic/useManifest";
+import {
+  MAX_ZOOM,
+  REGION_BOUNDS,
+  legacyHistoricYear,
+  yearsInBounds,
+} from "./historic/manifest";
 
 const fallbackCenter = [48.629371, 14.079059];
-
-const HistoricMap = (props) => {
-  const { open } = props;
-  if (!open) return null;
-  const url =
-    "https://debtray.fra1.cdn.digitaloceanspaces.com/test/timestrolls/tiles/1945/{z}/{x}/{y}.png";
-  return <TileLayer url={url} attribution="1945" noWrap={true} />;
-};
 
 const CoordinateMap = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [locations, setLocations] = useState(null);
+  const manifest = useManifest();
+  const [viewBounds, setViewBounds] = useState(REGION_BOUNDS);
 
   // Derive state from URL - single source of truth
   const locationSlug = searchParams.get("location");
@@ -30,9 +32,17 @@ const CoordinateMap = () => {
   const tourId = tourIdParam ? parseInt(tourIdParam, 10) : null;
   const showInfo = !!locationSlug;
 
-  // Layer visibility from URL (default to true for markers, false for historic map)
+  // Layer visibility from URL (default to true for markers, no historic year)
   const showMarkers = searchParams.get("markers") !== "false";
-  const showHistoricMap = searchParams.get("historic") === "true";
+  const year = searchParams.get("year");
+  const legacyHistoric = searchParams.get("historic") === "true";
+
+  // Years offered in the menu: those in view, plus the selected one
+  const yearsInView = yearsInBounds(manifest, viewBounds);
+  const years =
+    year && manifest?.times[year] && !yearsInView.includes(year)
+      ? [...yearsInView, year].sort()
+      : yearsInView;
 
   // Tracking mode from URL (default: "area")
   const trackingMode = searchParams.get("track") || "area";
@@ -50,6 +60,22 @@ const CoordinateMap = () => {
       .catch((error) => console.error("Error fetching places:", error));
   }, []);
 
+  // Old deep links used historic=true (1945 overlay); map them to a manifest year
+  useEffect(() => {
+    if (!legacyHistoric || !manifest) return;
+    const legacyYear = legacyHistoricYear(manifest);
+    setSearchParams(
+      (params) => {
+        params.delete("historic");
+        if (legacyYear && !params.has("year")) {
+          params.set("year", legacyYear);
+        }
+        return params;
+      },
+      { replace: true },
+    );
+  }, [legacyHistoric, manifest, setSearchParams]);
+
   const handleInfoClose = () => {
     setSearchParams((params) => {
       params.delete("location");
@@ -58,13 +84,13 @@ const CoordinateMap = () => {
   };
 
   const handleMenuItemClick = (item) => {
-    if (item === "showHistoricMap") {
-      return () => {
+    if (item === "year") {
+      return (newYear) => {
         setSearchParams((params) => {
-          if (showHistoricMap) {
-            params.delete("historic");
+          if (newYear) {
+            params.set("year", newYear);
           } else {
-            params.set("historic", "true");
+            params.delete("year");
           }
           return params;
         });
@@ -116,13 +142,17 @@ const CoordinateMap = () => {
       <MapContainer
         center={fallbackCenter} // Will be overwritten by track upon location found
         zoom={14}
+        maxZoom={MAX_ZOOM}
         style={{ height: "100vh", width: "100%" }}
       >
         <TileLayer
           url="https://tile.openstreetmap.de/{z}/{x}/{y}.png"
-          attribution="Timestrolls"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          maxNativeZoom={18}
+          maxZoom={MAX_ZOOM}
         />
-        <HistoricMap open={showHistoricMap} />
+        <HistoricLayers time={manifest?.times[year]} year={year} />
+        <ViewBounds onChange={setViewBounds} />
         <Track
           trackingMode={trackingMode}
           fallbackCenter={fallbackCenter}
@@ -159,8 +189,10 @@ const CoordinateMap = () => {
       </MapContainer>
       <Menu
         onItemClick={handleMenuItemClick}
+        years={years}
+        times={manifest?.times}
         itemState={{
-          showHistoricMap: showHistoricMap,
+          year: year,
           showMarkers: showMarkers,
           tourId: tourId,
         }}
