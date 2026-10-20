@@ -1,3 +1,5 @@
+<img src="frontend/public/logo.svg" alt="Time Strolls logo" width="140" />
+
 # API Documentation
 Comes with fastapi and is available under
 

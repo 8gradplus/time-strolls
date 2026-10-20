@@ -19,8 +19,8 @@ files = {
     "logo.svg": svg(mark),
     "logo-tile.svg": svg(f'<rect width="64" height="64" rx="15" fill="{PAPER}"/>' + mark),
     "logo-tile-dark.svg": svg(f'<rect width="64" height="64" rx="15" fill="{CLAY}"/>' + mark),
-    "favicon.svg": svg(f'<rect class="t" width="64" height="64" rx="14" fill="{PAPER}"/>' + scaled(1.12),
-                       f"<style>@media (prefers-color-scheme: dark) {{ .t {{ fill: {CLAY}; }} }}</style>"),
+    # Browser tab: always on a white tile, in light and dark browsers alike
+    "favicon.svg": svg('<rect width="64" height="64" rx="14" fill="#ffffff"/>' + scaled(1.12)),
     "square-maskable.svg": svg(f'<rect width="64" height="64" fill="{PAPER}"/>' + scaled(0.78)),
     "square-apple.svg": svg(f'<rect width="64" height="64" fill="{PAPER}"/>' + scaled(0.95)),
 }
