@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const LanguageContext = createContext();
 
@@ -62,12 +62,51 @@ const translations = {
   },
 };
 
+const STORAGE_KEY = "language";
+
+// The language picked earlier on this device, else the device's own language
+// if we have it (Czech is "cs" there, "cz" here), else German.
+export const initialLanguage = (stored, deviceLanguages = []) => {
+  if (stored in translations) return stored;
+  for (const tag of deviceLanguages) {
+    const code = tag.toLowerCase().split("-")[0];
+    if (code === "cs") return "cz";
+    if (code in translations) return code;
+  }
+  return "de";
+};
+
+const readStored = () => {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+};
+
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState("de");
+  const [language, setLanguage] = useState(() =>
+    initialLanguage(readStored(), navigator.languages),
+  );
   const t = translations[language];
 
+  useEffect(() => {
+    document.documentElement.lang = language === "cz" ? "cs" : language;
+  }, [language]);
+
+  const chooseLanguage = (lang) => {
+    setLanguage(lang);
+    try {
+      localStorage.setItem(STORAGE_KEY, lang);
+    } catch {
+      // Private mode: the choice lasts for this visit only
+    }
+  };
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider
+      value={{ language, setLanguage: chooseLanguage, t }}
+    >
       {children}
     </LanguageContext.Provider>
   );

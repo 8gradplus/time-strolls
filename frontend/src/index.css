@@ -112,17 +112,31 @@
    base map is always light grey: the map accent with a white ring and a thin
    dark edge, so they read on the grey map, the grey 1949/1952 aerials and the
    colour orthophotos alike. */
+.place-marker {
+  display: grid;
+  place-items: center;
+}
+
 .place-dot {
   display: block;
   box-sizing: border-box;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--mui-palette-mapAccent);
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease;
+}
+
+.place-marker:hover .place-dot {
+  transform: scale(1.25);
 }
 
 /* The place whose panel is open */
 .place-dot.active {
+  width: 24px;
+  height: 24px;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.35),
     0 0 0 6px color-mix(in srgb, var(--mui-palette-mapAccent) 35%, transparent);
@@ -185,6 +199,13 @@
 
 .marker-cluster span {
   line-height: 26px;
+}
+
+/* On touch screens people pinch to zoom, so the buttons only add clutter */
+@media (hover: none) and (pointer: coarse) {
+  .leaflet-control-zoom {
+    display: none;
+  }
 }
 
 /* Leaflet's zoom buttons and attribution in the theme: paper surface,

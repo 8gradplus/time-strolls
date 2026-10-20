@@ -26,16 +26,18 @@ export const GoogleMaterialIcon = ({
 };
 
 // A place: one plain dot in the map accent with a white ring (.place-dot in
-// index.css); the open place gets a halo.
-export const placeIcon = (size = 18, active = false) => {
-  const center = size / 2;
+// index.css), inside a larger transparent area that is easy to tap. The open
+// place gets a halo.
+const PLACE_TAP_SIZE = 44;
+
+export const placeIcon = (active = false) => {
   const className = active ? "place-dot active" : "place-dot";
 
   return L.divIcon({
-    html: `<span class="${className}" style="width:${size}px;height:${size}px"></span>`,
-    className: "",
-    iconSize: [size, size],
-    iconAnchor: [center, center],
+    html: `<span class="${className}"></span>`,
+    className: "place-marker",
+    iconSize: [PLACE_TAP_SIZE, PLACE_TAP_SIZE],
+    iconAnchor: [PLACE_TAP_SIZE / 2, PLACE_TAP_SIZE / 2],
   });
 };
 
