@@ -29,7 +29,7 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 | 0 | CI basics, Vite migration, repo cleanup (ETL out) | CI and Vite done (#7). Removing the ETL waits for aerial-timeline step 6. |
 | 1 | CDN years and time selection | Done (#7) |
 | 2 | Theme, logo, mobile layout | Done (branch `theme-and-logo`, not pushed yet) |
-| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | In progress: 1 (base map) done; Wall label theme, fonts and light/dark switch done; next: place panel as a wall label, then 2 (colours on the map) |
+| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | In progress: 1 (base map) done; Wall label theme, fonts, light/dark switch and the place panel as a wall label done; next: 2 (colours on the map) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -85,8 +85,8 @@ favicon (white tile) and the README image; see `frontend/design/logo/`.
    wordmark, Jost for UI, self-hosted via `@fontsource` (bundled by Vite,
    Latin and Latin Extended loaded on demand). Merriweather is gone. Still on
    Google: the Material Symbols icon font in `index.css`.
-   **Next:** the place panel as a wall label, as in the mockup: name, dates,
-   audio, then per photo the year, title and a credit line (`owner`).
+   The place panel is laid out as a wall label: coordinates, name, dates, a
+   round play button, then per photo the year, title and credit line.
 4. **Usability.** Touch targets and thumb reach on phones; how people discover
    the menu and the time travel; marker visibility outdoors (dots are 18 px);
    hover-only behaviour (tooltips do not work on touch); readable attribution;

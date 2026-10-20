@@ -5,6 +5,7 @@ import Podcast from "./Audio";
 import DisplayImages from "./Images";
 import Sheet from "../Components/Sheet";
 import { api } from "../api";
+import { formatCoordinates } from "./coordinates";
 
 // "1910 – 1965" from the image years, or null
 const yearRange = (images) => {
@@ -44,10 +45,22 @@ const LocationInfo = (props) => {
       loading={!info}
       header={
         info && (
+          // Like a museum wall label: where, what, when
           <>
+            <Typography
+              variant="overline"
+              component="p"
+              color="text.secondary"
+              sx={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatCoordinates(info.place.lat, info.place.lon)}
+            </Typography>
             <Typography variant="h1">{info.place.name}</Typography>
             {years && (
-              <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+              <Typography
+                color="text.secondary"
+                sx={{ mt: 0.5, fontVariantNumeric: "tabular-nums" }}
+              >
                 {years}
               </Typography>
             )}

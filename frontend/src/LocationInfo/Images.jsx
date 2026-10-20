@@ -5,9 +5,11 @@ import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/counter.css";
 import Counter from "yet-another-react-lightbox/plugins/counter";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import { useLanguage } from "../LanguageContext";
 
 const DisplayImages = (props) => {
   const { images } = props;
+  const { t } = useLanguage();
 
   // Image carroussel
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -68,22 +70,34 @@ const DisplayImages = (props) => {
                 borderColor: "divider",
               }}
             />
-            {(image.year || image.title) && (
-              <Box component="figcaption" sx={{ mt: 0.75, fontSize: 14 }}>
-                {image.year && (
-                  <Box
-                    component="span"
-                    sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}
-                  >
-                    {image.year}
-                  </Box>
-                )}
-                {image.year && image.title && " · "}
-                <Box component="span" sx={{ color: "text.secondary" }}>
-                  {image.title}
+            {/* Caption like a museum label: year, title, credit line */}
+            <Box
+              component="figcaption"
+              sx={{ mt: 1, display: "grid", gap: 0.25, fontSize: 14 }}
+            >
+              {image.year && (
+                <Box
+                  component="span"
+                  sx={{
+                    typography: "overline",
+                    lineHeight: 1.6,
+                    color: "text.secondary",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {image.year}
                 </Box>
-              </Box>
-            )}
+              )}
+              {image.title && <span>{image.title}</span>}
+              {image.owner && (
+                <Box
+                  component="span"
+                  sx={{ fontSize: 12, color: "text.secondary" }}
+                >
+                  {t.photo}: {image.owner}
+                </Box>
+              )}
+            </Box>
           </Box>
         ))}
       </Box>

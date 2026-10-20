@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import { useLanguage } from "../LanguageContext";
@@ -23,14 +23,35 @@ const Podcast = (props) => {
   return (
     <Box sx={{ px: 2.5, pb: 2 }}>
       {!isExpanded ? (
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<PlayArrowRoundedIcon />}
+        // A round play button with its label, like an audio-guide stop
+        <Box
+          component="button"
           onClick={() => setIsExpanded(true)}
+          sx={{
+            all: "unset",
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            cursor: "pointer",
+            fontWeight: 500,
+            "&:focus-visible": { outline: 2, outlineOffset: 4 },
+          }}
         >
+          <IconButton
+            component="span"
+            tabIndex={-1}
+            sx={{
+              width: 48,
+              height: 48,
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
+              "&:hover": { bgcolor: "primary.dark" },
+            }}
+          >
+            <PlayArrowRoundedIcon />
+          </IconButton>
           {t.listen}
-        </Button>
+        </Box>
       ) : (
         <audio
           controls
