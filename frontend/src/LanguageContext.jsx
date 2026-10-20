@@ -4,7 +4,9 @@ const LanguageContext = createContext();
 
 const translations = {
   de: {
-    historicImagery: "Historische Luftbilder",
+    timeTravel: "Zeitreise durch historische Luftbilder",
+    off: "Aus",
+    imageryOff: "Ohne Luftbild",
     noImageryInView: "Keine Luftbilder in diesem Kartenausschnitt",
     enhanced: "Nachbearbeitet",
     aiGenerated: "KI-generiert",
@@ -23,7 +25,9 @@ const translations = {
     modeDark: "Dunkel",
   },
   cz: {
-    historicImagery: "Historické letecké snímky",
+    timeTravel: "Cesta časem po historických leteckých snímcích",
+    off: "Vyp.",
+    imageryOff: "Bez leteckého snímku",
     noImageryInView: "V tomto výřezu mapy nejsou žádné letecké snímky",
     enhanced: "Upraveno",
     aiGenerated: "Vytvořeno umělou inteligencí",
@@ -42,7 +46,9 @@ const translations = {
     modeDark: "Tmavý",
   },
   en: {
-    historicImagery: "Historic aerial imagery",
+    timeTravel: "Time travel through historic aerial imagery",
+    off: "Off",
+    imageryOff: "No aerial imagery",
     noImageryInView: "No aerial imagery in this map view",
     enhanced: "Enhanced",
     aiGenerated: "AI-generated",

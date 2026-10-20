@@ -10,6 +10,7 @@ import Tour from "./Tours/Tour";
 import TrackControl from "./Track/TrackControl";
 import Track from "./Track/Track";
 import HistoricLayers, { ViewBounds } from "./historic/HistoricLayers";
+import TimeSlider from "./historic/TimeSlider";
 import { useManifest } from "./historic/useManifest";
 import {
   MAX_ZOOM,
@@ -37,7 +38,7 @@ const CoordinateMap = () => {
   const year = searchParams.get("year");
   const legacyHistoric = searchParams.get("historic") === "true";
 
-  // Years offered in the menu: those in view, plus the selected one
+  // Years offered on the time slider: those in view, plus the selected one
   const yearsInView = yearsInBounds(manifest, viewBounds);
   const years =
     year && manifest?.times[year] && !yearsInView.includes(year)
@@ -191,13 +192,17 @@ const CoordinateMap = () => {
       </MapContainer>
       <Menu
         onItemClick={handleMenuItemClick}
-        years={years}
-        times={manifest?.times}
         itemState={{
           year: year,
           showMarkers: showMarkers,
           tourId: tourId,
         }}
+      />
+      <TimeSlider
+        years={years}
+        times={manifest?.times}
+        year={year}
+        onChange={handleMenuItemClick("year")}
       />
       <TrackControl
         mode={trackingMode}

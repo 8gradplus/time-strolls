@@ -29,7 +29,7 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 | 0 | CI basics, Vite migration, repo cleanup (ETL out) | CI and Vite done (#7). Removing the ETL waits for aerial-timeline step 6. |
 | 1 | CDN years and time selection | Done (#7) |
 | 2 | Theme, logo, mobile layout | Done (branch `theme-and-logo`, not pushed yet) |
-| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | In progress: 1 (base map) done; Wall label theme, fonts, light/dark switch and the place panel as a wall label done; 2 (colours on the map) done; 4 (usability) partly done; next: 5 (time slider) |
+| 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | In progress: 1 (base map) done; Wall label theme, fonts, light/dark switch and the place panel as a wall label done; 2 (colours on the map) done; 4 (usability) partly done; 5 (time slider) done. Open: the rest of 4 |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -109,6 +109,11 @@ favicon (white tile) and the README image; see `frontend/design/logo/`.
    truth. Keep the real date labels (`yearLabel`), the enhanced/AI flags and the
    attribution. Mockup idea: a compact strip at the bottom of the map with the
    chosen year as a red chip.
+   **Done (2026-10-20):** `src/historic/TimeSlider.jsx`, variant B of
+   https://claude.ai/artifact/HhvdAusywgkszurx89MmkG: the years in view as stops
+   on a line (tap or drag), the real date and sources above it, and a separate
+   "Aus" button at the end that switches the imagery off. No gap labels (the
+   user's call). The year list in the menu is gone.
 
 **Open questions for the user:**
 - Home-screen/PWA icons (`logo192.png`, `logo512.png`, maskable,

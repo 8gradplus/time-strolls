@@ -12,14 +12,12 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { useColorScheme } from "@mui/material/styles";
 import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
-import HistoryIcon from "@mui/icons-material/History";
 import DirectionsWalkRoundedIcon from "@mui/icons-material/DirectionsWalkRounded";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
 import Button from "./Components/Button";
 import Sheet from "./Components/Sheet";
 import { api } from "./api";
 import { useLanguage } from "./LanguageContext";
-import { yearLabel } from "./historic/manifest";
 import { serif } from "./theme";
 
 const menuButtonStyle = {
@@ -45,40 +43,6 @@ const Section = ({ title, children }) => (
     {children}
   </List>
 );
-
-// One row per year: the real acquisition date(s), then the sources.
-const YearItem = ({ time, checked, onClick }) => {
-  const { language, t } = useLanguage();
-  const flags = [
-    time.layers.some((l) => l.enhanced) && t.enhanced,
-    time.layers.some((l) => l.ai_generated) && t.aiGenerated,
-  ].filter(Boolean);
-
-  return (
-    <ListItemButton selected={checked} onClick={onClick}>
-      <ListItemIcon sx={{ minWidth: 36 }}>
-        <HistoryIcon />
-      </ListItemIcon>
-      <ListItemText
-        primary={yearLabel(time, language)}
-        secondary={
-          <>
-            {time.layers.map((l) => l.title).join(" · ")}
-            {flags.length > 0 && (
-              <Box
-                component="span"
-                sx={{ display: "block", color: "warning.main" }}
-              >
-                {flags.join(" · ")}
-              </Box>
-            )}
-          </>
-        }
-      />
-      <Radio checked={checked} edge="end" tabIndex={-1} />
-    </ListItemButton>
-  );
-};
 
 const langLabels = { de: "De", cz: "Cz", en: "En" };
 
@@ -131,7 +95,7 @@ const AppearanceSwitch = () => {
 };
 
 const Menu = (props) => {
-  const { onItemClick, itemState, years, times } = props;
+  const { onItemClick, itemState } = props;
   const [open, setOpen] = useState(false);
   const [tours, setTours] = useState([]);
   const { t } = useLanguage();
@@ -175,25 +139,6 @@ const Menu = (props) => {
           </>
         }
       >
-        {/* Historic aerial imagery */}
-        <Section title={t.historicImagery}>
-          {years.length === 0 && (
-            <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
-              {t.noImageryInView}
-            </Typography>
-          )}
-          {years.map((year) => (
-            <YearItem
-              key={year}
-              time={times[year]}
-              checked={itemState.year === year}
-              onClick={() =>
-                onItemClick("year")(itemState.year === year ? null : year)
-              }
-            />
-          ))}
-        </Section>
-
         {/* Layer menu */}
         <Section title={t.map}>
           <ListItemButton onClick={onItemClick("showMarkers")}>
