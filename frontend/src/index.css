@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Merriweather&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap");
 /* Import Google Material Symbols font - Specify names  (in alphabetical order!) at end of url*/
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=assistant_navigation,location_searching,map,my_location");
 
@@ -85,6 +85,11 @@
 .middot {
   padding: 0 4px;
   font-weight: bold;
+}
+
+.place-scrap {
+  display: block;
+  filter: drop-shadow(0 1px 1.5px rgba(43, 39, 36, 0.35));
 }
 
 .pulsating-icon {

@@ -25,20 +25,13 @@ export const GoogleMaterialIcon = ({
   );
 };
 
-export const placeIcon = (color = "gray", haloColor = "yellow", size = 30) => {
+// A place is a small scrap of the logo, turned by `rotation` degrees so
+// neighbouring places don't look stamped.
+export const scrapIcon = (size = 30, rotation = 0) => {
   const center = size / 2;
-  const outerRadius = size * 0.46875;
-  const haloRadius = size * 0.32; // ~10 for default 32
-  const coreRadius = size * 0.11; // ~5 for default 32
 
   return L.divIcon({
-    html: `
-      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="${center}" cy="${center}" r="${outerRadius}" fill="${color}" stroke="black" stroke-width="0.2" />
-        <circle cx="${center}" cy="${center}" r="${haloRadius}" fill="${haloColor}" />
-        <circle cx="${center}" cy="${center}" r="${coreRadius}" fill="${color}" />
-      </svg>
-    `,
+    html: `<img src="/logo.svg" alt="" width="${size}" height="${size}" class="place-scrap" style="transform: rotate(${rotation}deg)" />`,
     className: "",
     iconSize: [size, size],
     iconAnchor: [center, center],

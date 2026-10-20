@@ -1,25 +1,27 @@
 import { createTheme } from "@mui/material/styles";
 
-// Outdoor-museum look: warm paper surfaces, one forest-green accent,
-// 1 px hairlines instead of shadows, a serif only for place names.
+// Outdoor-museum look, taken from the logo (public/logo.svg): warm paper and
+// grey surfaces, one red accent, 1 px hairlines instead of shadows, a serif
+// only for place names. Dark mode uses warm browns (the logo's clay tile is
+// #6b5a4e), never black.
 export const tokens = {
   light: {
-    accent: "#2f7a60",
-    accentSoft: "#dfeae2",
-    paper: "#fbf8f1",
-    surface: "#f3eee3",
-    text: "#2b2a26",
-    textMuted: "#6b665c",
-    hairline: "rgba(43, 42, 38, 0.14)",
+    accent: "#b8412f",
+    accentSoft: "#f3ddd6",
+    paper: "#faf7f3",
+    surface: "#efe9e3",
+    text: "#2b2724",
+    textMuted: "#7a716a",
+    hairline: "rgba(43, 39, 36, 0.13)",
   },
   dark: {
-    accent: "#6dbb9a",
-    accentSoft: "#26372f",
-    paper: "#1f211d",
-    surface: "#181a17",
-    text: "#ece8de",
-    textMuted: "#a8a395",
-    hairline: "rgba(236, 232, 222, 0.14)",
+    accent: "#e2705b",
+    accentSoft: "#4a302a",
+    paper: "#2e2723",
+    surface: "#25201d",
+    text: "#efe8e1",
+    textMuted: "#a99f97",
+    hairline: "rgba(239, 232, 225, 0.13)",
   },
 };
 

@@ -12,6 +12,9 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 - Offline base map: our own PMTiles vector map, rendered with MapLibre.
 - App: a PWA first, then Capacitor for Android.
 - Order: the foundation comes first (CI, Vite, removing the ETL).
+- Logo (2026-10-20): a circle torn by hand from paper painted in Rothko-like
+  fields (grey, red, ochre), cut clean. Warm theme: red accent `#b8412f`, warm
+  greys; dark mode in warm browns (clay `#6b5a4e` for the dark tile), never black.
 
 ## Status
 
@@ -19,7 +22,7 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 |---|---|---|
 | 0 | CI basics, Vite migration, repo cleanup (ETL out) | CI and Vite done (#7). Removing the ETL waits for aerial-timeline step 6. |
 | 1 | CDN years and time selection | Done (#7) |
-| 2 | Theme, logo, mobile layout | **In progress** |
+| 2 | Theme, logo, mobile layout | Done (branch `theme-and-logo`) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -50,7 +53,10 @@ manifest year in the region (1945 once it is published), one `TileLayer` per
 layer until `best/` exists. Once aerial-timeline publishes `best/`, switch
 `HistoricLayers.jsx` to one layer per year.
 
-## 2. Logo and UI design
+## 2. Logo and UI design — done
+The palette and logo below were the starting plan; the result is the warm, red
+scheme in the decisions above. Places on the map are small scraps of the logo.
+
 - Take the *feel* from edward-tells, not the exact values:
   - quiet surfaces, one accent, 1 px hairlines, no shadows
   - system font stack, list rows instead of tables

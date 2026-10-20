@@ -19,6 +19,8 @@ const LocationMarkers = (props) => {
           lat={location.lat}
           lon={location.lon}
           label={location.name}
+          // A stable, scattered angle per place
+          rotation={((location.id || idx) * 137) % 360}
           onClick={onClick(location.id)}
         />
       ))}
