@@ -20,6 +20,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
+          # Same as the Docker image; pyarrow (via swak) has no wheels for newer versions yet
+          python-version: "3.13"
           enable-cache: true
       - name: Install
         run: uv sync --extra test
