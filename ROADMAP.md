@@ -31,24 +31,21 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   the same build later.
 
 ## Next session (state on 2026-10-21)
-Step 2c is done on branch `calm-map`, with a PR to `main` (PR_PLACEHOLDER).
-It holds the calm map, `best` tiles per year, the dock and menu redesign
-(wordmark with the logo as its point, folding dock, √2 menu sheet, drawn
+Step 2c is done and merged into `main` (#9, squash, 2026-10-21). It holds
+the calm map, `best` tiles per year, the dock and menu redesign (wordmark with the logo as its point, folding dock, √2 menu sheet, drawn
 icons), the podcast player with the mini player, and English as the fallback
 language. Details are in "2c. Calm map" below.
-1. **Merge the PR** once the user has looked at it; then set 2c to done in
-   the status table.
-2. **Test on a real phone** (not possible in the desktop browser): dragging
+1. **Test on a real phone** (not possible in the desktop browser): dragging
    the time line in the dock, the folded pill and the menu sheet above the
    home indicator, audio with the screen locked, the lock-screen and
    headphone controls (Media Session), resuming an episode the next day.
-3. **Open points:** place names next to the dots from zoom 15 on (keep or
+2. **Open points:** place names next to the dots from zoom 15 on (keep or
    hide); the about text is a first draft; the Czech UI strings (player,
    dock) should be checked by a native speaker; in a desktop window narrower
    than ~360 px the zoom pill squeezes the years (accepted for now).
-4. Then go on in the agreed order: 4 release workflow, 5 admin, 3 offline
+3. Then go on in the agreed order: 4 release workflow, 5 admin, 3 offline
    PWA, 6 Android.
-5. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
+4. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
    wildcards after every upload (see `CLAUDE.md`, "CDN caching"); widening a
    region re-renders tiles under the same URLs.
 
@@ -60,7 +57,7 @@ language. Details are in "2c. Calm map" below.
 | 1 | CDN years and time selection | Done (#7) |
 | 2 | Theme, logo, mobile layout | Done (#8) |
 | 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
-| 2c | Calm map: only map and time line, the rest in the menu | PR open (PR_PLACEHOLDER); see "Next session" |
+| 2c | Calm map: only map and time line, the rest in the menu | Done (#9) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
