@@ -149,45 +149,36 @@
   line-height: 26px;
 }
 
-/* On touch screens people pinch to zoom, so the buttons only add clutter */
-@media (hover: none) and (pointer: coarse) {
-  .leaflet-control-zoom {
-    display: none;
-  }
-}
-
-/* Leaflet's zoom buttons and attribution in the theme: paper surface,
-   hairline, no shadow */
-.leaflet-bar {
-  border: 1px solid var(--mui-palette-divider) !important;
-  border-radius: 4px !important;
-  box-shadow: none !important;
-  overflow: hidden;
-}
-
-.leaflet-bar a {
-  background: var(--mui-palette-background-paper);
-  color: var(--mui-palette-text-primary);
-  border-bottom-color: var(--mui-palette-divider);
-}
-
-.leaflet-bar a:hover {
-  background: var(--mui-palette-background-default);
-}
-
+/* Leaflet's attribution is only the small OpenStreetMap credit (the aerial
+   sources are in the menu): a quiet line in the bottom left corner, on touch
+   screens in the top right, away from the dock (Components/CompactAttribution.jsx).
+   Leaflet's own zoom buttons are off (Components/ZoomButtons.jsx). */
 .leaflet-container .leaflet-control-attribution {
   background: color-mix(
     in srgb,
-    var(--mui-palette-background-paper) 85%,
+    var(--mui-palette-background-paper) 70%,
     transparent
   );
   color: var(--mui-palette-text-secondary);
   font-family: inherit;
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1.4;
+  padding: 0 4px;
+  border-radius: 0 3px 0 0;
 }
 
 .leaflet-control-attribution a {
-  color: var(--mui-palette-text-primary);
+  color: inherit;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .leaflet-container .leaflet-control-attribution {
+    position: fixed;
+    top: calc(6px + env(safe-area-inset-top));
+    right: calc(6px + env(safe-area-inset-right));
+    margin: 0;
+    border-radius: 3px;
+  }
 }
 
 /* Photo viewer (yet-another-react-lightbox) in the app's surface: a white

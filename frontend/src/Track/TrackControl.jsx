@@ -1,54 +1,34 @@
+import Box from "@mui/material/Box";
 import Button from "../Components/Button";
 import { GoogleMaterialIcon } from "../icons";
 import { useLanguage } from "../LanguageContext";
 
 const accent = "var(--mui-palette-primary-main)";
 
-const buttonStyle = (top = "100px") => {
-  return {
-    position: "absolute",
-    top: top,
-    right: "10px",
-    zIndex: 1000,
-  };
-};
-
-const handleTrackingIcons = (mode, userInteracted) => {
-  if (mode === "follow" && userInteracted === false) {
-    return <GoogleMaterialIcon name="my_location" fill={1} color={accent} />;
-  }
-  return <GoogleMaterialIcon name="location_searching" fill={0} />;
-};
-
-const handleAreaIcons = (mode, userInteracted) => {
-  if (mode === "area" && userInteracted === false) {
-    return <GoogleMaterialIcon name="map" fill={0} color={accent} />;
-  }
-  return <GoogleMaterialIcon name="map" fill={0} />;
-};
-
-const TrackControl = (props) => {
-  const { mode, onModeChange, userInteracted, onRecenterRequest } = props;
+// The location button, on its own just above the right end of the dock: a
+// tap follows the user,
+// a second tap while following goes back to the whole area. "Show the area"
+// is also in the menu.
+const TrackControl = ({ mode, userInteracted, onModeChange }) => {
   const { t } = useLanguage();
-
-  const handleClick = (mode) => () => {
-    onRecenterRequest();
-    onModeChange(mode);
-  };
+  const following = mode === "follow" && !userInteracted;
 
   return (
-    <>
-      <div style={buttonStyle("62px")}>
-        <Button onClick={handleClick("area")} label={t.showArea}>
-          {handleAreaIcons(mode, userInteracted)}
-        </Button>
-      </div>
-      <div style={buttonStyle("114px")}>
-        <Button onClick={handleClick("follow")} label={t.followMe}>
-          {handleTrackingIcons(mode, userInteracted)}
-        </Button>
-      </div>
-    </>
+    <Box
+      className="dock-float"
+      sx={{ position: "absolute", right: -1, bottom: "calc(100% + 8px)" }}
+    >
+      <Button
+        onClick={() => onModeChange(following ? "area" : "follow")}
+        label={following ? t.showArea : t.followMe}
+      >
+        {following ? (
+          <GoogleMaterialIcon name="my_location" fill={1} color={accent} />
+        ) : (
+          <GoogleMaterialIcon name="location_searching" fill={0} />
+        )}
+      </Button>
+    </Box>
   );
 };
 

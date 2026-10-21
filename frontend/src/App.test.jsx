@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { vi } from "vitest";
 import App from "./App";
@@ -73,5 +74,63 @@ test("offers a retry when the places fail to load", async () => {
   fireEvent.click(retry);
   await waitFor(() =>
     expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
+  );
+});
+
+test("one location button follows the user and goes back to the area", async () => {
+  localStorage.setItem("language", "de");
+  window.history.replaceState(null, "", "/?centered=false");
+  render(<App />);
+
+  fireEvent.click(
+    screen.getByRole("button", { name: "Meinem Standort folgen" }),
+  );
+  let params = new URLSearchParams(window.location.search);
+  expect(params.get("track")).toBe("follow");
+  expect(params.has("centered")).toBe(false);
+
+  fireEvent.click(screen.getByRole("button", { name: "Gebiet zeigen" }));
+  params = new URLSearchParams(window.location.search);
+  expect(params.has("track")).toBe(false);
+});
+
+test("the menu lists the sources of the selected year", async () => {
+  localStorage.setItem("language", "de");
+  const withSources = {
+    version: 1,
+    times: {
+      1952: {
+        bounds: [14.0, 48.58, 14.16, 48.68],
+        layers: [
+          {
+            id: "a",
+            url: "a/1952/{z}/{x}/{y}.webp",
+            bounds: [14.0, 48.58, 14.16, 48.68],
+            min_zoom: 10,
+            max_native_zoom: 17,
+            attribution: "CENIA",
+            licence: "CC-BY-4.0",
+          },
+        ],
+      },
+    },
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url) => json(url === MANIFEST_URL ? withSources : [])),
+  );
+  window.history.replaceState(null, "", "/?year=1952");
+  render(<App />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Menü" }));
+  const menu = await screen.findByRole("dialog", { name: "Menü" });
+  expect(
+    await within(menu).findByText("CENIA (CC-BY-4.0)"),
+  ).toBeInTheDocument();
+  expect(within(menu).getByText("OpenStreetMap")).toBeInTheDocument();
+
+  fireEvent.keyDown(document, { key: "Escape" });
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
   );
 });

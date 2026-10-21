@@ -21,6 +21,58 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   black and white, so the surfaces stay neutral. Light and dark are equals:
   the device setting by default, overridable in the menu ("Darstellung").
   Directions compared: https://claude.ai/artifact/TWELJnNxYqrj2zEsLGv9ac
+- Order (2026-10-20, replaces the numeric order): 2c calm map, then 4 release
+  workflow (small, so the new look reaches prod), 5 admin, 3 offline PWA,
+  6 Android.
+- Offline vs. app (2026-10-20): an app doesn't make offline much easier. The
+  base map licence, the download package and seekable cached audio are the
+  same work either way; the app only adds durable storage on iOS and
+  background GPS and audio. So offline lands as a PWA, and Capacitor wraps
+  the same build later.
+
+## Next session (state on 2026-10-21)
+Steps 2c and `best` per year are committed on branch `calm-map` (2026-10-21,
+not pushed, no PR yet).
+1. **Layout (2c):** the user wants to keep refining the dock and the map
+   chrome before committing ("we are getting close"). Ask what to change next;
+   open points: place names from zoom 15 on (keep or hide), real-phone test
+   (dragging in the dock, the menu card, the gap to the home indicator).
+2. **`best` per year (from a parallel session):** `historic/HistoricLayers.jsx`,
+   `historic/manifest.js` and `manifest.test.js` draw one
+   `TileLayer` from `time.best` and fall back to stacking all layers (the
+   aerial sources moved into the menu since: `bestAttribution` became
+   `sources()`, used by `Menu.jsx`, so this PR now depends on 2c). Checked
+   in the browser on 2026-10-21 against the live manifest (which now has
+   `best` for every year, all `composite: false`). Committed together with
+   2c, since it depends on it.
+3. **Dock and menu redesign (agreed 2026-10-21, mockup:
+   https://claude.ai/artifact/6K6Fh3Hk3tYgQ1fxduXVzP):** implement it as
+   shown there, in this order:
+   - year cross-fade (keep the old imagery until the new tiles have loaded);
+   - one icon family (Material Symbols, weight 300, self-hosted, no request
+     to Google); ☰ drawn so it folds into ✕;
+   - the year as one red dot that slides and follows the finger while
+     dragging;
+   - location button states: idle / searching (pulse) / following (filled);
+   - the menu grows **above** the control row, which stays at the bottom
+     (replaces "menu under the row"); only the height animates; at most two
+     thirds of the screen; a handle to drag it closed; motion values in the
+     mockup's table;
+   - menu order: Gebiete (thumbnail, name, countries, year range, "Hier";
+     replaces "Gebiet zeigen"; a tap closes the dock, then flies to the
+     area), Touren, "Auf der Karte" (Orte), then a footer with the
+     appearance row, the links Über das Projekt · Quellen · Impressum (as
+     pages inside the dock, with a back arrow) and the funding line with
+     the Interreg logo;
+   - areas come from the manifest's `regions` (aerial-timeline step 5b,
+     spec in its `CLAUDE.md`). Until that is published, use a short list in
+     the frontend (Šumava, Berlin), with the region tile as thumbnail.
+   Legal content beyond a slim Impressum is out of scope for now.
+4. Then push `calm-map`, open the PR, and go on in the agreed order: 4 release
+   workflow, 5 admin, 3 offline PWA, 6 Android.
+5. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
+   wildcards after every upload (see `CLAUDE.md`, "CDN caching"); widening a
+   region re-renders tiles under the same URLs.
 
 ## Status
 
@@ -30,6 +82,7 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 | 1 | CDN years and time selection | Done (#7) |
 | 2 | Theme, logo, mobile layout | Done (#8) |
 | 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
+| 2c | Calm map: only map and time line, the rest in the menu | In progress on branch `calm-map` (committed, no PR yet); see "Next session" |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -46,6 +99,7 @@ via ground control points, step 7 enhancement layers.
 | 1 | Spec ready; visible win |
 | 2 | Needed before PWA icons and the app |
 | 2b | The look has to hold on the real map and imagery before offline and the app |
+| 2c | Too many buttons confused people; usability before new features |
 | 3 | Core museum-guide value |
 | 4 | Before more people touch prod |
 | 5 | Replaces Swagger and notebooks |
@@ -53,6 +107,39 @@ via ground control points, step 7 enhancement layers.
 | 7 | Optional |
 
 ---
+
+## 2c. Calm map
+The map was too busy (three round buttons, the full attribution strip). The
+map now shows only the map, the places and the time line; everything else is
+in the menu. This is the normal view, not a separate mode.
+- **One dock at the bottom right**, within thumb reach (`Components/Dock.jsx`):
+  the menu button, the time line (its line is the dock's vertical centre)
+  and, with a mouse, − and + side by side; short hairlines separate the three
+  sections. The time line ends in an "Aus" stop that switches the imagery off
+  (replaces the red "Aus" button; "Heute" until 2026-10-21); enhanced/AI flags still show above it.
+  Without imagery in view the dock shrinks to the buttons. Touch screens pinch.
+- **Location button** on its own, just above the dock's right end: follows the
+  user, a second tap goes back to the whole area.
+- **Colour mode (2026-10-21, replaces "always light on the map"):** the base
+  map, the dots, the tooltips and the OSM credit stay light in both modes; the
+  dock, the buttons, the menu and the place panel follow the colour mode.
+- **The menu opens the dock** (2026-10-21, a first version): the dock grows
+  upwards, its row of controls stays on top and the menu unfolds underneath;
+  the menu button becomes a close button; a tap outside or Escape closes it.
+  Its look and motion get a separate design pass.
+- **In the menu ("Karte"):** "Gebiet zeigen" (closes the menu), "Orte
+  anzeigen"; following the user is only the location button (2026-10-21); under "Quellen" OpenStreetMap and the
+  sources of the selected aerial year.
+- **Attribution:** on the map only a small "© OpenStreetMap" (bottom left,
+  top right on touch screens), as OSM's guideline wants a credit on the map;
+  the aerial sources (CC BY 4.0) are in the menu. `viewport-fit=cover` plus
+  safe-area insets keep the controls clear of notch and home indicator.
+- Page translators (Chrome) leave icons, the wordmark, the language switch and
+  the sources alone (`translate="no"`); the icon font broke under translation.
+- Still to test on a real phone: the OSM credit top right, the dock and the
+  button column above the home indicator, the menu card's height, and
+  dragging the slider inside the dock.
+- Open: place names next to the dots from zoom 15 on (keep or hide).
 
 ## 2b. Styling polish — done (#8)
 All styling work, on top of step 2; merged into `main` as #8 on 2026-10-20.
@@ -136,8 +223,8 @@ tile) and the README image; see `frontend/design/logo/`.
 Specified in `CLAUDE.md` ("Historic imagery"). Implemented in `src/historic/`:
 `year=<YYYY>` replaces `historic`, an old `historic=true` maps to the earliest
 manifest year in the region (1945 once it is published), one `TileLayer` per
-layer until `best/` exists. Once aerial-timeline publishes `best/`, switch
-`HistoricLayers.jsx` to one layer per year.
+layer until `best` exists. The manifest now has a `best` entry per year; the
+switch to one layer per year is in the working tree (see "Next session").
 
 ## 2. Logo and UI design — done
 The palette and logo below were the starting plan; the result is the logo and

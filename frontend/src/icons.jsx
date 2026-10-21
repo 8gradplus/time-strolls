@@ -18,8 +18,14 @@ export const GoogleMaterialIcon = ({
     ...style,
   };
 
+  // The icon font draws a glyph for the icon's name; a page translator
+  // would translate the name and break the icon, so it is marked untranslatable
   return (
-    <span className="material-symbols-outlined" style={combinedStyle}>
+    <span
+      className="material-symbols-outlined notranslate"
+      translate="no"
+      style={combinedStyle}
+    >
       {name}
     </span>
   );

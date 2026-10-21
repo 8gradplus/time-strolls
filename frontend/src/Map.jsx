@@ -11,7 +11,9 @@ import TrackControl from "./Track/TrackControl";
 import Track from "./Track/Track";
 import HistoricLayers, { ViewBounds } from "./historic/HistoricLayers";
 import TimeSlider from "./historic/TimeSlider";
+import CompactAttribution from "./Components/CompactAttribution";
 import Notice from "./Components/Notice";
+import ZoomButtons from "./Components/ZoomButtons";
 import { useLanguage } from "./LanguageContext";
 import { useManifest } from "./historic/useManifest";
 import {
@@ -31,6 +33,7 @@ const CoordinateMap = () => {
   const { t } = useLanguage();
   const manifest = useManifest();
   const [viewBounds, setViewBounds] = useState(REGION_BOUNDS);
+  const [map, setMap] = useState(null);
 
   // Derive state from URL - single source of truth
   const locationSlug = searchParams.get("location");
@@ -132,6 +135,19 @@ const CoordinateMap = () => {
     }
   };
 
+  // A new tracking mode also recenters the map ("centered" is dropped)
+  const handleTrackingModeChange = (newMode) => {
+    setSearchParams((params) => {
+      if (newMode === "area") {
+        params.delete("track");
+      } else {
+        params.set("track", newMode);
+      }
+      params.delete("centered");
+      return params;
+    });
+  };
+
   const handleMarkerClick = (id) => (toggle) => {
     // Find the location to get its slug
     const location = locations?.find((loc) => loc.id === id);
@@ -149,56 +165,64 @@ const CoordinateMap = () => {
 
   return (
     <div id="map" style={{ position: "relative", height: "100vh" }}>
-      <MapContainer
-        center={fallbackCenter} // Will be overwritten by track upon location found
-        zoom={14}
-        maxZoom={MAX_ZOOM}
-        style={{ height: "100vh", width: "100%" }}
-      >
-        <TileLayer
-          className="base-map"
-          url="https://tile.openstreetmap.de/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          maxNativeZoom={18}
+      {/* The map is always light grey, so everything in it (dots, tooltips,
+          the OSM credit) uses the light scheme in both modes; the dock, the
+          buttons and the panels follow the colour mode */}
+      <div data-mui-color-scheme="light">
+        <MapContainer
+          ref={setMap}
+          zoomControl={false}
+          center={fallbackCenter} // Will be overwritten by track upon location found
+          zoom={14}
           maxZoom={MAX_ZOOM}
-        />
-        <HistoricLayers time={manifest?.times[year]} year={year} />
-        <ViewBounds onChange={setViewBounds} />
-        <Track
-          trackingMode={trackingMode}
-          fallbackCenter={fallbackCenter}
-          onUserInteraction={(interacted) => {
-            setSearchParams((params) => {
-              if (interacted) {
-                params.set("centered", "false");
-              } else {
-                params.delete("centered");
-              }
-              return params;
-            });
-          }}
-          userInteracted={userInteracted}
-        />
-
-        {locations && (
-          <LocationMarkers
-            open={showMarkers}
-            onClick={handleMarkerClick}
-            locations={locations}
-            activeSlug={locationSlug}
+          style={{ height: "100vh", width: "100%" }}
+        >
+          <TileLayer
+            className="base-map"
+            url="https://tile.openstreetmap.de/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            maxNativeZoom={18}
+            maxZoom={MAX_ZOOM}
           />
-        )}
-
-        {locationSlug && (
-          <LocationInfo
-            open={showInfo}
-            onClose={handleInfoClose}
-            slug={locationSlug}
+          <HistoricLayers time={manifest?.times[year]} year={year} />
+          <ViewBounds onChange={setViewBounds} />
+          <CompactAttribution />
+          <Track
+            trackingMode={trackingMode}
+            fallbackCenter={fallbackCenter}
+            onUserInteraction={(interacted) => {
+              setSearchParams((params) => {
+                if (interacted) {
+                  params.set("centered", "false");
+                } else {
+                  params.delete("centered");
+                }
+                return params;
+              });
+            }}
+            userInteracted={userInteracted}
           />
-        )}
 
-        {tourId && <Tour id={tourId} />}
-      </MapContainer>
+          {locations && (
+            <LocationMarkers
+              open={showMarkers}
+              onClick={handleMarkerClick}
+              locations={locations}
+              activeSlug={locationSlug}
+            />
+          )}
+
+          {locationSlug && (
+            <LocationInfo
+              open={showInfo}
+              onClose={handleInfoClose}
+              slug={locationSlug}
+            />
+          )}
+
+          {tourId && <Tour id={tourId} />}
+        </MapContainer>
+      </div>
       {locationsFailed && (
         <Notice
           message={t.placesFailed}
@@ -213,34 +237,23 @@ const CoordinateMap = () => {
           showMarkers: showMarkers,
           tourId: tourId,
         }}
-      />
-      <TimeSlider
-        years={years}
-        times={manifest?.times}
+        onTrackingModeChange={handleTrackingModeChange}
+        time={manifest?.times[year]}
         year={year}
-        onChange={handleMenuItemClick("year")}
-      />
-      <TrackControl
-        mode={trackingMode}
-        onModeChange={(newMode) => {
-          setSearchParams((params) => {
-            if (newMode === "area") {
-              params.delete("track");
-            } else {
-              params.set("track", newMode);
-            }
-            params.delete("centered");
-            return params;
-          });
-        }}
-        onRecenterRequest={() => {
-          setSearchParams((params) => {
-            params.delete("centered");
-            return params;
-          });
-        }}
-        userInteracted={userInteracted}
-      />
+      >
+        <TimeSlider
+          years={years}
+          times={manifest?.times}
+          year={year}
+          onChange={handleMenuItemClick("year")}
+        />
+        <ZoomButtons map={map} />
+        <TrackControl
+          mode={trackingMode}
+          userInteracted={userInteracted}
+          onModeChange={handleTrackingModeChange}
+        />
+      </Menu>
     </div>
   );
 };

@@ -1,18 +1,32 @@
 import { useEffect } from "react";
 import { TileLayer, useMap, useMapEvents } from "react-leaflet";
-import { MAX_ZOOM, attribution, leafletBounds, tileUrl } from "./manifest";
+import { MAX_ZOOM, leafletBounds, tileUrl } from "./manifest";
 
-// All layers of a year. Layers are ranked best first, so they are drawn in
-// reverse order: the best ends up on top, the others fill its transparent gaps.
+// The year's best tiles: one URL per tile, composited by aerial-timeline.
+// Without a `best` entry (older manifests) all layers are drawn, ranked best
+// first, in reverse order: the best ends up on top, the others fill its gaps.
+// Their sources are listed in the menu (Menu.jsx), not on the map.
 const HistoricLayers = ({ time, year }) => {
   if (!time) return null;
+  if (time.best) {
+    return (
+      <TileLayer
+        key={`${year}-best`}
+        url={tileUrl(time.best)}
+        bounds={leafletBounds(time.best.bounds)}
+        minNativeZoom={time.best.min_zoom}
+        maxNativeZoom={time.best.max_native_zoom}
+        maxZoom={MAX_ZOOM}
+        noWrap={true}
+      />
+    );
+  }
   return [...time.layers]
     .reverse()
     .map((layer) => (
       <TileLayer
         key={`${year}-${layer.id}`}
         url={tileUrl(layer)}
-        attribution={attribution(layer)}
         bounds={leafletBounds(layer.bounds)}
         minNativeZoom={layer.min_zoom}
         maxNativeZoom={layer.max_native_zoom}

@@ -6,14 +6,17 @@ import { useLanguage } from "../LanguageContext";
 const stopPosition = (index, count) =>
   count === 1 ? 50 : 8 + (index / (count - 1)) * 84;
 
-// The aerial years in view as stops on a timeline at the bottom of the map,
-// plus an "Off" button at the end that removes the imagery. Above the line:
-// the sources of the chosen year. Only years are shown, no months.
+// One row in the dock: the aerial years in view as stops on a line, and
+// "off" as the last stop, which switches the imagery off. Only years are
+// shown, no months; the sources are in the map attribution. Enhanced or
+// AI-generated imagery is flagged above the line.
 const TimeSlider = ({ years, times, year, onChange }) => {
   const { t } = useLanguage();
   const trackRef = useRef(null);
   if (!times || (years.length === 0 && !year)) return null;
 
+  // null is "off": no imagery
+  const stops = [...years, null];
   const time = year && times[year];
   const flags = time
     ? [
@@ -22,178 +25,123 @@ const TimeSlider = ({ years, times, year, onChange }) => {
       ].filter(Boolean)
     : [];
 
-  // Dragging along the line snaps to the nearest year
+  // Dragging along the line snaps to the nearest stop
   const pick = (event) => {
     const rect = trackRef.current.getBoundingClientRect();
     const percent = ((event.clientX - rect.left) / rect.width) * 100;
     let nearest = 0;
-    years.forEach((_, i) => {
-      const distance = Math.abs(stopPosition(i, years.length) - percent);
-      if (distance < Math.abs(stopPosition(nearest, years.length) - percent)) {
+    stops.forEach((_, i) => {
+      const distance = Math.abs(stopPosition(i, stops.length) - percent);
+      if (distance < Math.abs(stopPosition(nearest, stops.length) - percent)) {
         nearest = i;
       }
     });
-    if (years[nearest] !== year) onChange(years[nearest]);
+    if (stops[nearest] !== (year || null)) onChange(stops[nearest]);
   };
 
   return (
     <Box
       role="group"
       aria-label={t.timeTravel}
-      sx={{
-        position: "absolute",
-        left: 10,
-        right: 10,
-        bottom: 28,
-        mx: "auto",
-        maxWidth: 460,
-        zIndex: 1000,
-        px: 1.75,
-        pt: 1.25,
-        pb: 0.5,
-        bgcolor: "background.paper",
-        color: "text.primary",
-        border: 1,
-        borderColor: "divider",
-        borderRadius: 1.5,
-      }}
+      className="dock-section"
+      sx={{ flex: 1, minWidth: 0, px: 0.5 }}
     >
-      {/* The year is on the line already; above it only the sources */}
+      {flags.length > 0 && (
+        <Box sx={{ pt: 0.5, fontSize: 12, color: "warning.main" }}>
+          {flags.join(" · ")}
+        </Box>
+      )}
+
       <Box
+        ref={trackRef}
+        onPointerDown={(event) => {
+          event.currentTarget.setPointerCapture(event.pointerId);
+          pick(event);
+        }}
+        onPointerMove={(event) => {
+          // Only while pressed, in case a capture outlives its pointerup
+          if (
+            event.buttons !== 0 &&
+            event.currentTarget.hasPointerCapture(event.pointerId)
+          ) {
+            pick(event);
+          }
+        }}
         sx={{
-          minHeight: 20,
-          fontSize: 13,
-          color: flags.length ? "warning.main" : "text.secondary",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
+          position: "relative",
+          height: 48, // the line is the vertical centre, level with the menu button
+          touchAction: "none",
+          cursor: "pointer",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            left: 8,
+            right: 8,
+            top: 23,
+            height: 2,
+            bgcolor: "divider",
+          },
         }}
       >
-        {time
-          ? [...flags, ...time.layers.map((l) => l.title)].join(" · ")
-          : years.length === 0
-            ? t.noImageryInView
-            : t.imageryOff}
-      </Box>
-
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-        <Box
-          ref={trackRef}
-          onPointerDown={(event) => {
-            event.currentTarget.setPointerCapture(event.pointerId);
-            pick(event);
-          }}
-          onPointerMove={(event) => {
-            // Only while pressed, in case a capture outlives its pointerup
-            if (
-              event.buttons !== 0 &&
-              event.currentTarget.hasPointerCapture(event.pointerId)
-            ) {
-              pick(event);
-            }
-          }}
-          sx={{
-            position: "relative",
-            flex: 1,
-            minWidth: 0,
-            height: 48,
-            touchAction: "none",
-            cursor: "pointer",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              left: 8,
-              right: 8,
-              top: 16,
-              height: 2,
-              bgcolor: "divider",
-            },
-          }}
-        >
-          {years.map((y, i) => {
-            const selected = y === year;
-            return (
+        {stops.map((y, i) => {
+          const selected = y === (year || null);
+          return (
+            <Box
+              key={y ?? "off"}
+              component="button"
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onChange(y)}
+              sx={{
+                all: "unset",
+                position: "absolute",
+                top: 2,
+                left: `${stopPosition(i, stops.length)}%`,
+                width: 44,
+                height: 44,
+                ml: "-22px",
+                cursor: "pointer",
+                "&:focus-visible": {
+                  outline: 2,
+                  outlineColor: "primary.main",
+                },
+              }}
+            >
               <Box
-                key={y}
-                component="button"
-                type="button"
-                aria-pressed={selected}
-                onClick={() => onChange(y)}
+                component="i"
                 sx={{
-                  all: "unset",
                   position: "absolute",
-                  top: 0,
-                  left: `${stopPosition(i, years.length)}%`,
-                  width: 44,
-                  height: 44,
-                  ml: "-22px",
-                  cursor: "pointer",
-                  "&:focus-visible": {
-                    outline: 2,
-                    outlineColor: "primary.main",
-                  },
+                  left: "50%",
+                  top: selected ? 14 : 16,
+                  width: selected ? 16 : 12,
+                  height: selected ? 16 : 12,
+                  ml: selected ? "-8px" : "-6px",
+                  borderRadius: "50%",
+                  boxSizing: "border-box",
+                  bgcolor: selected ? "primary.main" : "background.paper",
+                  border: 2,
+                  borderColor: selected ? "primary.main" : "text.secondary",
+                }}
+              />
+              <Box
+                component="span"
+                sx={{
+                  position: "absolute",
+                  left: "50%",
+                  top: 30,
+                  transform: "translateX(-50%)",
+                  fontSize: 12,
+                  fontWeight: selected ? 600 : 400,
+                  color: selected ? "text.primary" : "text.secondary",
+                  fontVariantNumeric: "tabular-nums",
+                  whiteSpace: "nowrap",
                 }}
               >
-                <Box
-                  component="i"
-                  sx={{
-                    position: "absolute",
-                    left: "50%",
-                    top: selected ? 9 : 11,
-                    width: selected ? 16 : 12,
-                    height: selected ? 16 : 12,
-                    ml: selected ? "-8px" : "-6px",
-                    borderRadius: "50%",
-                    boxSizing: "border-box",
-                    bgcolor: selected ? "primary.main" : "background.paper",
-                    border: 2,
-                    borderColor: selected ? "primary.main" : "text.secondary",
-                  }}
-                />
-                <Box
-                  component="span"
-                  sx={{
-                    position: "absolute",
-                    left: "50%",
-                    top: 28,
-                    transform: "translateX(-50%)",
-                    fontSize: 12,
-                    fontWeight: selected ? 600 : 400,
-                    color: selected ? "text.primary" : "text.secondary",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {y}
-                </Box>
+                {y ?? t.off}
               </Box>
-            );
-          })}
-        </Box>
-
-        <Box
-          component="button"
-          type="button"
-          aria-pressed={!year}
-          onClick={() => onChange(null)}
-          sx={{
-            flex: "none",
-            height: 36,
-            mt: 0.75,
-            px: 1.5,
-            border: 1,
-            borderColor: year ? "divider" : "primary.main",
-            borderRadius: 1,
-            bgcolor: year ? "transparent" : "primary.main",
-            color: year ? "text.secondary" : "primary.contrastText",
-            font: "inherit",
-            fontSize: 13,
-            fontWeight: 500,
-            cursor: "pointer",
-            "&:focus-visible": { outline: 2, outlineColor: "primary.main" },
-          }}
-        >
-          {t.off}
-        </Box>
+            </Box>
+          );
+        })}
       </Box>
     </Box>
   );

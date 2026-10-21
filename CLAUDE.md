@@ -49,7 +49,7 @@ Monorepo layout: `backend/` (FastAPI + SQLModel, Python ≥3.13, managed with `u
 
 **Media/CDN:** Images, podcasts and map tiles are stored in DigitalOcean Spaces (S3-compatible, via boto3 in `helpers/cdn.py`, uploaded `public-read`), under the paths in `config.cdn.path`. The DB stores only the `url`/`path` and a content `hash`. Deleting a DB record should also delete the CDN object. Images can be imported from Topothek (`topothek/crawl.py`, `POST /api/images/topothek/`).
 
-**Frontend (`frontend/src/`):** `Map.jsx` is the root view. **The URL query string is the single source of truth for UI state**: `location` (slug of the open info panel), `tour`, `markers`, `year` (historic aerial imagery; an old `historic=true` is rewritten to a year), `track`, `centered`. Change state with `setSearchParams` instead of local state, so that views stay deep-linkable. API paths are centralized in `api.js`. Historic imagery lives in `src/historic/`: `manifest.js` (pure functions, unit-tested), `useManifest.js`, `HistoricLayers.jsx` (tile layers and `ViewBounds`) and `TimeSlider.jsx` (the year timeline at the bottom of the map, with an "Aus" button); see "Historic imagery" below. Colours and typography live in `src/theme.js` (MUI, light and dark); `Components/Sheet.jsx` is the bottom sheet / side panel used by the menu and the place panel. The logo files in `public/` are generated: `frontend/design/logo/build-icons.sh` (seeded, reproducible) — don't edit them by hand. UI strings live in `LanguageContext.jsx` (`de` default, `cz`, `en`); add every new string to all three languages.
+**Frontend (`frontend/src/`):** `Map.jsx` is the root view. **The URL query string is the single source of truth for UI state**: `location` (slug of the open info panel), `tour`, `markers`, `year` (historic aerial imagery; an old `historic=true` is rewritten to a year), `track`, `centered`. Change state with `setSearchParams` instead of local state, so that views stay deep-linkable. API paths are centralized in `api.js`. Historic imagery lives in `src/historic/`: `manifest.js` (pure functions, unit-tested), `useManifest.js`, `HistoricLayers.jsx` (tile layers and `ViewBounds`) and `TimeSlider.jsx` (the year timeline in the bottom-right dock, `Components/Dock.jsx`, with "Aus" as the last stop to switch the imagery off). The dock holds the menu button, the time line and (with a mouse) − and +, separated by short hairlines (`.dock-section`); the location button sits just above its right end. The menu button opens the dock itself: it grows upwards, the controls stay in its top row and the menu unfolds underneath (`Menu.jsx` renders the dock around the other controls). Inside the Leaflet map (base map, dots, tooltips, the OSM credit) everything uses the light scheme in both modes (`data-mui-color-scheme="light"` on the wrapper around `MapContainer`); the dock, the buttons and the panels follow the colour mode (decided 2026-10-21); see "Historic imagery" below. Colours and typography live in `src/theme.js` (MUI, light and dark); `Components/Sheet.jsx` is the bottom sheet / side panel used by the place panel. The logo files in `public/` are generated: `frontend/design/logo/build-icons.sh` (seeded, reproducible) — don't edit them by hand. UI strings live in `LanguageContext.jsx` (`de` default, `cz`, `en`); add every new string to all three languages.
 
 ## Historic imagery (aerial-timeline tiles, planned frontend work)
 
@@ -60,8 +60,9 @@ is no tile server and no backend involvement. Any logic beyond display (a "best 
 choice and similar) goes into aerial-timeline or a later API, not into React.
 
 **Entry point:** `https://timestrolls.fra1.cdn.digitaloceanspaces.com/tiles/manifest.json`
-- CORS is `*`. The manifest is cached for 5 min; tiles are cached for 1 day and
-  never change once rendered.
+- CORS is `*`. The manifest says `max-age=300`, tiles `max-age=86400`. Tiles are
+  meant to be immutable, but widening a region re-renders edge tiles under the
+  same URLs (happened 2026-10-20). See "CDN caching" below.
 - The manifest is shared by all aerial-timeline projects, so it also lists Berlin.
   Show only the years whose `bounds` intersect the map view or our region.
 
@@ -72,6 +73,11 @@ choice and similar) goes into aerial-timeline or a later API, not into React.
       "bounds": [w, s, e, n],      // EPSG:4326, union of the year's layers
       "min_zoom": 10, "max_native_zoom": 17,
       "attribution": "...",        // all layers of the year, joined with " | "
+      "best": {                    // the one layer to draw (aerial-timeline step 5)
+        "url": "cz-cenia-ortho/1952/{z}/{x}/{y}.webp",   // or best/{year}/… once composite
+        "bounds": [w, s, e, n], "min_zoom": 10, "max_native_zoom": 17,
+        "composite": false, "layers": ["cz-cenia-ortho"],  // ids it is made from
+        "redistribute": true, "enhanced": false, "ai_generated": false },
       "layers": [                  // ranked best first (finer gsd, then priority)
         { "id": "cz-cenia-ortho", "title": "...",
           "url": "cz-cenia-ortho/1952/{z}/{x}/{y}.webp",  // RELATIVE to manifest.json
@@ -85,16 +91,32 @@ choice and similar) goes into aerial-timeline or a later API, not into React.
 **Tile format:** 256 px WebP with alpha, transparent outside coverage. Empty tiles
 are not stored, so a 404 is normal outside coverage: no `errorTileUrl`, no retries.
 
-**Live as of 2026-10-20:**
+**Live as of 2026-10-21** (every year has a `best` entry, all `composite: false`):
 
 | Year | Layer | Area | Max zoom |
 |---|---|---|---|
-| 1949, 1952 | `cz-cenia-ortho` | Czech side of the Deutsch Reichenau / Přední Výtoň area; 1949 only a northern strip | 17 |
-| 2023 | `at-basemap-ortho` | basemap.at, Austrian side (St. Oswald, Haslach) | 18 |
-| 2025 | `cz-cuzk-ortho` | ČÚZK, Czech side; **testing only**, licence of the tile service unconfirmed | 18 |
-| 1928, 1953 | Berlin | not our region; 1953 covers ~82% of the city | 17 |
+| 1947, 1949, 1952 | `cz-cenia-ortho` | Czech side only. CENIA's 1950s ortho is a patchwork of flight years, split by year: 1952 has a hole around Lipno (≈13.93–14.21 E, 48.70–48.82 N) that 1949 and 1947 fill; 1947 only north of 48.75 | 17 |
+| 2023 | `at-basemap-ortho` | basemap.at, Austrian side only | 18 |
+| 2025 | `cz-cuzk-ortho` | ČÚZK, Czech side only; **testing only**, licence of the tile service unconfirmed | 18 |
+| 1928, 1953 | Berlin | not our region | 17 |
 
-The Šumava box is lon 14.00–14.16, lat 48.58–48.68. The 1945 US Army print is not
+The Šumava region in aerial-timeline is lon 13.74–14.34, lat 48.58–48.85
+(Haidmühle to Vyšší Brod, widened 2026-10-20; Bavaria not covered yet). Our own
+`REGION_BOUNDS` in `manifest.js` (14.00–14.16, 48.58–48.68) only picks the year
+for old `historic=true` links; nothing in the frontend clips the imagery.
+
+**CDN caching (checked 2026-10-21):**
+- The CDN endpoint (DO id `476f6986-b8c8-488e-b52a-7001834bf05f`) has an edge
+  TTL of 3600 s that overrides `max-age`: after a publish the CDN can serve the
+  old manifest for up to an hour.
+- Responses carry `Vary: Origin` (CORS), so the CDN keeps one copy per site
+  origin. Flush **with wildcards**, an exact path misses the browser copies:
+  `doctl compute cdn flush 476f6986-b8c8-488e-b52a-7001834bf05f --files 'tiles/manifest*' 'tiles/<layer>/*'`
+  (ask first, it is shared infrastructure).
+- Check what browsers get with `curl -H 'Origin: http://localhost:3000' …`, and
+  compare with the origin `https://timestrolls.fra1.digitaloceanspaces.com/tiles/manifest.json`.
+- Browsers keep tiles for a day; locally use DevTools "Empty Cache and Hard Reload".
+- The lasting fix belongs in aerial-timeline: flush after every `publish`. The 1945 US Army print is not
 in the manifest yet; it will come from another service later (aerial-timeline
 roadmap step 6). The frontend uses **only** tiles from the `timestrolls` bucket
 (the manifest). Drop the old 1945 URL (`debtray` bucket). Until 1945 is published,
@@ -118,21 +140,24 @@ points (its roadmap step 6), remove these files in one commit.
   - Map an old `historic=true` link to the earliest manifest year in the region (1945 once
     it is published), so existing deep links keep working.
   - Offer only the years whose `bounds` touch the current view.
-- **Layers per year:** until aerial-timeline publishes the `tiles/best/{year}`
-  composite (its roadmap step 5), render **all** layers of the year.
+- **Layers per year:** draw the year's `best` entry as one `TileLayer` (its
+  `url`, `bounds`, `min_zoom`, `max_native_zoom`; attribution from the layers in
+  `best.layers`). Without `best` (older manifests) render **all** layers:
   - Use one `TileLayer` per layer, in reverse rank order, so the best is on top and
     the others fill gaps; the alpha channel makes this work.
   - Per layer, set: `maxNativeZoom={layer.max_native_zoom}`,
     `minNativeZoom={layer.min_zoom}`, a map-level `maxZoom` above it (Leaflet upscales),
     and `bounds={[[s, w], [n, e]]}` (avoids requests outside coverage).
-  - Also `noWrap`, and `attribution` = layer attribution + licence.
-  - Once `best/` exists, use one layer per year: `best/{year}/{z}/{x}/{y}.webp`,
-    with the year's `max_native_zoom` and `attribution`.
+  - Also `noWrap`. No `attribution` on the aerial layers: their sources are
+    listed in the menu (`sources()` in `manifest.js`).
 - **Labels and attribution:**
   - The time slider shows only the year key, no months (decided 2026-10-20);
-    above the line it shows the sources of the chosen year.
+    the aerial sources are in the menu ("Quellen"), not on the slider or the
+    map (decided 2026-10-21; enhanced/AI flags still show above the slider).
+    Only a small "© OpenStreetMap" stays on the map, as OSM's attribution
+    guideline requires a credit on the map itself.
   - Mark `enhanced` / `ai_generated` layers visibly (none so far).
-  - Licences require attribution (CC BY 4.0), so always show it.
+  - Licences require attribution (CC BY 4.0), so always list it in the menu.
   - Add every new UI string to all three languages in `LanguageContext.jsx`.
 - **Offline caching** (`OFFLINE_CACHING_STRATEGY.md`): tile URLs are immutable, so
   they cache well. Re-fetch the manifest; don't cache it long.

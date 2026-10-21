@@ -1,31 +1,28 @@
 import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
+import ClickAwayListener from "@mui/material/ClickAwayListener";
+import Link from "@mui/material/Link";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import ListSubheader from "@mui/material/ListSubheader";
 import Radio from "@mui/material/Radio";
-import Switch from "@mui/material/Switch";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { useColorScheme } from "@mui/material/styles";
-import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import ZoomOutMapRoundedIcon from "@mui/icons-material/ZoomOutMapRounded";
 import DirectionsWalkRoundedIcon from "@mui/icons-material/DirectionsWalkRounded";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
 import Button from "./Components/Button";
-import Sheet from "./Components/Sheet";
+import Dock from "./Components/Dock";
 import { api } from "./api";
+import { sources } from "./historic/manifest";
 import { useLanguage } from "./LanguageContext";
 import { serif } from "./theme";
-
-const menuButtonStyle = {
-  position: "absolute",
-  top: "10px",
-  right: "10px",
-  zIndex: 1000,
-};
 
 const Section = ({ title, children }) => (
   <List
@@ -50,7 +47,12 @@ const LanguageSwitch = () => {
   const { language, setLanguage } = useLanguage();
 
   return (
-    <Box sx={{ display: "flex", gap: 1.5, mt: 0.5 }}>
+    // Language names stay as they are, also under a page translator
+    <Box
+      translate="no"
+      className="notranslate"
+      sx={{ display: "flex", gap: 1.5, mt: 0.5 }}
+    >
       {Object.entries(langLabels).map(([lang, label]) => (
         <Box
           key={lang}
@@ -94,14 +96,62 @@ const AppearanceSwitch = () => {
   );
 };
 
+// The map's sources: OpenStreetMap (also credited on the map itself) and the
+// aerial imagery of the selected year. Quoted as published, not translated.
+const Sources = ({ time, year }) => {
+  const { t } = useLanguage();
+
+  return (
+    <Box sx={{ px: 1, typography: "body2", color: "text.secondary" }}>
+      <Box translate="no" className="notranslate" sx={{ mb: 1 }}>
+        ©{" "}
+        <Link
+          href="https://www.openstreetmap.org/copyright"
+          target="_blank"
+          rel="noopener"
+          color="inherit"
+        >
+          OpenStreetMap
+        </Link>
+      </Box>
+      {time && (
+        <>
+          <Box sx={{ color: "text.primary" }}>
+            {t.aerialImagery} {year}
+          </Box>
+          {sources(time).map((source) => (
+            <Box key={source} translate="no" className="notranslate">
+              {source}
+            </Box>
+          ))}
+        </>
+      )}
+    </Box>
+  );
+};
+
+// The menu button opens the dock: it grows upwards, the controls stay in its
+// top row and the menu unfolds underneath them (a first version; the look and
+// the motion get their own design pass). A tap outside or Escape closes it.
+// The other dock controls come in as children.
 const Menu = (props) => {
-  const { onItemClick, itemState } = props;
+  const { onItemClick, itemState, onTrackingModeChange, time, year, children } =
+    props;
   const [open, setOpen] = useState(false);
   const [tours, setTours] = useState([]);
   const { t } = useLanguage();
 
-  const handleOpen = (open) => () => {
-    setOpen(open);
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event) => event.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // Moving the map closes the menu, so the user sees where it went
+  const handleTrackingMode = (mode) => () => {
+    onTrackingModeChange(mode);
+    setOpen(false);
   };
 
   useEffect(() => {
@@ -116,37 +166,47 @@ const Menu = (props) => {
       .catch((error) => console.error("Error fetching track:", error));
   }, []);
 
-  return (
-    <div style={menuButtonStyle}>
-      <Button onClick={handleOpen(true)} label={t.menu}>
-        <LayersOutlinedIcon />
-      </Button>
+  const button = (
+    <Button
+      onClick={() => setOpen(!open)}
+      label={open ? t.close : t.menu}
+      plain
+    >
+      {open ? <CloseRoundedIcon /> : <MenuRoundedIcon />}
+    </Button>
+  );
 
-      <Sheet
-        open={open}
-        onClose={handleOpen(false)}
-        header={
-          <>
-            <Typography
-              sx={{ fontFamily: serif, fontWeight: 600, fontSize: 28 }}
-            >
-              <Box component="i" sx={{ fontWeight: 500 }}>
-                Time
-              </Box>{" "}
-              Strolls
-            </Typography>
-            <LanguageSwitch />
-          </>
-        }
-      >
+  const panel = (
+    <Box role="dialog" aria-label={t.menu}>
+      <Box sx={{ px: 2, pt: 2, pb: 1.5, borderTop: 1, borderColor: "divider" }}>
+        {/* The wordmark is a name, page translators leave it alone */}
+        <Typography
+          translate="no"
+          className="notranslate"
+          sx={{ fontFamily: serif, fontWeight: 600, fontSize: 28 }}
+        >
+          <Box component="i" sx={{ fontWeight: 500 }}>
+            Time
+          </Box>{" "}
+          Strolls
+        </Typography>
+        <LanguageSwitch />
+      </Box>
+      <Box sx={{ borderTop: 1, borderColor: "divider" }}>
         {/* Layer menu */}
         <Section title={t.map}>
+          <ListItemButton onClick={handleTrackingMode("area")}>
+            <ListItemIcon sx={{ minWidth: 36 }}>
+              <ZoomOutMapRoundedIcon />
+            </ListItemIcon>
+            <ListItemText primary={t.showArea} />
+          </ListItemButton>
           <ListItemButton onClick={onItemClick("showMarkers")}>
             <ListItemIcon sx={{ minWidth: 36 }}>
               <LocationPinIcon />
             </ListItemIcon>
             <ListItemText primary={t.showLocations} />
-            <Switch checked={itemState.showMarkers} edge="end" tabIndex={-1} />
+            <Radio checked={itemState.showMarkers} edge="end" tabIndex={-1} />
           </ListItemButton>
         </Section>
 
@@ -185,6 +245,11 @@ const Menu = (props) => {
           <AppearanceSwitch />
         </Section>
 
+        {/* Map and imagery sources */}
+        <Section title={t.sources}>
+          <Sources time={time} year={year} />
+        </Section>
+
         {/* With support from */}
         <Box
           sx={{
@@ -216,8 +281,17 @@ const Menu = (props) => {
             />
           </Box>
         </Box>
-      </Sheet>
-    </div>
+      </Box>
+    </Box>
+  );
+
+  return (
+    <ClickAwayListener onClickAway={() => setOpen(false)}>
+      <Dock open={open} panel={panel}>
+        {button}
+        {children}
+      </Dock>
+    </ClickAwayListener>
   );
 };
 
