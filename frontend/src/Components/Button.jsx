@@ -1,8 +1,9 @@
 import IconButton from "@mui/material/IconButton";
 
-// Round floating map control: paper surface, hairline border, no shadow.
+// Round map control: paper surface, hairline border, no shadow. Inside the
+// dock (plain) it has neither, the dock is the surface.
 const Button = (props) => {
-  const { children, onClick, label } = props;
+  const { children, onClick, label, plain = false } = props;
 
   return (
     <IconButton
@@ -11,10 +12,15 @@ const Button = (props) => {
       sx={{
         width: 44,
         height: 44,
-        bgcolor: "background.paper",
+        flex: "none",
         color: "text.primary",
-        border: 1,
-        borderColor: "divider",
+        ...(plain
+          ? {}
+          : {
+              bgcolor: "background.paper",
+              border: 1,
+              borderColor: "divider",
+            }),
         "&:hover": { bgcolor: "background.default" },
       }}
     >

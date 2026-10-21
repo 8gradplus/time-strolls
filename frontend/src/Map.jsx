@@ -9,17 +9,24 @@ import { api } from "./api";
 import Tour from "./Tours/Tour";
 import TrackControl from "./Track/TrackControl";
 import Track from "./Track/Track";
+import { useTrack } from "./Track/useTrack";
 import HistoricLayers, { ViewBounds } from "./historic/HistoricLayers";
 import TimeSlider from "./historic/TimeSlider";
+import CompactAttribution from "./Components/CompactAttribution";
 import Notice from "./Components/Notice";
+import Toast from "./Components/Toast";
+import ZoomButtons from "./Components/ZoomButtons";
+import MiniPlayer from "./Components/MiniPlayer";
 import { useLanguage } from "./LanguageContext";
 import { useManifest } from "./historic/useManifest";
 import {
   MAX_ZOOM,
   REGION_BOUNDS,
+  leafletBounds,
   legacyHistoricYear,
   yearsInBounds,
 } from "./historic/manifest";
+import { localized, regionAt, regionList, yearRange } from "./historic/regions";
 
 const fallbackCenter = [48.629371, 14.079059];
 
@@ -28,9 +35,16 @@ const CoordinateMap = () => {
   const [locations, setLocations] = useState(null);
   const [locationsFailed, setLocationsFailed] = useState(false);
   const [locationsRequest, setLocationsRequest] = useState(0);
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const manifest = useManifest();
   const [viewBounds, setViewBounds] = useState(REGION_BOUNDS);
+  const [map, setMap] = useState(null);
+  const [toast, setToast] = useState(null);
+  const { position, failed: positionFailed } = useTrack();
+
+  // Areas with aerial imagery; "here" is the one around the centre of the view
+  const regions = regionList(manifest);
+  const here = regionAt(regions, viewBounds);
 
   // Derive state from URL - single source of truth
   const locationSlug = searchParams.get("location");
@@ -132,6 +146,42 @@ const CoordinateMap = () => {
     }
   };
 
+  // A new tracking mode also recenters the map ("centered" is dropped)
+  const handleTrackingModeChange = (newMode) => {
+    setSearchParams((params) => {
+      if (newMode === "area") {
+        params.delete("track");
+      } else {
+        params.set("track", newMode);
+      }
+      params.delete("centered");
+      return params;
+    });
+  };
+
+  // Flies to an area, then shows its name for a moment
+  const handleRegion = (region) => {
+    if (!map) return;
+    const reduced = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    map.once("moveend", () =>
+      setToast({
+        title: localized(region.title, language),
+        years: yearRange(region.times),
+        id: Date.now(),
+      }),
+    );
+    // A selected year the area doesn't have gives way to its earliest
+    if (year && !region.times.includes(year)) {
+      handleMenuItemClick("year")(region.times[0]);
+    }
+    map.flyToBounds(leafletBounds(region.bounds), {
+      animate: !reduced,
+      duration: 1.2,
+    });
+  };
+
   const handleMarkerClick = (id) => (toggle) => {
     // Find the location to get its slug
     const location = locations?.find((loc) => loc.id === id);
@@ -149,56 +199,65 @@ const CoordinateMap = () => {
 
   return (
     <div id="map" style={{ position: "relative", height: "100vh" }}>
-      <MapContainer
-        center={fallbackCenter} // Will be overwritten by track upon location found
-        zoom={14}
-        maxZoom={MAX_ZOOM}
-        style={{ height: "100vh", width: "100%" }}
-      >
-        <TileLayer
-          className="base-map"
-          url="https://tile.openstreetmap.de/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          maxNativeZoom={18}
+      {/* The map is always light grey, so everything in it (dots, tooltips,
+          the OSM credit) uses the light scheme in both modes; the dock, the
+          buttons and the panels follow the colour mode */}
+      <div data-mui-color-scheme="light">
+        <MapContainer
+          ref={setMap}
+          zoomControl={false}
+          center={fallbackCenter} // Will be overwritten by track upon location found
+          zoom={14}
           maxZoom={MAX_ZOOM}
-        />
-        <HistoricLayers time={manifest?.times[year]} year={year} />
-        <ViewBounds onChange={setViewBounds} />
-        <Track
-          trackingMode={trackingMode}
-          fallbackCenter={fallbackCenter}
-          onUserInteraction={(interacted) => {
-            setSearchParams((params) => {
-              if (interacted) {
-                params.set("centered", "false");
-              } else {
-                params.delete("centered");
-              }
-              return params;
-            });
-          }}
-          userInteracted={userInteracted}
-        />
-
-        {locations && (
-          <LocationMarkers
-            open={showMarkers}
-            onClick={handleMarkerClick}
-            locations={locations}
-            activeSlug={locationSlug}
+          style={{ height: "100vh", width: "100%" }}
+        >
+          <TileLayer
+            className="base-map"
+            url="https://tile.openstreetmap.de/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            maxNativeZoom={18}
+            maxZoom={MAX_ZOOM}
           />
-        )}
-
-        {locationSlug && (
-          <LocationInfo
-            open={showInfo}
-            onClose={handleInfoClose}
-            slug={locationSlug}
+          <HistoricLayers time={manifest?.times[year]} year={year} />
+          <ViewBounds onChange={setViewBounds} />
+          <CompactAttribution />
+          <Track
+            position={position}
+            trackingMode={trackingMode}
+            fallbackCenter={fallbackCenter}
+            onUserInteraction={(interacted) => {
+              setSearchParams((params) => {
+                if (interacted) {
+                  params.set("centered", "false");
+                } else {
+                  params.delete("centered");
+                }
+                return params;
+              });
+            }}
+            userInteracted={userInteracted}
           />
-        )}
 
-        {tourId && <Tour id={tourId} />}
-      </MapContainer>
+          {locations && (
+            <LocationMarkers
+              open={showMarkers}
+              onClick={handleMarkerClick}
+              locations={locations}
+              activeSlug={locationSlug}
+            />
+          )}
+
+          {locationSlug && (
+            <LocationInfo
+              open={showInfo}
+              onClose={handleInfoClose}
+              slug={locationSlug}
+            />
+          )}
+
+          {tourId && <Tour id={tourId} />}
+        </MapContainer>
+      </div>
       {locationsFailed && (
         <Notice
           message={t.placesFailed}
@@ -206,6 +265,7 @@ const CoordinateMap = () => {
           onAction={() => setLocationsRequest((n) => n + 1)}
         />
       )}
+      <Toast toast={toast} />
       <Menu
         onItemClick={handleMenuItemClick}
         itemState={{
@@ -213,34 +273,40 @@ const CoordinateMap = () => {
           showMarkers: showMarkers,
           tourId: tourId,
         }}
-      />
-      <TimeSlider
-        years={years}
-        times={manifest?.times}
+        regions={regions}
+        hereId={here?.id}
+        onRegion={handleRegion}
+        time={manifest?.times[year]}
         year={year}
-        onChange={handleMenuItemClick("year")}
-      />
-      <TrackControl
-        mode={trackingMode}
-        onModeChange={(newMode) => {
-          setSearchParams((params) => {
-            if (newMode === "area") {
-              params.delete("track");
-            } else {
-              params.set("track", newMode);
-            }
-            params.delete("centered");
-            return params;
-          });
-        }}
-        onRecenterRequest={() => {
-          setSearchParams((params) => {
-            params.delete("centered");
-            return params;
-          });
-        }}
-        userInteracted={userInteracted}
-      />
+        float={
+          <>
+            <TrackControl
+              mode={trackingMode}
+              userInteracted={userInteracted}
+              position={position}
+              failed={positionFailed}
+              onModeChange={handleTrackingModeChange}
+            />
+            <MiniPlayer
+              openSlug={locationSlug}
+              onOpen={(slug) =>
+                setSearchParams((params) => {
+                  params.set("location", slug);
+                  return params;
+                })
+              }
+            />
+          </>
+        }
+      >
+        <TimeSlider
+          years={years}
+          times={manifest?.times}
+          year={year}
+          onChange={handleMenuItemClick("year")}
+        />
+        <ZoomButtons map={map} />
+      </Menu>
     </div>
   );
 };

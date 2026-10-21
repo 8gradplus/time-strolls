@@ -3,6 +3,7 @@ import {
   formatDatetime,
   leafletBounds,
   legacyHistoricYear,
+  sources,
   tileUrl,
   yearLabel,
   yearsInBounds,
@@ -62,6 +63,25 @@ test("leafletBounds converts [w, s, e, n] to [[s, w], [n, e]]", () => {
 test("attribution appends the licence", () => {
   expect(attribution(layer())).toBe("CENIA (CC-BY-4.0)");
   expect(attribution(layer({ licence: null }))).toBe("CENIA");
+});
+
+test("sources lists only the layers the best tiles are made from", () => {
+  const time = {
+    best: { url: "best/1952/{z}/{x}/{y}.webp", layers: ["a", "b"] },
+    layers: [
+      layer({ id: "a", attribution: "A" }),
+      layer({ id: "c", attribution: "C" }),
+      layer({ id: "b", attribution: "B", licence: null }),
+    ],
+  };
+  expect(sources(time)).toEqual(["A (CC-BY-4.0)", "B"]);
+});
+
+test("sources lists all layers without a best entry", () => {
+  const time = {
+    layers: [layer({ attribution: "A" }), layer({ attribution: "B" })],
+  };
+  expect(sources(time)).toEqual(["A (CC-BY-4.0)", "B (CC-BY-4.0)"]);
 });
 
 test("legacyHistoricYear is the earliest year in our region", () => {

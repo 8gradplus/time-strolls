@@ -3,7 +3,7 @@ import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import { Icon } from "../icons";
 
 // A bottom sheet on phones, a side panel from sm upwards.
 const Sheet = (props) => {
@@ -49,7 +49,7 @@ const Sheet = (props) => {
       >
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>{header}</Box>
         <IconButton onClick={onClose} aria-label="close" edge="end">
-          <CloseRoundedIcon />
+          <Icon name="close" />
         </IconButton>
       </Box>
       <Box sx={{ height: 2 }}>{loading && <LinearProgress />}</Box>

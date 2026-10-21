@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Marker } from "react-leaflet";
 import { currentLocationIcon } from "../icons";
-import { useTrack } from "./useTrack";
 import { useMap } from "react-leaflet";
 
 const TrackMarker = ({ position, trackingMode }) => {
@@ -9,7 +8,10 @@ const TrackMarker = ({ position, trackingMode }) => {
   return <Marker position={position} icon={currentLocationIcon()} />;
 };
 
+// The user's position comes from useTrack in Map.jsx, which the location
+// button needs as well.
 const Track = ({
+  position,
   trackingMode,
   fallbackCenter,
   onUserInteraction,
@@ -17,30 +19,28 @@ const Track = ({
 }) => {
   const map = useMap(); // map instance is available here
   const programmaticMove = useRef(false);
-  // todo use smoothHeading (or heading from useTrack) for orintation lateron
-  const { position, smoothHeading } = useTrack();
 
-  // Detect manual map movements (drag/zoom) only
-  // Non-manual map movements are triggert by changes in trackMode
+  // Detect manual map movements (drag/zoom) only. Moves made here (by the
+  // tracking mode) fire several events (zoomstart, movestart, ...) until
+  // their moveend, so they are skipped until then; a drag always counts.
   useEffect(() => {
-    const stopFollowing = () => {
-      if (programmaticMove.current) {
-        // skip if move was triggered by code
-        programmaticMove.current = false;
-        return;
-      }
+    const stopFollowing = (event) => {
+      if (programmaticMove.current && event.type !== "dragstart") return;
       onUserInteraction(true);
+    };
+    const moveEnd = () => {
+      programmaticMove.current = false;
     };
 
     map.on("dragstart", stopFollowing);
     map.on("zoomstart", stopFollowing);
     map.on("movestart", stopFollowing);
-    map.on("touchstart", stopFollowing);
+    map.on("moveend", moveEnd);
     return () => {
       map.off("dragstart", stopFollowing);
       map.off("zoomstart", stopFollowing);
       map.off("movestart", stopFollowing);
-      map.off("touchstart", stopFollowing);
+      map.off("moveend", moveEnd);
     };
   }, [map, onUserInteraction]);
 

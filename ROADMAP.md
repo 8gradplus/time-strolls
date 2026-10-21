@@ -21,6 +21,36 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   black and white, so the surfaces stay neutral. Light and dark are equals:
   the device setting by default, overridable in the menu ("Darstellung").
   Directions compared: https://claude.ai/artifact/TWELJnNxYqrj2zEsLGv9ac
+- Order (2026-10-20, replaces the numeric order): 2c calm map, then 4 release
+  workflow (small, so the new look reaches prod), 5 admin, 3 offline PWA,
+  6 Android.
+- Offline vs. app (2026-10-20): an app doesn't make offline much easier. The
+  base map licence, the download package and seekable cached audio are the
+  same work either way; the app only adds durable storage on iOS and
+  background GPS and audio. So offline lands as a PWA, and Capacitor wraps
+  the same build later.
+
+## Next session (state on 2026-10-21)
+Step 2c is done on branch `calm-map`, with a PR to `main` (PR_PLACEHOLDER).
+It holds the calm map, `best` tiles per year, the dock and menu redesign
+(wordmark with the logo as its point, folding dock, √2 menu sheet, drawn
+icons), the podcast player with the mini player, and English as the fallback
+language. Details are in "2c. Calm map" below.
+1. **Merge the PR** once the user has looked at it; then set 2c to done in
+   the status table.
+2. **Test on a real phone** (not possible in the desktop browser): dragging
+   the time line in the dock, the folded pill and the menu sheet above the
+   home indicator, audio with the screen locked, the lock-screen and
+   headphone controls (Media Session), resuming an episode the next day.
+3. **Open points:** place names next to the dots from zoom 15 on (keep or
+   hide); the about text is a first draft; the Czech UI strings (player,
+   dock) should be checked by a native speaker; in a desktop window narrower
+   than ~360 px the zoom pill squeezes the years (accepted for now).
+4. Then go on in the agreed order: 4 release workflow, 5 admin, 3 offline
+   PWA, 6 Android.
+5. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
+   wildcards after every upload (see `CLAUDE.md`, "CDN caching"); widening a
+   region re-renders tiles under the same URLs.
 
 ## Status
 
@@ -30,6 +60,7 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
 | 1 | CDN years and time selection | Done (#7) |
 | 2 | Theme, logo, mobile layout | Done (#8) |
 | 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
+| 2c | Calm map: only map and time line, the rest in the menu | PR open (PR_PLACEHOLDER); see "Next session" |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -46,6 +77,7 @@ via ground control points, step 7 enhancement layers.
 | 1 | Spec ready; visible win |
 | 2 | Needed before PWA icons and the app |
 | 2b | The look has to hold on the real map and imagery before offline and the app |
+| 2c | Too many buttons confused people; usability before new features |
 | 3 | Core museum-guide value |
 | 4 | Before more people touch prod |
 | 5 | Replaces Swagger and notebooks |
@@ -53,6 +85,63 @@ via ground control points, step 7 enhancement layers.
 | 7 | Optional |
 
 ---
+
+## 2c. Calm map
+The map was too busy (three round buttons, the full attribution strip). The
+map now shows only the map, the places and the time line; everything else is
+in the menu. This is the normal view, not a separate mode.
+- **One dock at the bottom right**, within thumb reach (`Components/Dock.jsx`):
+  the menu button, the time line (its line is the dock's vertical centre)
+  and, with a mouse, − and + as one pill split by a hairline; › at the end
+  folds the dock; short hairlines separate the sections. The time line ends in an "Aus" stop that switches the imagery off
+  (replaces the red "Aus" button; "Heute" until 2026-10-21); enhanced/AI flags still show above it.
+  Without imagery in view the dock shrinks to the buttons. Touch screens pinch.
+- **Location button** on its own, just above the dock's right end: follows the
+  user, a second tap goes back to the whole area.
+- **Folded dock (2026-10-21):** › folds the dock into a pill with the year and
+  the logo in the same corner, as high as the location button (without a year
+  a circle of its size); the logo sits right under it. The location button
+  sits at a fixed height (8 px above the dock's 62 px row), so it doesn't move
+  when the dock folds. Only the pill unfolds it. The fold › and the
+  appearance glyphs (circles: half, open, filled) are drawn in the menu
+  button's 1.6 px line, not taken from Material Symbols. Kept
+  per device in `localStorage` (`dockFolded`), not in the URL.
+- **Colour mode (2026-10-21, replaces "always light on the map"):** the base
+  map, the dots, the tooltips and the OSM credit stay light in both modes; the
+  dock, the buttons, the menu and the place panel follow the colour mode.
+- **The menu opens the dock** (redesign 2026-10-21, replaces the first
+  version): the menu grows above the row of controls, which stays at the
+  bottom and opens into a portrait sheet, √2 times as high as the dock is
+  wide (a sheet of paper), capped so some map stays visible above; the
+  colophon stands at its foot and the sub-pages keep the same height;
+  ☰ turns into a drawn ⌄ (replaces ✕, 2026-10-21); a tap outside, Escape or
+  the handle closes it.
+- **In the menu** (refined 2026-10-21): the wordmark "Time ● Strolls" with
+  the logo as the point between the words (`Components/Wordmark.jsx`; it rolls
+  in once each time the menu opens), under it the languages and one
+  appearance button (Automatisch → Hell → Dunkel); then Gebiete (replaces
+  "Gebiet zeigen"), "Auf der Karte" (Orte, then the tours); 24 px between
+  sections. Following the user is only the location button. A quiet colophon
+  links the pages "Über das Projekt" (with the Interreg logo), "Quellen"
+  (OpenStreetMap and the sources of the selected aerial year) and
+  "Impressum", which open inside the dock.
+- **Podcast player (2026-10-21):** the red button plays and pauses (no
+  browser controls, never faded); a line like the time line with the red dot
+  as handle, the times, 15 s back and 30 s ahead (drawn like the dock icons).
+  The story keeps playing when the panel closes: a pill above the dock, left
+  of the location button (pause, open the place, ✕ when paused); paused in
+  the panel and then left, listening just ends. Positions per
+  episode are kept on the device; lock screen and headphones via Media Session.
+- **Attribution:** on the map only a small "© OpenStreetMap" (bottom left,
+  top right on touch screens), as OSM's guideline wants a credit on the map;
+  the aerial sources (CC BY 4.0) are in the menu. `viewport-fit=cover` plus
+  safe-area insets keep the controls clear of notch and home indicator.
+- Page translators (Chrome) leave icons, the wordmark, the language switch and
+  the sources alone (`translate="no"`); the icon font broke under translation.
+- Still to test on a real phone: the OSM credit top right, the dock and the
+  button column above the home indicator, the menu card's height, and
+  dragging the slider inside the dock.
+- Open: place names next to the dots from zoom 15 on (keep or hide).
 
 ## 2b. Styling polish — done (#8)
 All styling work, on top of step 2; merged into `main` as #8 on 2026-10-20.
@@ -136,8 +225,8 @@ tile) and the README image; see `frontend/design/logo/`.
 Specified in `CLAUDE.md` ("Historic imagery"). Implemented in `src/historic/`:
 `year=<YYYY>` replaces `historic`, an old `historic=true` maps to the earliest
 manifest year in the region (1945 once it is published), one `TileLayer` per
-layer until `best/` exists. Once aerial-timeline publishes `best/`, switch
-`HistoricLayers.jsx` to one layer per year.
+layer until `best` exists. The manifest now has a `best` entry per year; the
+switch to one layer per year is in the working tree (see "Next session").
 
 ## 2. Logo and UI design — done
 The palette and logo below were the starting plan; the result is the logo and

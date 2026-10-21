@@ -101,7 +101,14 @@ const LocationInfo = (props) => {
           {podcasts.length > 0 && (
             <>
               <SectionLabel title={t.audio} count={podcasts.length} />
-              <Podcasts podcasts={podcasts} />
+              <Podcasts
+                podcasts={podcasts}
+                place={{
+                  slug: info.place.slug,
+                  name: info.place.name,
+                  image: info.images[0]?.url,
+                }}
+              />
             </>
           )}
           {info.images.length > 0 && (

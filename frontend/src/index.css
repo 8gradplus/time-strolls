@@ -1,15 +1,61 @@
-/* Import Google Material Symbols font - Specify names  (in alphabetical order!) at end of url*/
-@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=assistant_navigation,location_searching,map,my_location");
+/* One icon family: Material Symbols (outlined), weight 300 to match Jost,
+   weight 400 when filled. Self-hosted: only the icons the app uses, fetched
+   by design/icons/fetch-icons.sh (add new names there). Icons.jsx renders them. */
+@font-face {
+  font-family: "Material Symbols Outlined";
+  font-style: normal;
+  font-weight: 300 400;
+  font-display: block;
+  src: url("./fonts/material-symbols.woff2") format("woff2");
+}
 
-/* Default styling for material symbols */
-.material-symbols-outlined {
+.icon {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
   display: inline-block;
-  vertical-align: middle;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
   font-variation-settings:
     "FILL" 0,
+    "wght" 300,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
+.icon.filled {
+  font-variation-settings:
+    "FILL" 1,
     "wght" 400,
     "GRAD" 0,
     "opsz" 24;
+}
+
+/* Everything still works without movement */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+    animation: none !important;
+  }
+}
+
+/* A new aerial year fades in over the old one (historic/HistoricLayers.jsx) */
+.historic-layer {
+  transition: opacity 320ms ease;
 }
 
 /* Fonts, body and colours come from the MUI theme (src/theme.js, CssBaseline).
@@ -149,45 +195,36 @@
   line-height: 26px;
 }
 
-/* On touch screens people pinch to zoom, so the buttons only add clutter */
-@media (hover: none) and (pointer: coarse) {
-  .leaflet-control-zoom {
-    display: none;
-  }
-}
-
-/* Leaflet's zoom buttons and attribution in the theme: paper surface,
-   hairline, no shadow */
-.leaflet-bar {
-  border: 1px solid var(--mui-palette-divider) !important;
-  border-radius: 4px !important;
-  box-shadow: none !important;
-  overflow: hidden;
-}
-
-.leaflet-bar a {
-  background: var(--mui-palette-background-paper);
-  color: var(--mui-palette-text-primary);
-  border-bottom-color: var(--mui-palette-divider);
-}
-
-.leaflet-bar a:hover {
-  background: var(--mui-palette-background-default);
-}
-
+/* Leaflet's attribution is only the small OpenStreetMap credit (the aerial
+   sources are in the menu): a quiet line in the bottom left corner, on touch
+   screens in the top right, away from the dock (Components/CompactAttribution.jsx).
+   Leaflet's own zoom buttons are off (Components/ZoomButtons.jsx). */
 .leaflet-container .leaflet-control-attribution {
   background: color-mix(
     in srgb,
-    var(--mui-palette-background-paper) 85%,
+    var(--mui-palette-background-paper) 70%,
     transparent
   );
   color: var(--mui-palette-text-secondary);
   font-family: inherit;
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1.4;
+  padding: 0 4px;
+  border-radius: 0 3px 0 0;
 }
 
 .leaflet-control-attribution a {
-  color: var(--mui-palette-text-primary);
+  color: inherit;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .leaflet-container .leaflet-control-attribution {
+    position: fixed;
+    top: calc(6px + env(safe-area-inset-top));
+    right: calc(6px + env(safe-area-inset-right));
+    margin: 0;
+    border-radius: 3px;
+  }
 }
 
 /* Photo viewer (yet-another-react-lightbox) in the app's surface: a white

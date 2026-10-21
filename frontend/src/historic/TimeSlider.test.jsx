@@ -23,14 +23,14 @@ beforeEach(() => localStorage.setItem("language", "de"));
 afterEach(cleanup);
 
 describe("TimeSlider", () => {
-  test("shows only years, and the source of the chosen one", () => {
+  test("shows only years; the sources are in the menu", () => {
     renderSlider({ year: "2025", onChange: vi.fn() });
     expect(screen.getByRole("button", { name: "2025" })).toBeInTheDocument();
     expect(screen.queryByText(/Juni/)).not.toBeInTheDocument();
-    expect(screen.getByText("Ortofoto ČR")).toBeInTheDocument();
+    expect(screen.queryByText("Ortofoto ČR")).not.toBeInTheDocument();
   });
 
-  test("picks a year and switches the imagery off", () => {
+  test("picks a year, and off switches the imagery off", () => {
     const onChange = vi.fn();
     renderSlider({ year: "1952", onChange });
     fireEvent.click(screen.getByRole("button", { name: "2025" }));
@@ -39,13 +39,22 @@ describe("TimeSlider", () => {
     expect(onChange).toHaveBeenCalledWith(null);
   });
 
-  test("marks Off as pressed when no year is chosen", () => {
+  test("marks off as pressed when no year is chosen", () => {
     renderSlider({ year: null, onChange: vi.fn() });
     expect(screen.getByRole("button", { name: "Aus" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByText("Ohne Luftbild")).toBeInTheDocument();
+  });
+
+  test("flags AI-generated imagery", () => {
+    const ai = { layers: [{ title: "KI", ai_generated: true }] };
+    renderSlider({
+      year: "1952",
+      times: { ...times, 1952: ai },
+      onChange: vi.fn(),
+    });
+    expect(screen.getByText("KI-generiert")).toBeInTheDocument();
   });
 
   test("hides when no year is in view and none is chosen", () => {

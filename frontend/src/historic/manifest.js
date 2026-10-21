@@ -32,6 +32,13 @@ export const leafletBounds = ([w, s, e, n]) => [
 export const attribution = (layer) =>
   layer.licence ? `${layer.attribution} (${layer.licence})` : layer.attribution;
 
+// Sources of a year's imagery, one per layer drawn: the layers the best
+// tiles are made from, or all layers without a `best` entry.
+export const sources = (time) =>
+  time.layers
+    .filter((layer) => !time.best || time.best.layers.includes(layer.id))
+    .map(attribution);
+
 // Replacement for the old boolean `historic=true` link: the earliest year in our region.
 export const legacyHistoricYear = (manifest) =>
   yearsInBounds(manifest, REGION_BOUNDS)[0] ?? null;
