@@ -23,7 +23,7 @@ beforeEach(() => localStorage.setItem("language", "de"));
 afterEach(cleanup);
 
 describe("TimeSlider", () => {
-  test("shows only years; the sources are left to the attribution", () => {
+  test("shows only years; the sources are in the menu", () => {
     renderSlider({ year: "2025", onChange: vi.fn() });
     expect(screen.getByRole("button", { name: "2025" })).toBeInTheDocument();
     expect(screen.queryByText(/Juni/)).not.toBeInTheDocument();

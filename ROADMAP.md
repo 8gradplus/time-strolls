@@ -31,45 +31,23 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   the same build later.
 
 ## Next session (state on 2026-10-21)
-Steps 2c and `best` per year are committed on branch `calm-map` (2026-10-21,
-not pushed, no PR yet).
-1. **Layout (2c):** the user wants to keep refining the dock and the map
-   chrome before committing ("we are getting close"). Ask what to change next;
-   open points: place names from zoom 15 on (keep or hide), real-phone test
-   (dragging in the dock, the menu card, the gap to the home indicator).
-2. **`best` per year (from a parallel session):** `historic/HistoricLayers.jsx`,
-   `historic/manifest.js` and `manifest.test.js` draw one
-   `TileLayer` from `time.best` and fall back to stacking all layers (the
-   aerial sources moved into the menu since: `bestAttribution` became
-   `sources()`, used by `Menu.jsx`, so this PR now depends on 2c). Checked
-   in the browser on 2026-10-21 against the live manifest (which now has
-   `best` for every year, all `composite: false`). Committed together with
-   2c, since it depends on it.
-3. **Dock and menu redesign (agreed 2026-10-21, mockup:
-   https://claude.ai/artifact/6K6Fh3Hk3tYgQ1fxduXVzP):** implement it as
-   shown there, in this order:
-   - year cross-fade (keep the old imagery until the new tiles have loaded);
-   - one icon family (Material Symbols, weight 300, self-hosted, no request
-     to Google); ☰ drawn so it folds into ✕;
-   - the year as one red dot that slides and follows the finger while
-     dragging;
-   - location button states: idle / searching (pulse) / following (filled);
-   - the menu grows **above** the control row, which stays at the bottom
-     (replaces "menu under the row"); only the height animates; at most two
-     thirds of the screen; a handle to drag it closed; motion values in the
-     mockup's table;
-   - menu order: Gebiete (thumbnail, name, countries, year range, "Hier";
-     replaces "Gebiet zeigen"; a tap closes the dock, then flies to the
-     area), Touren, "Auf der Karte" (Orte), then a footer with the
-     appearance row, the links Über das Projekt · Quellen · Impressum (as
-     pages inside the dock, with a back arrow) and the funding line with
-     the Interreg logo;
-   - areas come from the manifest's `regions` (aerial-timeline step 5b,
-     spec in its `CLAUDE.md`). Until that is published, use a short list in
-     the frontend (Šumava, Berlin), with the region tile as thumbnail.
-   Legal content beyond a slim Impressum is out of scope for now.
-4. Then push `calm-map`, open the PR, and go on in the agreed order: 4 release
-   workflow, 5 admin, 3 offline PWA, 6 Android.
+Step 2c is done on branch `calm-map`, with a PR to `main` (PR_PLACEHOLDER).
+It holds the calm map, `best` tiles per year, the dock and menu redesign
+(wordmark with the logo as its point, folding dock, √2 menu sheet, drawn
+icons), the podcast player with the mini player, and English as the fallback
+language. Details are in "2c. Calm map" below.
+1. **Merge the PR** once the user has looked at it; then set 2c to done in
+   the status table.
+2. **Test on a real phone** (not possible in the desktop browser): dragging
+   the time line in the dock, the folded pill and the menu sheet above the
+   home indicator, audio with the screen locked, the lock-screen and
+   headphone controls (Media Session), resuming an episode the next day.
+3. **Open points:** place names next to the dots from zoom 15 on (keep or
+   hide); the about text is a first draft; the Czech UI strings (player,
+   dock) should be checked by a native speaker; in a desktop window narrower
+   than ~360 px the zoom pill squeezes the years (accepted for now).
+4. Then go on in the agreed order: 4 release workflow, 5 admin, 3 offline
+   PWA, 6 Android.
 5. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
    wildcards after every upload (see `CLAUDE.md`, "CDN caching"); widening a
    region re-renders tiles under the same URLs.
@@ -82,7 +60,7 @@ not pushed, no PR yet).
 | 1 | CDN years and time selection | Done (#7) |
 | 2 | Theme, logo, mobile layout | Done (#8) |
 | 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
-| 2c | Calm map: only map and time line, the rest in the menu | In progress on branch `calm-map` (committed, no PR yet); see "Next session" |
+| 2c | Calm map: only map and time line, the rest in the menu | PR open (PR_PLACEHOLDER); see "Next session" |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -114,22 +92,46 @@ map now shows only the map, the places and the time line; everything else is
 in the menu. This is the normal view, not a separate mode.
 - **One dock at the bottom right**, within thumb reach (`Components/Dock.jsx`):
   the menu button, the time line (its line is the dock's vertical centre)
-  and, with a mouse, − and + side by side; short hairlines separate the three
-  sections. The time line ends in an "Aus" stop that switches the imagery off
+  and, with a mouse, − and + as one pill split by a hairline; › at the end
+  folds the dock; short hairlines separate the sections. The time line ends in an "Aus" stop that switches the imagery off
   (replaces the red "Aus" button; "Heute" until 2026-10-21); enhanced/AI flags still show above it.
   Without imagery in view the dock shrinks to the buttons. Touch screens pinch.
 - **Location button** on its own, just above the dock's right end: follows the
   user, a second tap goes back to the whole area.
+- **Folded dock (2026-10-21):** › folds the dock into a pill with the year and
+  the logo in the same corner, as high as the location button (without a year
+  a circle of its size); the logo sits right under it. The location button
+  sits at a fixed height (8 px above the dock's 62 px row), so it doesn't move
+  when the dock folds. Only the pill unfolds it. The fold › and the
+  appearance glyphs (circles: half, open, filled) are drawn in the menu
+  button's 1.6 px line, not taken from Material Symbols. Kept
+  per device in `localStorage` (`dockFolded`), not in the URL.
 - **Colour mode (2026-10-21, replaces "always light on the map"):** the base
   map, the dots, the tooltips and the OSM credit stay light in both modes; the
   dock, the buttons, the menu and the place panel follow the colour mode.
-- **The menu opens the dock** (2026-10-21, a first version): the dock grows
-  upwards, its row of controls stays on top and the menu unfolds underneath;
-  the menu button becomes a close button; a tap outside or Escape closes it.
-  Its look and motion get a separate design pass.
-- **In the menu ("Karte"):** "Gebiet zeigen" (closes the menu), "Orte
-  anzeigen"; following the user is only the location button (2026-10-21); under "Quellen" OpenStreetMap and the
-  sources of the selected aerial year.
+- **The menu opens the dock** (redesign 2026-10-21, replaces the first
+  version): the menu grows above the row of controls, which stays at the
+  bottom and opens into a portrait sheet, √2 times as high as the dock is
+  wide (a sheet of paper), capped so some map stays visible above; the
+  colophon stands at its foot and the sub-pages keep the same height;
+  ☰ turns into a drawn ⌄ (replaces ✕, 2026-10-21); a tap outside, Escape or
+  the handle closes it.
+- **In the menu** (refined 2026-10-21): the wordmark "Time ● Strolls" with
+  the logo as the point between the words (`Components/Wordmark.jsx`; it rolls
+  in once each time the menu opens), under it the languages and one
+  appearance button (Automatisch → Hell → Dunkel); then Gebiete (replaces
+  "Gebiet zeigen"), "Auf der Karte" (Orte, then the tours); 24 px between
+  sections. Following the user is only the location button. A quiet colophon
+  links the pages "Über das Projekt" (with the Interreg logo), "Quellen"
+  (OpenStreetMap and the sources of the selected aerial year) and
+  "Impressum", which open inside the dock.
+- **Podcast player (2026-10-21):** the red button plays and pauses (no
+  browser controls, never faded); a line like the time line with the red dot
+  as handle, the times, 15 s back and 30 s ahead (drawn like the dock icons).
+  The story keeps playing when the panel closes: a pill above the dock, left
+  of the location button (pause, open the place, ✕ when paused); paused in
+  the panel and then left, listening just ends. Positions per
+  episode are kept on the device; lock screen and headphones via Media Session.
 - **Attribution:** on the map only a small "© OpenStreetMap" (bottom left,
   top right on touch screens), as OSM's guideline wants a credit on the map;
   the aerial sources (CC BY 4.0) are in the menu. `viewport-fit=cover` plus

@@ -42,6 +42,13 @@ const scheme = (t) => ({
   },
 });
 
+// Motion: one curve to open, a quicker one to close (the dock, the year dot).
+// prefers-reduced-motion switches all transitions off (index.css).
+export const motion = {
+  open: "cubic-bezier(0.05, 0.7, 0.1, 1)",
+  close: "cubic-bezier(0.3, 0, 0.8, 0.15)",
+};
+
 export const serif = '"Cormorant Garamond", Garamond, Georgia, serif';
 const sans = '"Jost Variable", Futura, "Helvetica Neue", Arial, sans-serif';
 

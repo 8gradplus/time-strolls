@@ -1,6 +1,7 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import { useLanguage } from "../LanguageContext";
+import { motion } from "../theme";
 
 // Stops sit between 8% and 92% of the track, so the end labels stay inside.
 const stopPosition = (index, count) =>
@@ -8,11 +9,15 @@ const stopPosition = (index, count) =>
 
 // One row in the dock: the aerial years in view as stops on a line, and
 // "off" as the last stop, which switches the imagery off. Only years are
-// shown, no months; the sources are in the map attribution. Enhanced or
+// shown, no months; the sources are in the menu. The selected year is one red
+// dot that slides from stop to stop; while dragging it follows the finger and
+// the year under it is selected, on release it snaps. Enhanced or
 // AI-generated imagery is flagged above the line.
 const TimeSlider = ({ years, times, year, onChange }) => {
   const { t } = useLanguage();
   const trackRef = useRef(null);
+  // Where the dot is while the line is pressed (percent), else null
+  const [drag, setDrag] = useState(null);
   if (!times || (years.length === 0 && !year)) return null;
 
   // null is "off": no imagery
@@ -25,10 +30,18 @@ const TimeSlider = ({ years, times, year, onChange }) => {
       ].filter(Boolean)
     : [];
 
-  // Dragging along the line snaps to the nearest stop
+  const selected = stops.indexOf(year || null);
+  const first = stopPosition(0, stops.length);
+  const last = stopPosition(stops.length - 1, stops.length);
+
+  // Dragging along the line selects the nearest stop
   const pick = (event) => {
     const rect = trackRef.current.getBoundingClientRect();
-    const percent = ((event.clientX - rect.left) / rect.width) * 100;
+    const percent = Math.min(
+      last,
+      Math.max(first, ((event.clientX - rect.left) / rect.width) * 100),
+    );
+    setDrag(percent);
     let nearest = 0;
     stops.forEach((_, i) => {
       const distance = Math.abs(stopPosition(i, stops.length) - percent);
@@ -67,9 +80,14 @@ const TimeSlider = ({ years, times, year, onChange }) => {
             pick(event);
           }
         }}
+        onPointerUp={() => setDrag(null)}
+        onPointerCancel={() => setDrag(null)}
+        onLostPointerCapture={() => setDrag(null)}
         sx={{
           position: "relative",
-          height: 48, // the line is the vertical centre, level with the menu button
+          // The line is the vertical centre, level with the menu button; the years
+          // below it keep a little air to the dock's edge
+          height: 52,
           touchAction: "none",
           cursor: "pointer",
           "&::before": {
@@ -77,25 +95,25 @@ const TimeSlider = ({ years, times, year, onChange }) => {
             position: "absolute",
             left: 8,
             right: 8,
-            top: 23,
+            top: 25,
             height: 2,
             bgcolor: "divider",
           },
         }}
       >
         {stops.map((y, i) => {
-          const selected = y === (year || null);
+          const pressed = i === selected;
           return (
             <Box
               key={y ?? "off"}
               component="button"
               type="button"
-              aria-pressed={selected}
+              aria-pressed={pressed}
               onClick={() => onChange(y)}
               sx={{
                 all: "unset",
                 position: "absolute",
-                top: 2,
+                top: 4,
                 left: `${stopPosition(i, stops.length)}%`,
                 width: 44,
                 height: 44,
@@ -112,15 +130,15 @@ const TimeSlider = ({ years, times, year, onChange }) => {
                 sx={{
                   position: "absolute",
                   left: "50%",
-                  top: selected ? 14 : 16,
-                  width: selected ? 16 : 12,
-                  height: selected ? 16 : 12,
-                  ml: selected ? "-8px" : "-6px",
+                  top: 16,
+                  width: 12,
+                  height: 12,
+                  ml: "-6px",
                   borderRadius: "50%",
                   boxSizing: "border-box",
-                  bgcolor: selected ? "primary.main" : "background.paper",
-                  border: 2,
-                  borderColor: selected ? "primary.main" : "text.secondary",
+                  bgcolor: "background.paper",
+                  border: 1.5,
+                  borderColor: "text.secondary",
                 }}
               />
               <Box
@@ -131,10 +149,11 @@ const TimeSlider = ({ years, times, year, onChange }) => {
                   top: 30,
                   transform: "translateX(-50%)",
                   fontSize: 12,
-                  fontWeight: selected ? 600 : 400,
-                  color: selected ? "text.primary" : "text.secondary",
+                  fontWeight: pressed ? 600 : 400,
+                  color: pressed ? "text.primary" : "text.secondary",
                   fontVariantNumeric: "tabular-nums",
                   whiteSpace: "nowrap",
+                  transition: "color 200ms ease",
                 }}
               >
                 {y ?? t.off}
@@ -142,6 +161,29 @@ const TimeSlider = ({ years, times, year, onChange }) => {
             </Box>
           );
         })}
+
+        {/* The selected year: red; "off": hollow */}
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: "absolute",
+            top: 16,
+            left: `${drag ?? stopPosition(selected, stops.length)}%`,
+            width: 16,
+            height: 16,
+            ml: "-8px",
+            borderRadius: "50%",
+            boxSizing: "border-box",
+            pointerEvents: "none",
+            transition:
+              drag === null
+                ? `left 260ms ${motion.open}, background-color 200ms ease`
+                : "none",
+            ...(year
+              ? { bgcolor: "primary.main" }
+              : { bgcolor: "background.paper", border: 1.5 }),
+          }}
+        />
       </Box>
     </Box>
   );

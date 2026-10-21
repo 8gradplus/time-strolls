@@ -9,19 +9,24 @@ import { api } from "./api";
 import Tour from "./Tours/Tour";
 import TrackControl from "./Track/TrackControl";
 import Track from "./Track/Track";
+import { useTrack } from "./Track/useTrack";
 import HistoricLayers, { ViewBounds } from "./historic/HistoricLayers";
 import TimeSlider from "./historic/TimeSlider";
 import CompactAttribution from "./Components/CompactAttribution";
 import Notice from "./Components/Notice";
+import Toast from "./Components/Toast";
 import ZoomButtons from "./Components/ZoomButtons";
+import MiniPlayer from "./Components/MiniPlayer";
 import { useLanguage } from "./LanguageContext";
 import { useManifest } from "./historic/useManifest";
 import {
   MAX_ZOOM,
   REGION_BOUNDS,
+  leafletBounds,
   legacyHistoricYear,
   yearsInBounds,
 } from "./historic/manifest";
+import { localized, regionAt, regionList, yearRange } from "./historic/regions";
 
 const fallbackCenter = [48.629371, 14.079059];
 
@@ -30,10 +35,16 @@ const CoordinateMap = () => {
   const [locations, setLocations] = useState(null);
   const [locationsFailed, setLocationsFailed] = useState(false);
   const [locationsRequest, setLocationsRequest] = useState(0);
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const manifest = useManifest();
   const [viewBounds, setViewBounds] = useState(REGION_BOUNDS);
   const [map, setMap] = useState(null);
+  const [toast, setToast] = useState(null);
+  const { position, failed: positionFailed } = useTrack();
+
+  // Areas with aerial imagery; "here" is the one around the centre of the view
+  const regions = regionList(manifest);
+  const here = regionAt(regions, viewBounds);
 
   // Derive state from URL - single source of truth
   const locationSlug = searchParams.get("location");
@@ -148,6 +159,29 @@ const CoordinateMap = () => {
     });
   };
 
+  // Flies to an area, then shows its name for a moment
+  const handleRegion = (region) => {
+    if (!map) return;
+    const reduced = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    map.once("moveend", () =>
+      setToast({
+        title: localized(region.title, language),
+        years: yearRange(region.times),
+        id: Date.now(),
+      }),
+    );
+    // A selected year the area doesn't have gives way to its earliest
+    if (year && !region.times.includes(year)) {
+      handleMenuItemClick("year")(region.times[0]);
+    }
+    map.flyToBounds(leafletBounds(region.bounds), {
+      animate: !reduced,
+      duration: 1.2,
+    });
+  };
+
   const handleMarkerClick = (id) => (toggle) => {
     // Find the location to get its slug
     const location = locations?.find((loc) => loc.id === id);
@@ -188,6 +222,7 @@ const CoordinateMap = () => {
           <ViewBounds onChange={setViewBounds} />
           <CompactAttribution />
           <Track
+            position={position}
             trackingMode={trackingMode}
             fallbackCenter={fallbackCenter}
             onUserInteraction={(interacted) => {
@@ -230,6 +265,7 @@ const CoordinateMap = () => {
           onAction={() => setLocationsRequest((n) => n + 1)}
         />
       )}
+      <Toast toast={toast} />
       <Menu
         onItemClick={handleMenuItemClick}
         itemState={{
@@ -237,9 +273,31 @@ const CoordinateMap = () => {
           showMarkers: showMarkers,
           tourId: tourId,
         }}
-        onTrackingModeChange={handleTrackingModeChange}
+        regions={regions}
+        hereId={here?.id}
+        onRegion={handleRegion}
         time={manifest?.times[year]}
         year={year}
+        float={
+          <>
+            <TrackControl
+              mode={trackingMode}
+              userInteracted={userInteracted}
+              position={position}
+              failed={positionFailed}
+              onModeChange={handleTrackingModeChange}
+            />
+            <MiniPlayer
+              openSlug={locationSlug}
+              onOpen={(slug) =>
+                setSearchParams((params) => {
+                  params.set("location", slug);
+                  return params;
+                })
+              }
+            />
+          </>
+        }
       >
         <TimeSlider
           years={years}
@@ -248,11 +306,6 @@ const CoordinateMap = () => {
           onChange={handleMenuItemClick("year")}
         />
         <ZoomButtons map={map} />
-        <TrackControl
-          mode={trackingMode}
-          userInteracted={userInteracted}
-          onModeChange={handleTrackingModeChange}
-        />
       </Menu>
     </div>
   );

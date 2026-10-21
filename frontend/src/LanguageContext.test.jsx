@@ -13,8 +13,8 @@ describe("initialLanguage", () => {
     expect(initialLanguage(null, ["fr-FR", "en-GB", "de"])).toBe("en");
   });
 
-  test("falls back to German", () => {
-    expect(initialLanguage(null, ["fr-FR"])).toBe("de");
-    expect(initialLanguage("xx", undefined)).toBe("de");
+  test("falls back to English", () => {
+    expect(initialLanguage(null, ["fr-FR"])).toBe("en");
+    expect(initialLanguage("xx", undefined)).toBe("en");
   });
 });

@@ -4,6 +4,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import CoordinateMap from "./Map";
 import { LanguageProvider } from "./LanguageContext";
+import { PlayerProvider } from "./podcast/PlayerContext";
 import theme from "./theme";
 
 function App() {
@@ -11,9 +12,11 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <LanguageProvider>
-        <BrowserRouter>
-          <CoordinateMap />
-        </BrowserRouter>
+        <PlayerProvider>
+          <BrowserRouter>
+            <CoordinateMap />
+          </BrowserRouter>
+        </PlayerProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

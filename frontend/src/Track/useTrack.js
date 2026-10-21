@@ -29,18 +29,23 @@ export const useSmoothHeading = (targetHeading) => {
 export const useTrack = () => {
   const [position, setPosition] = useState(null);
   const [heading, setHeading] = useState(0);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setPosition(latlng);
+        setFailed(false);
 
         if (pos.coords.heading != null) {
           setHeading(pos.coords.heading);
         }
       },
-      (err) => console.error("Geolocation error:", err),
+      (err) => {
+        console.error("Geolocation error:", err);
+        setFailed(true);
+      },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 },
     );
 
@@ -48,5 +53,5 @@ export const useTrack = () => {
   }, []);
 
   const smoothHeading = useSmoothHeading(heading);
-  return { position, smoothHeading };
+  return { position, failed, smoothHeading };
 };

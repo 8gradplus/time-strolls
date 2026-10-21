@@ -1,35 +1,119 @@
 import L from "leaflet";
 
-export const GoogleMaterialIcon = ({
-  name, // icon name as given imported in index.css
-  color = "currentColor",
-  size = 24,
-  fill = 0,
-  weight = 400,
-  style = {},
-}) => {
-  // use icons from google imported in index.css
-  const combinedStyle = {
-    color,
-    fontSize: size,
-    fontVariationSettings: `'FILL' ${fill}, 'wght' ${weight}, 'GRAD' 0, 'opsz' ${size}`,
-    display: "inline-block",
-    verticalAlign: "middle",
-    ...style,
-  };
+// One icon from the self-hosted Material Symbols font (index.css): outlined
+// at weight 300, or filled for an active state. The font draws a glyph for the
+// icon's name; a page translator would translate the name and break the icon,
+// so it is marked untranslatable. Only names in design/icons/fetch-icons.sh exist.
+export const Icon = ({ name, filled = false, size = 24, color, style }) => (
+  <span
+    className={`icon notranslate${filled ? " filled" : ""}`}
+    translate="no"
+    aria-hidden="true"
+    style={{ fontSize: size, color, ...style }}
+  >
+    {name}
+  </span>
+);
 
-  // The icon font draws a glyph for the icon's name; a page translator
-  // would translate the name and break the icon, so it is marked untranslatable
-  return (
-    <span
-      className="material-symbols-outlined notranslate"
-      translate="no"
-      style={combinedStyle}
+// Drawn glyphs for the dock and the menu header, in the menu button's line:
+// 1.6 px strokes in the text colour, round ends. The appearance glyphs are
+// circles, like the logo and the dots: half filled for automatic, open for
+// light, filled for dark.
+const Glyph = ({ size, children }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+    fill="none"
+    stroke="currentColor"
+    // 1.6 px on screen at any size
+    strokeWidth={32 / size}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ display: "block", flex: "none" }}
+  >
+    {children}
+  </svg>
+);
+
+// ⌄ closes the menu (it folds back down); › folds the dock. One chevron at
+// 45°, turned
+export const DownGlyph = ({ size = 20 }) => (
+  <Glyph size={size}>
+    <path d="M5.5 8 10 12.5 14.5 8" />
+  </Glyph>
+);
+
+export const FoldGlyph = ({ size = 20 }) => (
+  <Glyph size={size}>
+    <path d="M8 5.5 12.5 10 8 14.5" />
+  </Glyph>
+);
+
+export const ModeGlyph = ({ mode, size = 16 }) => (
+  <Glyph size={size}>
+    <circle
+      cx="10"
+      cy="10"
+      r="6.5"
+      fill={mode === "dark" ? "currentColor" : "none"}
+    />
+    {mode === "system" && (
+      <path d="M10 3.5a6.5 6.5 0 0 0 0 13z" fill="currentColor" />
+    )}
+  </Glyph>
+);
+
+// ✕ for ending things that are not the menu (the mini player)
+export const CloseGlyph = ({ size = 18 }) => (
+  <Glyph size={size}>
+    <path d="M6 6l8 8M14 6l-8 8" />
+  </Glyph>
+);
+
+// "15 back" / "30 ahead": an open circle with an arrow head, the seconds in it
+export const SkipGlyph = ({ seconds, back = false, size = 26 }) => (
+  <Glyph size={size}>
+    <g transform={back ? undefined : "translate(20 0) scale(-1 1)"}>
+      <path d="M6.3 4.9A6.6 6.6 0 1 1 3.5 10" />
+      <path d="M6.6 2 6.3 4.9 9.2 5.3" />
+    </g>
+    <text
+      x="10"
+      y="12.6"
+      textAnchor="middle"
+      fontSize="6"
+      fontWeight="500"
+      fill="currentColor"
+      stroke="none"
+      style={{ fontFamily: "inherit" }}
     >
-      {name}
-    </span>
-  );
-};
+      {seconds}
+    </text>
+  </Glyph>
+);
+
+// ▸ and ❚❚ filled, on the red button; .pp-play and .pp-pause cross-fade
+export const PlayPauseGlyph = ({ size = 22 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    fill="currentColor"
+    style={{ display: "block" }}
+  >
+    <path
+      className="pp-play"
+      d="M8.5 5.8v12.4a.6.6 0 0 0 .92.5l9.6-6.2a.6.6 0 0 0 0-1L9.42 5.3a.6.6 0 0 0-.92.5z"
+    />
+    <g className="pp-pause">
+      <rect x="7" y="5.5" width="3.4" height="13" rx="1" />
+      <rect x="13.6" y="5.5" width="3.4" height="13" rx="1" />
+    </g>
+  </svg>
+);
 
 // A place: one plain dot in the map accent with a white ring (.place-dot in
 // index.css), inside a larger transparent area that is easy to tap. The open
