@@ -1,12 +1,10 @@
-# Local development: build the images from source, and a normal local
-# database volume (created if missing) instead of the external live one.
 configs:
   caddy_config_file:
     file: ./Caddyfile.local
 
 volumes:
-  postgres:
-    external: false
+  # Don't create named volume in local dev - we'll use bind mounts
+  migrations_sql: {}
 
 services:
   postgres:
@@ -18,17 +16,11 @@ services:
       - ../backend/migration:/flyway/sql:ro
 
   api:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
       - ../backend/migration:/app/migration:ro
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
     ports:
       - "3000:3000"
