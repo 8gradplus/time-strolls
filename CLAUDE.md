@@ -11,14 +11,20 @@ Monorepo layout: `backend/` (FastAPI + SQLModel, Python ≥3.13, managed with `u
 ## Commands
 
 ### Backend (run from `backend/`)
-- `make run-api` — dev server on :8000 with reload. It sources `../deployment/credentials.local` for env vars, and that file must exist.
+- `make run-api` — dev server on :8000 with reload. It sources `../deployment/.env` (the local passwords and keys), and that file must exist.
 - `make test` / `uv run pytest` — tests. pytest and ruff are in the `test` extra (`uv sync --extra test`, as in CI). The `dev` extra includes `test` plus the geo/notebook stack.
-- `make lint` / `uv run ruff check .` — lint (default rules, notebooks excluded). `make check` runs lint and tests, as in CI.
+- `make lint` / `uv run ruff check .` — lint (default rules). `make check` runs lint and tests, as in CI.
 - Single test: `uv run pytest tests/test_slug.py::TestSlugify::test_slugify_basic`
 - `make test-cov` — coverage for `helpers` and `api`.
 - `make run-etl` — runs `etl.py`: georeferences `resources/us-army-1945.jpeg` with hardcoded ground control points into a GeoTIFF, then cuts it into map tiles. Needs the geo dev extras (rasterio, titiler, etc.).
 - `make run-local-tile-server` — serves tiles locally for inspection.
 - API docs: `http://localhost:8000/api/docs`.
+
+### Content replay (run from `replay/`)
+- `replay/places.yml` is the curated content: places with their Topothek image links and podcasts, and the tours (GPX files in `replay/tours/`). Edit it by hand; it replaced the notebook `upload_data.ipynb` (the notebooks were removed on 2026-10-22).
+- `make local` / `make production` replay it through the API: only what is missing is added, nothing is changed or deleted, so it can run any number of times (an empty database gets everything). Each target has its own key in `replay/.env` (git-ignored, only on your Mac): `API_KEY_LOCAL` (the local stack's `API_KEY`) and `API_KEY_PRODUCTION`. The environment wins over the file. The script is a safety net run by hand on the Mac, never on a server.
+- `make check` (production) / `make check-local` only list what would be added and what differs, without a key.
+- Its own uv project (httpx, pydantic, PyYAML), separate from the backend: it only talks to the HTTP API. `make lint`, `make test`.
 
 ### Frontend (run from `frontend/`)
 - Vite. `npm start` — dev server on :3000. `vite.config.js` proxies `/api` to the **production** API by default; `API_PROXY=http://127.0.0.1:8000 npm start` uses a local backend.
@@ -30,15 +36,17 @@ Monorepo layout: `backend/` (FastAPI + SQLModel, Python ≥3.13, managed with `u
 - `.github/workflows/ci.yml` on push/PR to `main`: backend ruff + pytest, frontend prettier + vitest + build, and a Docker build of both images (no push).
 
 ### Deployment (run from `deployment/`)
-- Local full stack: `make run` (`docker compose --env-file credentials.local up -d --build`). This picks up `docker-compose.override.yml` automatically, which adds port mappings and `Caddyfile.local`.
-- Production: `deploy_production.sh` SSHes into the DigitalOcean droplet via `doctl`, downloads the `main` branch zip from GitHub, copies `credentials.prod`, and runs `make run-prod` (base compose only, without overrides). There is no image registry, so whatever is on `main` gets deployed.
-- Images: publishing a GitHub release (tag `vX.Y.Z`) runs `.github/workflows/release.yml`, which builds `timestrolls-api` and `timestrolls-frontend` and pushes them to the DigitalOcean registry (`REGISTRY` in the workflow, `debtray-registry` for now) as `:<version>` and `:latest`, then sends a private Slack message. Deploying these images is a separate, later step; production still uses `deploy_production.sh`. Repository secrets only (no company secrets, so a move to a dedicated DigitalOcean account only changes secrets): `DO_ACCESS_TOKEN` (registry read/write) and `SLACK_WEBHOOK_URL` (a webhook into the user's own DM).
-- Inspect the interpolated compose config: `docker compose --env-file credentials.local config`.
+- Local full stack: `make run` (`docker compose up -d --build`). Compose reads the passwords and keys from `deployment/.env` (git-ignored, your own local values: `POSTGRES_ADMIN_PASSWORD`, `POSTGRES_USER_PASSWORD`, `API_KEY`, `SPACES_KEY`, `SPACES_SECRET`) and picks up `docker-compose.override.yml`, which builds the images from source and adds port mappings, `Caddyfile.local` and a normal local database volume. Stop the Vite dev server first (both use :3000).
+- Production is released, not built on the droplet: publishing a GitHub release (tag `vX.Y.Z`) runs `.github/workflows/release.yml`. It builds `timestrolls-api` and `timestrolls-frontend`, pushes them to the DigitalOcean registry (`REGISTRY` in the workflow, `debtray-registry` for now) as `:<version>` and `:latest`, copies `docker-compose.yml` and `Caddyfile.prod` to `~/timestrolls/` on the droplet, writes the passwords and keys from the GitHub secrets into `.env` there, pulls the version and runs `docker compose up -d` (never `down`), waits for `/api/ready` and sends a private Slack message. **Rollback:** run the workflow by hand with an earlier tag; it deploys that version without building. Everything about deploying is in that one file.
+- **Secrets** are repository secrets only (no company secrets; moving to a dedicated DigitalOcean account changes only them and `REGISTRY`): `DO_ACCESS_TOKEN` (registry, droplet read), `SSH_KEY`, `KNOWN_HOSTS`, `POSTGRES_ADMIN_PASSWORD`, `POSTGRES_USER_PASSWORD`, `API_KEY`, `SPACES_KEY`, `SPACES_SECRET`, `SLACK_WEBHOOK_URL`. Everything else (user names `postgres` and `user`, database, hosts, bucket, domain) is written into `docker-compose.yml` and `backend/config.yml`. GitHub secrets can't be read back; keep the values in a password manager too.
+- **The live data** is in the droplet's Docker volume `deployment_postgres`, declared `external` in `docker-compose.yml`, so compose never creates or deletes it and won't start without it. Never run `docker compose down -v` on the droplet. There are no automatic backups until the managed database (roadmap).
+- The migrations ship inside the API image: the one-shot service `migration-files` copies them into a volume for Flyway (pinned to 11.9.1), so a release pins code and migrations together.
+- Inspect the compose config: `docker compose config` (local) or `docker compose -f docker-compose.yml config` (production, without the override).
 - To develop the API locally against a DB, start the compose stack, stop the `api`/`frontend` services, then run `make run-api` in `backend/`.
 
 ## Architecture
 
-**Config:** `backend/config/__init__.py` loads `config.yml` with EnvYAML (`${VAR}` interpolation from env) and validates it against the pydantic `Validator` in `config/validate.py`. The resulting module-level `config` object is imported everywhere (`from config import config`). `backend/config.yml` targets `localhost` for local runs. In Docker, `deployment/api-config.yml` (host `postgres.timestrolls`) is mounted over `/app/config.yml`. Keep both files in sync when adding config keys. Required env vars: `API_KEY`, `POSTGRES_USER`, `POSTGRES_USER_PASSWORD`, `SPACES_KEY`, `SPACES_SECRET` (plus `POSTGRES_ADMIN*` for compose/Flyway).
+**Config:** `backend/config/__init__.py` loads `config.yml` with EnvYAML (`${VAR}` interpolation from env, `${VAR|default}` for a default) and validates it against the pydantic `Validator` in `config/validate.py`. The resulting module-level `config` object is imported everywhere (`from config import config`). `backend/config.yml` is the only config, baked into the API image: the database host is `${POSTGRES_HOST|localhost}` (compose sets `postgres.timestrolls`). Required env vars: `API_KEY`, `POSTGRES_USER_PASSWORD`, `SPACES_KEY`, `SPACES_SECRET` (plus `POSTGRES_ADMIN_PASSWORD` for compose/Flyway).
 
 **API (`backend/api/`):** `main.py` mounts routers from `api/controller/`. Each controller pairs with SQLModel table/DTO classes in `api/model/`. Routes are prefixed with `/api/...`.
 - `place`, `image`, `podcast` and the write side of `tour` require the `X-API-Key` header (`api/auth/api_key.py`). They are admin/content-management endpoints.
@@ -126,7 +134,7 @@ an old `historic=true` link opens the earliest manifest year in the region.
 **TODO: move the legacy 1945 pipeline to aerial-timeline.** These files stay here
 for now. Don't delete them, and don't build new features on them:
 - `backend/etl.py` (ground control points), `backend/transform/`, `backend/helpers/image.py`
-- `backend/local_tile_server.py`, `backend/notebooks/transformations.ipynb`
+- `backend/local_tile_server.py` (`notebooks/transformations.ipynb` was removed on 2026-10-22)
 - `make run-etl` / `make run-local-tile-server`, and the geo packages in the `dev` extra
 
 The API doesn't import any of this. Once aerial-timeline has the ground control
