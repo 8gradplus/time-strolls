@@ -59,7 +59,7 @@ language. Details are in "2c. Calm map" below.
 | 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
 | 2c | Calm map: only map and time line, the rest in the menu | Done (#9) |
 | 3 | Own base map and offline PWA | Open |
-| 4 | Release workflow (DOCR, deploy) | Open |
+| 4 | Release workflow (DOCR, deploy) | In progress (branch `release-workflow`) |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
 | 6 | Capacitor Android: geofence notifications, background audio | Open |
 | 7 | MCP server on the same auth | Optional, once the admin API is stable |
@@ -276,8 +276,8 @@ people use the app outdoors. Two corrections to `OFFLINE_CACHING_STRATEGY.md`:
 
 ## 4. Deployment automation
 Adapted from the pricing-prediction-linear workflows:
-- **`ci.yml`** exists (ruff, pytest, prettier, vitest, build, Docker build). Still to
-  add: `ruff format --check`.
+- **`ci.yml`** exists (ruff check and format, pytest, prettier, vitest, build,
+  Docker build).
 - **`release.yml`** (GitHub release or `workflow_dispatch`):
   1. Build the `api` and `frontend` images and push them to DOCR
      (`doctl registry login`), tagged `:<version>` and `:latest`.
@@ -285,8 +285,15 @@ Adapted from the pricing-prediction-linear workflows:
      `docker compose pull && up -d`. Flyway runs as before.
 - **Compose:** `image:` references with an `IMAGE_TAG` variable instead of `build:`.
   The droplet only keeps compose files, Caddyfile and credentials; no source zip.
-- **Notifications:** Slack webhooks on success and failure.
-- **Secrets:** `DO_ACCESS_TOKEN`, SSH key, Slack URLs. `credentials.prod` stays on the
+- **Notifications:** Slack, privately to the user (one webhook into their DM).
+- **Database (2026-10-22):** the live data stays in the droplet's volume
+  `deployment_postgres`, now `external` (compose never creates or deletes it);
+  a `pg_dump` before every deployment. A managed database comes later.
+- **Images:** two, `timestrolls-api` (with the migrations, copied for Flyway
+  by a one-shot service) and `timestrolls-frontend`, in `debtray-registry`,
+  configured only through this repo's secrets so it can move to a dedicated
+  DigitalOcean account.
+- **Secrets:** see `CLAUDE.md`, Deployment. `credentials.prod` stays on the
   droplet.
 - **Rollback:** redeploy an earlier tag.
 

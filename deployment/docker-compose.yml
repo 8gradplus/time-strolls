@@ -1,3 +1,8 @@
+# Production: the images come from the registry (release workflow,
+# .github/workflows/release.yml), IMAGE_TAG picks the version. Locally,
+# docker-compose.override.yml builds them from source instead.
+name: deployment
+
 configs:
   api_config:
     file: ./api-config.yml
@@ -20,13 +25,23 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d timestrolls"]
 
+  # The migrations ship in the API image; copy them where Flyway reads them,
+  # so a release tag pins code and migrations together
+  migration-files:
+    image: registry.digitalocean.com/${DO_REGISTRY:-debtray-registry}/timestrolls-api:${IMAGE_TAG:-latest}
+    volumes:
+      - migrations:/sql
+    command: sh -c "rm -rf /sql/* && cp -r /app/migration/. /sql/"
+
   migrate-postgres:
-    image: flyway/flyway:latest
+    image: flyway/flyway:11.9.1
     depends_on:
       postgres:
         condition: service_healthy
+      migration-files:
+        condition: service_completed_successfully
     volumes:
-      - ../backend/migration:/flyway/sql:ro # Import migrations to Flyway
+      - migrations:/flyway/sql:ro
     environment:
       FLYWAY_URL: jdbc:postgresql://postgres.timestrolls:5432/timestrolls
       FLYWAY_USER: ${POSTGRES_ADMIN}
@@ -38,15 +53,11 @@ services:
     command: -connectRetries=60 migrate
 
   api:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: registry.digitalocean.com/${DO_REGISTRY:-debtray-registry}/timestrolls-api:${IMAGE_TAG:-latest}
     container_name: api
     hostname: api.timestrolls
     expose:
       - "8000"
-    volumes:
-      - ../backend/migration:/app/migration:ro
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_USER_PASSWORD=${POSTGRES_USER_PASSWORD}
@@ -64,9 +75,7 @@ services:
         condition: service_completed_successfully
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: registry.digitalocean.com/${DO_REGISTRY:-debtray-registry}/timestrolls-frontend:${IMAGE_TAG:-latest}
     container_name: frontend
     hostname: frontend.timestrolls
     depends_on:
@@ -97,5 +106,10 @@ services:
 volumes:
   caddy_data:
   caddy_config:
-  # migrations_sql:
+  migrations:
+  # The live data. External, so compose never creates or removes it (not
+  # even with down -v) and refuses to start without it rather than start
+  # with an empty database. Back it up with make backup-prod.
   postgres:
+    external: true
+    name: deployment_postgres

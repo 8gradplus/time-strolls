@@ -1,0 +1,141 @@
+name: Release
+
+# A published GitHub release (tag vX.Y.Z) builds both images, pushes them to
+# the DigitalOcean registry and deploys that version to the droplet. A manual
+# run with an earlier tag deploys it again without building (rollback).
+# Everything comes from this repository's secrets (see CLAUDE.md, Deployment).
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to deploy again (rollback), e.g. v0.2.0; its images must exist"
+        required: true
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  build:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - context: backend
+            image: timestrolls-api
+          - context: frontend
+            image: timestrolls-frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+      - name: Log in to the registry
+        run: doctl registry login --expiry-seconds 900
+      - name: Version
+        id: version
+        run: echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: |
+            registry.digitalocean.com/${{ secrets.DO_REGISTRY }}/${{ matrix.image }}:${{ steps.version.outputs.version }}
+            registry.digitalocean.com/${{ secrets.DO_REGISTRY }}/${{ matrix.image }}:latest
+          cache-from: type=gha,scope=${{ matrix.context }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.context }}
+
+  deploy:
+    needs: build
+    # Also for a rollback, where build is skipped
+    if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - name: Version
+        id: version
+        run: echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+      - name: Short-lived, read-only registry login for the droplet
+        run: |
+          mkdir -p registry
+          doctl registry docker-config --read-write=false --expiry-seconds 900 > registry/config.json
+      - name: Copy the deployment files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          source: deployment/docker-compose.yml,deployment/Caddyfile.prod,deployment/api-config.yml,deployment/Makefile,deployment/backup.sh,deployment/deploy.sh,registry/config.json
+          target: timestrolls
+          strip_components: 1
+      - name: Deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          command_timeout: 15m
+          script: sh timestrolls/deploy.sh ${{ steps.version.outputs.version }} ${{ secrets.DO_REGISTRY }}
+      - name: Check that the API answers
+        run: |
+          for i in $(seq 1 30); do
+            curl -fsS https://timestrolls.debtray.com/api/ready && exit 0
+            sleep 10
+          done
+          echo "The API did not get ready" >&2
+          exit 1
+
+  notify:
+    needs: [build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack on success
+        if: needs.deploy.result == 'success'
+        uses: slackapi/slack-github-action@v3
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "#2eb886",
+                  "title": "Release ${{ github.event.repository.name }}",
+                  "text": "Status: *deployed* — Version: `${{ env.TAG }}`${{ github.event_name == 'workflow_dispatch' && ' (rollback)' || '' }}",
+                  "mrkdwn_in": ["text"]
+                }
+              ]
+            }
+      - name: Slack on failure
+        if: needs.deploy.result != 'success'
+        uses: slackapi/slack-github-action@v3
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "#a30200",
+                  "title": "Release ${{ github.event.repository.name }}",
+                  "text": "Status: *failed* — Version: `${{ env.TAG }}` — <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>",
+                  "mrkdwn_in": ["text"]
+                }
+              ]
+            }
