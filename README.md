@@ -14,40 +14,10 @@ Comes with fastapi and is available under
 - `http://localhost:8000/api/redoc`
 
 # Deployment
-### Docker compose
-- Configs are in the `deployment` folder.
-- We use docker compose together with overrides.
-- The base docker compose is given for live Deployment
-- `docker-compose.overrides.yml` injects settings for local deployment (Caddyfile and port mapping)
-
-### Deployment remark
-- Currently we don't use a docker registry (money constraints)
-- This should be done in the future.
-- So in essence we clone the git repo on the server
-- check docker compose env after interpolation `docker compose --env-file credentials.local config`
-
-### Live Docker
-- Just use docker compose (no override)
-- `docker compose -f docker-compose.yml --env-file credentials.local up --build`
-- Run `deploy_production.sh` for digital ocean deployment.
-  - Needs `credentials.prod` ENV file. Located in root of server
-  - Will be copied to `deployment` folder upon running deployment script `deploy_production.sh`
-
-### Local Docker
-- Uses overrides (no need for -f flag).
-- `docker compose --env-file credentials.local up --build`
-- Needs `credentials.local` ENV file.
-
-### Local api development
-Upon development we don't always want to inspect api changes via docker but from a local development server
-1. Start postgres from home
-  - `docker compose --env-file credentials.local up --build`
-2. Stop unnecessary services
-3. Run API development server
-  - `cd backend`
-  - `make run-api`
-
-
+- **Production:** publish a GitHub release (tag `vX.Y.Z`). `.github/workflows/release.yml` builds the API and frontend images, pushes them to the DigitalOcean registry and deploys that version to the droplet. Rollback: run the workflow by hand with an earlier tag. Passwords and keys are repository secrets; see `CLAUDE.md`, Deployment.
+- **Local stack:** `make run` in `deployment/` (`docker compose up -d --build`; the override builds from source). Passwords and keys in `deployment/.env` (git-ignored). The site is at `http://localhost`.
+- **Local API development:** start the stack, stop the `api` service, then `make run-api` in `backend/`.
+- **Content:** `replay/places.yml`, replayed through the API with `make local` / `make production` in `replay/`.
 
 ### Content Sources
 - Topothek
