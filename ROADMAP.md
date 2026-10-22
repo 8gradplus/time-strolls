@@ -59,7 +59,7 @@ language. Details are in "2c. Calm map" below.
 | 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
 | 2c | Calm map: only map and time line, the rest in the menu | Done (#9) |
 | 3 | Own base map and offline PWA | Open |
-| 4 | Release workflow (DOCR, deploy) | Building the images: in progress (branch `release-workflow`); deploying: open |
+| 4 | Release workflow (DOCR, deploy) | Building the images: done (#10); deploying: in progress (branch `deploy-workflow`) |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
 | 6 | Capacitor Android: geofence notifications, background audio | Open |
 | 7 | MCP server on the same auth | Optional, once the admin API is stable |
@@ -282,6 +282,18 @@ Adapted from the pricing-prediction-linear workflows:
   (`release.yml`, repo secrets, Slack privately to the user); deploying them
   to the droplet is a separate step afterwards. Images go to
   `debtray-registry` for now, configured only through this repo's secrets.
+- **Deploying (agreed 2026-10-22):** everything in `release.yml`, no
+  scripts: copy `docker-compose.yml` and `Caddyfile.prod`, write `.env` from
+  the secrets, `pull` and `up -d` (never `down`). Rollback = manual run with
+  an earlier tag. One API config (`backend/config.yml`), user names written
+  into the files; only passwords and keys are secrets. Locally one
+  `deployment/.env`. Then `deploy_production.sh`, `api-config.yml` and the
+  `credentials.*` files go.
+- **Database until the managed one:** the live data stays in the droplet's
+  volume `deployment_postgres`; the only protection is that the workflow
+  never runs `down` and the volume is `external` (compose can't delete it).
+  No backup code for this stopgap: review backups when moving to a managed
+  database, which brings daily backups and point-in-time restore.
 - **`release.yml`** (GitHub release or `workflow_dispatch`):
   1. Build the `api` and `frontend` images and push them to DOCR
      (`doctl registry login`), tagged `:<version>` and `:latest`.
@@ -334,6 +346,10 @@ A FastMCP mount at `/mcp` calls the same service layer as the admin API and is
 protected by the same tokens.
 
 ## Repo structure
+- The notebooks in `backend/notebooks/` were removed (2026-10-22). The
+  content they uploaded is now `replay/places.yml`, replayed through the API
+  with `make local` / `make production` in `replay/` (the safety net until
+  the admin, step 5).
 - The tile and georeferencing pipeline in `backend/` (`etl.py`, `transform/`, …)
   moves to aerial-timeline (its step 6) and is then deleted here in one commit.
 - `resources/` (raw GPX, TIFs, tiles, crawl output): once the admin exists, the

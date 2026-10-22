@@ -32,6 +32,24 @@ jobs:
       - name: Test
         run: uv run pytest
 
+  replay:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: replay
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          enable-cache: true
+      - name: Install
+        run: uv sync --extra test
+      - name: Lint
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Test
+        run: uv run pytest -q
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

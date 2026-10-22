@@ -1,9 +1,10 @@
 name: Release
 
-# A published GitHub release (tag vX.Y.Z) builds both images and pushes them
-# to the DigitalOcean registry as :<version> and :latest. A manual run builds
-# a given tag again. Deploying is a separate, later step. Everything comes
-# from this repository's secrets (see CLAUDE.md, Deployment).
+# A published GitHub release (tag vX.Y.Z) builds both images, pushes them to
+# the DigitalOcean registry and deploys that version to the droplet. A manual
+# run with an earlier tag deploys it again without building (rollback).
+# Secrets come from this repository's secrets; everything else is written
+# here and in deployment/docker-compose.yml.
 
 on:
   release:
@@ -11,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to build, e.g. v0.2.0"
+        description: "Tag to deploy again (rollback), e.g. v0.3.0; its images must exist"
         required: true
 
 concurrency:
@@ -22,9 +23,12 @@ env:
   TAG: ${{ github.event.release.tag_name || inputs.tag }}
   # The DigitalOcean container registry the images go to
   REGISTRY: registry.digitalocean.com/debtray-registry
+  DROPLET: timestrolls
+  SITE: https://timestrolls.debtray.com
 
 jobs:
   build:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -50,19 +54,86 @@ jobs:
         with:
           context: ${{ matrix.context }}
           push: true
+          # No build record: the tag then points straight at the image, and
+          # the registry shows its real size without untagged entries
+          provenance: false
           tags: |
             ${{ env.REGISTRY }}/${{ matrix.image }}:${{ steps.version.outputs.version }}
             ${{ env.REGISTRY }}/${{ matrix.image }}:latest
           cache-from: type=gha,scope=${{ matrix.context }}
           cache-to: type=gha,mode=max,scope=${{ matrix.context }}
 
-  notify:
+  deploy:
     needs: build
+    # Also for a manual run (rollback), where build is skipped
+    if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+      - name: Install the deploy key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          # ssh-keyscan <droplet IP>
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+      - name: Copy the compose file and the Caddyfile to ~/timestrolls
+        run: |
+          tar -czf - -C deployment docker-compose.yml Caddyfile.prod \
+            | doctl compute ssh "$DROPLET" --ssh-command "mkdir -p timestrolls && tar -xzf - -C timestrolls"
+
+      - name: Write the passwords and keys for compose (timestrolls/.env)
+        env:
+          POSTGRES_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          POSTGRES_USER_PASSWORD: ${{ secrets.POSTGRES_USER_PASSWORD }}
+          API_KEY: ${{ secrets.API_KEY }}
+          SPACES_KEY: ${{ secrets.SPACES_KEY }}
+          SPACES_SECRET: ${{ secrets.SPACES_SECRET }}
+        run: |
+          printf '%s\n' \
+            "IMAGE_TAG=${TAG#v}" \
+            "POSTGRES_ADMIN_PASSWORD=$POSTGRES_ADMIN_PASSWORD" \
+            "POSTGRES_USER_PASSWORD=$POSTGRES_USER_PASSWORD" \
+            "API_KEY=$API_KEY" \
+            "SPACES_KEY=$SPACES_KEY" \
+            "SPACES_SECRET=$SPACES_SECRET" \
+            | doctl compute ssh "$DROPLET" --ssh-command "umask 077 && cat > timestrolls/.env"
+
+      - name: Start the new version
+        # A read-only registry login that expires after 15 minutes, only for
+        # the pull. Never "down": up replaces the containers that changed and
+        # leaves the database volume alone.
+        run: |
+          doctl registry docker-config --read-write=false --expiry-seconds 900 \
+            | doctl compute ssh "$DROPLET" --ssh-command "mkdir -p timestrolls/.docker && cat > timestrolls/.docker/config.json"
+          doctl compute ssh "$DROPLET" --ssh-command "cd timestrolls \
+            && DOCKER_CONFIG=.docker docker compose pull api frontend \
+            && rm -rf .docker \
+            && docker compose up -d --remove-orphans \
+            && docker image prune -f"
+
+      - name: Check that the site answers
+        run: |
+          for i in $(seq 1 30); do
+            curl -fsS "$SITE/api/ready" && exit 0
+            sleep 10
+          done
+          echo "The API did not get ready" >&2
+          exit 1
+
+  notify:
+    needs: [build, deploy]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Slack on success
-        if: needs.build.result == 'success'
+        if: needs.deploy.result == 'success'
         uses: slackapi/slack-github-action@v3
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -72,14 +143,14 @@ jobs:
               "attachments": [
                 {
                   "color": "#2eb886",
-                  "title": "Build ${{ github.event.repository.name }}",
-                  "text": "Status: *success* — Version: `${{ env.TAG }}`",
+                  "title": "Release ${{ github.event.repository.name }}",
+                  "text": "Status: *deployed* — Version: `${{ env.TAG }}`${{ github.event_name == 'workflow_dispatch' && ' (rollback)' || '' }}",
                   "mrkdwn_in": ["text"]
                 }
               ]
             }
       - name: Slack on failure
-        if: needs.build.result != 'success'
+        if: needs.deploy.result != 'success'
         uses: slackapi/slack-github-action@v3
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -89,7 +160,7 @@ jobs:
               "attachments": [
                 {
                   "color": "#a30200",
-                  "title": "Build ${{ github.event.repository.name }}",
+                  "title": "Release ${{ github.event.repository.name }}",
                   "text": "Status: *failed* — Version: `${{ env.TAG }}` — <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>",
                   "mrkdwn_in": ["text"]
                 }
