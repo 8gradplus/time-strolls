@@ -4,21 +4,22 @@ api:
 database:
   driver: postgres
   ssl: false
-  host: localhost
+  # postgres.timestrolls in docker compose (deployment/docker-compose.yml)
+  host: ${POSTGRES_HOST|localhost}
   port: 5432
   name: timestrolls
-  user: ${POSTGRES_USER}
+  user: user
   password: ${POSTGRES_USER_PASSWORD}
 
 cdn:
   path:
-    image: test/timestrolls/images
-    podcast: test/timestrolls/podcasts
-    tile: test/timestrolls/tiles
+    image: images
+    podcast: podcasts
+    tile: tiles
   credentials:
     key: ${SPACES_KEY}
     secret: ${SPACES_SECRET}
-  bucket: debtray
+  bucket: timestrolls
   endpoint: https://fra1.digitaloceanspaces.com
   #endpoint: /Users/viktor/Work/8gradplus/time-strolls/resources/
 #tile:

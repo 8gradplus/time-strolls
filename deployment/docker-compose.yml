@@ -1,6 +1,14 @@
+# The whole stack. In production the images come from the registry, built
+# and deployed by .github/workflows/release.yml; IMAGE_TAG picks the
+# version. Passwords and keys come from .env next to this file (on the
+# droplet the workflow writes it from the GitHub secrets, locally it's your
+# own); everything else is written here. Locally, docker-compose.override.yml
+# builds the images from source instead.
+# The project name stays "deployment", so the live containers and volumes
+# keep their names.
+name: deployment
+
 configs:
-  api_config:
-    file: ./api-config.yml
   caddy_config_file:
     file: ./Caddyfile.prod
 
@@ -8,8 +16,8 @@ services:
   postgres:
     image: postgis/postgis:13-3.3
     environment:
-      - POSTGRES_USER=${POSTGRES_ADMIN}
-      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD:?}
       - POSTGRES_DB=timestrolls
     container_name: postgres
     hostname: postgres.timestrolls
@@ -20,43 +28,46 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d timestrolls"]
 
+  # The migrations ship in the API image; copy them where Flyway reads them,
+  # so a release pins code and migrations together
+  migration-files:
+    image: registry.digitalocean.com/debtray-registry/timestrolls-api:${IMAGE_TAG:-latest}
+    volumes:
+      - migrations:/sql
+    command: sh -c "rm -rf /sql/* && cp -r /app/migration/. /sql/"
+
   migrate-postgres:
-    image: flyway/flyway:latest
+    image: flyway/flyway:11.9.1
     depends_on:
       postgres:
         condition: service_healthy
+      migration-files:
+        condition: service_completed_successfully
     volumes:
-      - ../backend/migration:/flyway/sql:ro # Import migrations to Flyway
+      - migrations:/flyway/sql:ro
     environment:
       FLYWAY_URL: jdbc:postgresql://postgres.timestrolls:5432/timestrolls
-      FLYWAY_USER: ${POSTGRES_ADMIN}
-      FLYWAY_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
-      FLYWAY_PLACEHOLDERS_USER: ${POSTGRES_USER}
-      FLYWAY_PLACEHOLDERS_PASSWORD: ${POSTGRES_USER_PASSWORD}
+      FLYWAY_USER: postgres
+      FLYWAY_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?}
+      # The restricted user the API connects with (created by the migrations)
+      FLYWAY_PLACEHOLDERS_USER: user
+      FLYWAY_PLACEHOLDERS_PASSWORD: ${POSTGRES_USER_PASSWORD:?}
       FLYWAY_SCHEMAS: timestrolls
       FLYWAY_LOCATIONS: filesystem:/flyway/sql
     command: -connectRetries=60 migrate
 
   api:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: registry.digitalocean.com/debtray-registry/timestrolls-api:${IMAGE_TAG:-latest}
     container_name: api
     hostname: api.timestrolls
     expose:
       - "8000"
-    volumes:
-      - ../backend/migration:/app/migration:ro
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_USER_PASSWORD=${POSTGRES_USER_PASSWORD}
-      - SPACES_KEY=${SPACES_KEY}
-      - SPACES_SECRET=${SPACES_SECRET}
-      - API_KEY=${API_KEY}
-    configs:
-      - source: api_config
-        target: /app/config.yml
-        mode: 0444 # read only
+      - POSTGRES_HOST=postgres.timestrolls
+      - POSTGRES_USER_PASSWORD=${POSTGRES_USER_PASSWORD:?}
+      - SPACES_KEY=${SPACES_KEY:?}
+      - SPACES_SECRET=${SPACES_SECRET:?}
+      - API_KEY=${API_KEY:?}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/ready"]
     depends_on:
@@ -64,9 +75,7 @@ services:
         condition: service_completed_successfully
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: registry.digitalocean.com/debtray-registry/timestrolls-frontend:${IMAGE_TAG:-latest}
     container_name: frontend
     hostname: frontend.timestrolls
     depends_on:
@@ -97,5 +106,10 @@ services:
 volumes:
   caddy_data:
   caddy_config:
-  # migrations_sql:
+  migrations:
+  # The live data. External: compose never creates or deletes it (not even
+  # with "down -v") and refuses to start without it, instead of starting
+  # with an empty database. Never run "docker compose down -v" on the droplet.
   postgres:
+    external: true
+    name: deployment_postgres

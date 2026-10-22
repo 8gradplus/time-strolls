@@ -1,11 +1,7 @@
+# Local stack, built from source; passwords and keys from .env next to this
+# file. Production is deployed by .github/workflows/release.yml.
 run:
-	docker compose --env-file credentials.local up -d --build
+	docker compose up -d --build
 
 stop:
 	docker compose down
-
-run-prod:
-	docker compose -f docker-compose.yml --env-file credentials.prod up -d --build
-
-stop-prod:
-	docker compose -f docker-compose.yml down --remove-orphans | true

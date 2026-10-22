@@ -1,10 +1,13 @@
+# Local development only (docker compose picks this file up by itself):
+# builds the images from source, serves on localhost, opens the ports and
+# uses a normal local database volume, created if missing.
 configs:
   caddy_config_file:
     file: ./Caddyfile.local
 
 volumes:
-  # Don't create named volume in local dev - we'll use bind mounts
-  migrations_sql: {}
+  postgres:
+    external: false
 
 services:
   postgres:
@@ -16,11 +19,13 @@ services:
       - ../backend/migration:/flyway/sql:ro
 
   api:
+    build:
+      context: ../backend
     ports:
       - "8000:8000"
-    volumes:
-      - ../backend/migration:/app/migration:ro
 
   frontend:
+    build:
+      context: ../frontend
     ports:
       - "3000:3000"
