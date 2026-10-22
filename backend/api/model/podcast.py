@@ -2,6 +2,7 @@ from sqlmodel import Field, SQLModel
 from datetime import datetime
 from typing import Optional
 
+
 class PodcastBase(SQLModel):
     title: str
     place_id: int
@@ -18,13 +19,16 @@ class Podcast(PodcastBase, table=True):
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)
 
+
 class PodcastCreate(PodcastBase):
     url: str
+
 
 class PodcastUpdate(SQLModel):
     title: Optional[str] = None
     place_id: Optional[str] = None
     owner: Optional[str] = None
+
 
 class PodcastPublic(PodcastBase):
     id: int

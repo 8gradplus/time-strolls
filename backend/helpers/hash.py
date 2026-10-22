@@ -4,6 +4,7 @@ from sqlmodel import Session, SQLModel, select
 from typing import Type
 from api.db import engine
 
+
 async def hash(file: UploadFile) -> str:
     await file.seek(0)
     hash_sha256 = hashlib.sha256()
@@ -14,6 +15,7 @@ async def hash(file: UploadFile) -> str:
     if hash_sha256.digest_size == 0:
         raise ValueError("File is empty or unreadable")
     return hash_sha256.hexdigest()
+
 
 def hash_exists(model: Type[SQLModel], hash_value: str):
     if not hasattr(model, "hash"):

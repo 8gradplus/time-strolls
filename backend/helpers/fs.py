@@ -18,7 +18,8 @@ def clear_directory(path):
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)  # Remove directory and all contents
         except Exception as e:
-            print(f'Failed to delete {file_path}. Reason: {e}')
+            print(f"Failed to delete {file_path}. Reason: {e}")
+
 
 def image_id(url):
     parsed = urlparse(url)
@@ -27,40 +28,45 @@ def image_id(url):
     id = os.path.splitext(filename)[0]
     return id
 
+
 def write_local(stuff: bytes, path: str):
-    #Create dir if not exists
+    # Create dir if not exists
     file_path = Path(path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, 'wb') as f:
+    with open(path, "wb") as f:
         f.write(stuff)
 
+
 # Todo: reconcile and cleanup
+
 
 def save_webp(path, img):
     buffer = Image.open(BytesIO(img))
     webp_io = BytesIO()
     buffer.save(webp_io, format="WEBP", quality=80, method=6)
     webp_bytes = webp_io.getvalue()
-    with open(path, 'wb') as f:
+    with open(path, "wb") as f:
         f.write(webp_bytes)
 
+
 class SaveImage:
-    def __init__(self, dir:str, compress:bool=False):
+    def __init__(self, dir: str, compress: bool = False):
         self.dir = dir
         self.compress = compress
 
     def __call__(self, img, url):
         id = image_id(url)
         path = f"{self.dir}/{id}"
-        print(f'Upload image {id} to {self.dir} from {url}')
+        print(f"Upload image {id} to {self.dir} from {url}")
         if self.compress:
-            save_webp(f'{path}.webp', img)
-        with open(f'{path}.jpg', 'wb') as f:
+            save_webp(f"{path}.webp", img)
+        with open(f"{path}.jpg", "wb") as f:
             f.write(img)
 
-def download(url:str):
+
+def download(url: str):
     try:
-        print(f'Downloading: {url}')
+        print(f"Downloading: {url}")
         return requests.get(url).content, url
     except Exception as e:
         print(f"Failed to download url: {url}: {e}")

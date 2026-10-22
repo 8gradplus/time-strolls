@@ -59,7 +59,7 @@ language. Details are in "2c. Calm map" below.
 | 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
 | 2c | Calm map: only map and time line, the rest in the menu | Done (#9) |
 | 3 | Own base map and offline PWA | Open |
-| 4 | Release workflow (DOCR, deploy) | Open |
+| 4 | Release workflow (DOCR, deploy) | Building the images: in progress (branch `release-workflow`); deploying: open |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
 | 6 | Capacitor Android: geofence notifications, background audio | Open |
 | 7 | MCP server on the same auth | Optional, once the admin API is stable |
@@ -276,8 +276,12 @@ people use the app outdoors. Two corrections to `OFFLINE_CACHING_STRATEGY.md`:
 
 ## 4. Deployment automation
 Adapted from the pricing-prediction-linear workflows:
-- **`ci.yml`** exists (ruff, pytest, prettier, vitest, build, Docker build). Still to
-  add: `ruff format --check`.
+- **`ci.yml`** exists (ruff check and format, pytest, prettier, vitest, build,
+  Docker build).
+- **Two parts (2026-10-22):** first only building and pushing the images
+  (`release.yml`, repo secrets, Slack privately to the user); deploying them
+  to the droplet is a separate step afterwards. Images go to
+  `debtray-registry` for now, configured only through this repo's secrets.
 - **`release.yml`** (GitHub release or `workflow_dispatch`):
   1. Build the `api` and `frontend` images and push them to DOCR
      (`doctl registry login`), tagged `:<version>` and `:latest`.

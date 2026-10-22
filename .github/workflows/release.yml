@@ -1,0 +1,97 @@
+name: Release
+
+# A published GitHub release (tag vX.Y.Z) builds both images and pushes them
+# to the DigitalOcean registry as :<version> and :latest. A manual run builds
+# a given tag again. Deploying is a separate, later step. Everything comes
+# from this repository's secrets (see CLAUDE.md, Deployment).
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build, e.g. v0.2.0"
+        required: true
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+  # The DigitalOcean container registry the images go to
+  REGISTRY: registry.digitalocean.com/debtray-registry
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - context: backend
+            image: timestrolls-api
+          - context: frontend
+            image: timestrolls-frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+      - name: Log in to the registry
+        run: doctl registry login --expiry-seconds 900
+      - name: Version
+        id: version
+        run: echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ matrix.image }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ matrix.image }}:latest
+          cache-from: type=gha,scope=${{ matrix.context }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.context }}
+
+  notify:
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack on success
+        if: needs.build.result == 'success'
+        uses: slackapi/slack-github-action@v3
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "#2eb886",
+                  "title": "Build ${{ github.event.repository.name }}",
+                  "text": "Status: *success* — Version: `${{ env.TAG }}`",
+                  "mrkdwn_in": ["text"]
+                }
+              ]
+            }
+      - name: Slack on failure
+        if: needs.build.result != 'success'
+        uses: slackapi/slack-github-action@v3
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "#a30200",
+                  "title": "Build ${{ github.event.repository.name }}",
+                  "text": "Status: *failed* — Version: `${{ env.TAG }}` — <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>",
+                  "mrkdwn_in": ["text"]
+                }
+              ]
+            }

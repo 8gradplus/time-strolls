@@ -1,6 +1,7 @@
 import gpxpy
 from shapely.geometry import LineString
 
+
 def extract_linestring(gpx):
     points = []
     for track in gpx.tracks:

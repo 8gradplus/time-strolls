@@ -10,18 +10,16 @@ from fastapi import UploadFile, File, Form
 from api.model.podcast import Podcast, PodcastCreate, PodcastPublic, PodcastUpdate
 from config import config
 
-router = APIRouter(
-    tags=['Podcasts'],
-    prefix='/api/podcasts'
-)
+router = APIRouter(tags=["Podcasts"], prefix="/api/podcasts")
 
-@router.get('/', response_model=list[PodcastPublic])
+
+@router.get("/", response_model=list[PodcastPublic])
 def get_postcasts():
     with Session(engine) as session:
         return session.exec(select(Podcast)).all()
 
 
-@router.get('/{id}', response_model=PodcastPublic)
+@router.get("/{id}", response_model=PodcastPublic)
 def get_pocast(id: int):
     with Session(engine) as session:
         podcast = session.get(Podcast, id)
@@ -30,7 +28,7 @@ def get_pocast(id: int):
     return podcast
 
 
-@router.delete('/{id}')
+@router.delete("/{id}")
 async def delete_podcast(id: int):
     with Session(engine) as session:
         podcast = session.get(Podcast, id)
@@ -41,11 +39,14 @@ async def delete_podcast(id: int):
     try:
         await cdn.delete(podcast.path)
     except Exception:
-        raise HTTPException(status_code=404, detail=f"Could not delete podcast {podcast.id} (title: {podcast.title}) on cdn")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Could not delete podcast {podcast.id} (title: {podcast.title}) on cdn",
+        )
     return {f"Deleted podcast {id}": True}
 
 
-@router.post('/', response_model=PodcastPublic)
+@router.post("/", response_model=PodcastPublic)
 def post_podcast(podcast: PodcastCreate):
     # Todo: add created at info
     db_podcast = Podcast.model_validate(podcast)
@@ -56,7 +57,8 @@ def post_podcast(podcast: PodcastCreate):
         session.refresh(db_podcast)
     return db_podcast
 
-@router.patch('/{id}', response_model=PodcastPublic)
+
+@router.patch("/{id}", response_model=PodcastPublic)
 def patch_podcast(id: int, podcast: PodcastUpdate):
     with Session(engine) as session:
         db_podcast = session.get(Podcast, id)
@@ -69,36 +71,42 @@ def patch_podcast(id: int, podcast: PodcastUpdate):
         session.refresh(db_podcast)
     return db_podcast
 
+
 # As we need a mulitpart form anyway let's not put an pydantic object as input
-@router.post('/upload/')
+@router.post("/upload/")
 async def upload_podcast(
     file: UploadFile = File(...),
     title: str = Form(...),
-    place_id: int = Form( ... ),
-    owner: str = Form (...),
-    response_model=PodcastPublic
+    place_id: int = Form(...),
+    owner: str = Form(...),
+    response_model=PodcastPublic,
 ):
 
     file_hash = await hash(file)
     if existing := hash_exists(Podcast, file_hash):
         pc = PodcastPublic.validate(existing)
-        raise HTTPException(status_code=404, detail=f"Podcast {file.filename} already uploaded: {pc.url} (id = {pc.id})  ")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Podcast {file.filename} already uploaded: {pc.url} (id = {pc.id})  ",
+        )
 
-    path = f'{config.cdn.path.podcast}/{str(uuid.uuid4())}.mp3'
+    path = f"{config.cdn.path.podcast}/{str(uuid.uuid4())}.mp3"
     try:
         await cdn.write(file.file, path, file.content_type)
     except Exception:
-        raise HTTPException(status_code=404, detail=f"Could not upload file {file.filename} to cdn")
+        raise HTTPException(
+            status_code=404, detail=f"Could not upload file {file.filename} to cdn"
+        )
 
     db_podcast = Podcast(
-        title = title,
-        place_id= place_id,
-        url = f'https://{config.cdn.bucket}.{config.cdn.endpoint.split('//')[-1]}/{path}',
+        title=title,
+        place_id=place_id,
+        url=f"https://{config.cdn.bucket}.{config.cdn.endpoint.split('//')[-1]}/{path}",
         path=path,
         hash=file_hash,
-        owner = owner,
+        owner=owner,
         content_type=file.content_type,
-        created_at = dt.utcnow()
+        created_at=dt.utcnow(),
     )
     with Session(engine) as session:
         session.add(db_podcast)
