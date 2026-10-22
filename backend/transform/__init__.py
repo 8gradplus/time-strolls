@@ -7,39 +7,40 @@ from .ground_control import get_transformation
 from .ground_control import gcp_to_rasterio
 from .geotif import AsGeoTif
 
+
 def create_tiles(year):
     """
-     Returns a CreateTiles instance configured for the given year.
+    Returns a CreateTiles instance configured for the given year.
 
-     Parameters
-     ----------
-     year : int
-         The year for which to generate map tiles.
+    Parameters
+    ----------
+    year : int
+        The year for which to generate map tiles.
 
-     Returns
-     -------
-     CreateTiles
-         Configured tile writer callable.
-     """
-
+    Returns
+    -------
+    CreateTiles
+        Configured tile writer callable.
+    """
 
     writer = write_local
-    output_dir= config.cdn.endpoint + config.cdn.path.tile
+    output_dir = config.cdn.endpoint + config.cdn.path.tile
 
-    if  config.cdn.endpoint.startswith('https'):
+    if config.cdn.endpoint.startswith("https"):
         writer = write_s3
         output_dir = config.cdn.path.tile
 
-    print(f'Write tiles to {output_dir} using cdn {config.cdn.endpoint}')
+    print(f"Write tiles to {output_dir} using cdn {config.cdn.endpoint}")
 
     return CreateTiles(
-        year= year,
-        zooms = range(config.tile.zoom.min, config.tile.zoom.max),
-        output_dir = output_dir,
-        tile_size = config.tile.size,
-        format = config.tile.format,
-        writer=writer
+        year=year,
+        zooms=range(config.tile.zoom.min, config.tile.zoom.max),
+        output_dir=output_dir,
+        tile_size=config.tile.size,
+        format=config.tile.format,
+        writer=writer,
     )
+
 
 def create_tif(gcps, image, sink):
     """

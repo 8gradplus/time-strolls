@@ -12,33 +12,29 @@ from shapely import wkb
 
 from tour import parse_gpx
 
-router = APIRouter(
-    tags=['Tours'],
-    prefix='/api/tours'
-)
+router = APIRouter(tags=["Tours"], prefix="/api/tours")
 
-router_public = APIRouter(
-    tags=['Tracks'],
-    prefix='/api/tours'
-)
+router_public = APIRouter(tags=["Tracks"], prefix="/api/tours")
 
-@router_public.get('/', response_model=list[TourPublicSlim])
+
+@router_public.get("/", response_model=list[TourPublicSlim])
 def get_tours():
     with Session(engine) as session:
         return session.exec(select(Tour)).all()
 
 
-@router_public.get('/{id}', response_model=TourPublic)
+@router_public.get("/{id}", response_model=TourPublic)
 def get_tour(id: int):
     with Session(engine) as session:
         tour = session.get(Tour, id)
     if not tour:
         raise HTTPException(status_code=404, detail=f"Track {id} not found")
     # convert hex line to geojson
-    geojson = mapping(wkb.loads(tour.geom))['coordinates']
+    geojson = mapping(wkb.loads(tour.geom))["coordinates"]
     tour_dict = tour.model_dump()
     tour_dict["geom"] = geojson
     return TourPublic(**tour_dict)
+
 
 @router.post("/", response_model=Tour)
 def post_tour(track: TourCreate):
@@ -50,16 +46,17 @@ def post_tour(track: TourCreate):
         session.refresh(db_track)
     return db_track
 
+
 # As we need a mulitpart form anyway let's not put an pydantic object as input
-@router.post('/upload/')
+@router.post("/upload/")
 async def upload_tour(
     name: str = Form(...),
-    description: str = Form (...),
+    description: str = Form(...),
     file: UploadFile = File(...),
-    response_model=Tour
+    response_model=Tour,
 ):
     if not file:
-            raise HTTPException(status_code=400, detail="No file uploaded")
+        raise HTTPException(status_code=400, detail="No file uploaded")
     content = await file.read()
     wkt = parse_gpx(content)
     tour = Tour(name=name, description=description, geom=wkt, created_at=dt.utcnow())
@@ -68,6 +65,7 @@ async def upload_tour(
         session.commit()
         session.refresh(tour)
     return tour
+
 
 @router.patch("/{id}", response_model=Tour)
 def patch_tour(id: int, tour: TrackUpdate):
@@ -83,7 +81,8 @@ def patch_tour(id: int, tour: TrackUpdate):
     session.refresh(db_tour)
     return db_tour
 
-@router.delete('/{id}')
+
+@router.delete("/{id}")
 def delete_tour(id: int):
     with Session(engine) as session:
         tour = session.get(Tour, id)

@@ -1,16 +1,18 @@
 from rasterio.control import GroundControlPoint
 import rasterio
 
+
 def gcp_to_rasterio(gcp: dict):
     return GroundControlPoint(
-        row = gcp['pixel'].y,
-        col= gcp['pixel'].x,
-        x = gcp['gps'].y,
-        y = gcp['gps'].x,
-        z = gcp['zoom'],
-        id = gcp['id'],
-        info = gcp['info']
+        row=gcp["pixel"].y,
+        col=gcp["pixel"].x,
+        x=gcp["gps"].y,
+        y=gcp["gps"].x,
+        z=gcp["zoom"],
+        id=gcp["id"],
+        info=gcp["info"],
     )
+
 
 def get_transformation(gcps: list[GroundControlPoint]):
     """

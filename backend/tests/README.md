@@ -67,14 +67,10 @@ Example:
 import pytest
 from api.model.place import Place
 
+
 class TestPlaceModel:
     def test_place_creation_with_valid_data(self):
-        place = Place(
-            name="Test",
-            lat=48.0,
-            lon=14.0,
-            slug="test-n48-000-e14-000"
-        )
+        place = Place(name="Test", lat=48.0, lon=14.0, slug="test-n48-000-e14-000")
         assert place.name == "Test"
 ```
 
@@ -87,9 +83,11 @@ Use markers to categorize tests:
 def test_something():
     pass
 
+
 @pytest.mark.integration
 def test_api_endpoint():
     pass
+
 
 @pytest.mark.slow
 def test_large_dataset():
@@ -109,11 +107,8 @@ Common test data can be shared using fixtures:
 ```python
 @pytest.fixture
 def sample_place():
-    return {
-        "name": "Test Place",
-        "lat": 48.0,
-        "lon": 14.0
-    }
+    return {"name": "Test Place", "lat": 48.0, "lon": 14.0}
+
 
 def test_with_fixture(sample_place):
     assert sample_place["name"] == "Test Place"
@@ -129,10 +124,13 @@ def test_with_fixture(sample_place):
    - Assert: Verify the result
 4. **Use parametrize**: Test multiple inputs efficiently
    ```python
-   @pytest.mark.parametrize("input,expected", [
-       ("test", "test"),
-       ("Test", "test"),
-   ])
+   @pytest.mark.parametrize(
+       "input,expected",
+       [
+           ("test", "test"),
+           ("Test", "test"),
+       ],
+   )
    def test_lowercase(input, expected):
        assert input.lower() == expected
    ```

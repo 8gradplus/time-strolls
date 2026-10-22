@@ -16,29 +16,48 @@ def slugify(text: str) -> str:
 
     # Replace umlauts and special characters
     replacements = {
-        'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss',
-        'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'å': 'a',
-        'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e',
-        'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i',
-        'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o',
-        'ù': 'u', 'ú': 'u', 'û': 'u',
-        'ñ': 'n', 'ç': 'c'
+        "ä": "ae",
+        "ö": "oe",
+        "ü": "ue",
+        "ß": "ss",
+        "à": "a",
+        "á": "a",
+        "â": "a",
+        "ã": "a",
+        "å": "a",
+        "è": "e",
+        "é": "e",
+        "ê": "e",
+        "ë": "e",
+        "ì": "i",
+        "í": "i",
+        "î": "i",
+        "ï": "i",
+        "ò": "o",
+        "ó": "o",
+        "ô": "o",
+        "õ": "o",
+        "ù": "u",
+        "ú": "u",
+        "û": "u",
+        "ñ": "n",
+        "ç": "c",
     }
 
     for char, replacement in replacements.items():
         text = text.replace(char, replacement)
 
     # Remove apostrophes and quotes
-    text = re.sub(r"['\"]", '', text)
+    text = re.sub(r"['\"]", "", text)
 
     # Replace non-alphanumeric characters with hyphens
-    text = re.sub(r'[^a-z0-9]+', '-', text)
+    text = re.sub(r"[^a-z0-9]+", "-", text)
 
     # Remove leading/trailing hyphens
-    text = text.strip('-')
+    text = text.strip("-")
 
     # Replace multiple consecutive hyphens with single hyphen
-    text = re.sub(r'-+', '-', text)
+    text = re.sub(r"-+", "-", text)
 
     return text
 
@@ -63,12 +82,12 @@ def generate_place_slug(name: str, lat: float, lon: float, precision: int = 3) -
     name_slug = slugify(name)
 
     # Round coordinates to specified precision and format without decimal point
-    lat_str = format(abs(lat), f'.{precision}f').replace('.', '-')
-    lon_str = format(abs(lon), f'.{precision}f').replace('.', '-')
+    lat_str = format(abs(lat), f".{precision}f").replace(".", "-")
+    lon_str = format(abs(lon), f".{precision}f").replace(".", "-")
 
     # Add N/S and E/W prefixes for clarity if needed
-    lat_prefix = 'n' if lat >= 0 else 's'
-    lon_prefix = 'e' if lon >= 0 else 'w'
+    lat_prefix = "n" if lat >= 0 else "s"
+    lon_prefix = "e" if lon >= 0 else "w"
 
     return f"{name_slug}-{lat_prefix}{lat_str}-{lon_prefix}{lon_str}"
 
@@ -87,5 +106,5 @@ def validate_slug(slug: str) -> bool:
         return False
 
     # Must be lowercase alphanumeric with hyphens, no leading/trailing hyphens
-    pattern = r'^[a-z0-9]+(-[a-z0-9]+)*$'
+    pattern = r"^[a-z0-9]+(-[a-z0-9]+)*$"
     return bool(re.match(pattern, slug))

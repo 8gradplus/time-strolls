@@ -1,5 +1,6 @@
 import rasterio
 
+
 class AsGeoTif:
     """
     Saves an image as a GeoTIFF using a given affine transform.
@@ -14,7 +15,7 @@ class AsGeoTif:
         Coordinate reference system (default: 'EPSG:4326').
     """
 
-    def __init__(self, image, path, crs='EPSG:4326'):
+    def __init__(self, image, path, crs="EPSG:4326"):
         self.image = image
         self.path = path
         self.crs = crs
@@ -25,12 +26,13 @@ class AsGeoTif:
         # Bands at first place in gtiff
         image = image.transpose(2, 0, 1)
         config = dict(
-            driver='GTiff',
+            driver="GTiff",
             height=height,
             width=width,
             count=bands,
             dtype=image.dtype,
             crs=self.crs,
-            transform=A)
-        with rasterio.open(self.path, 'w', **config) as dataset:
+            transform=A,
+        )
+        with rasterio.open(self.path, "w", **config) as dataset:
             dataset.write(image)

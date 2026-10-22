@@ -2,11 +2,13 @@ from sqlmodel import Field, SQLModel
 from datetime import datetime
 from typing import Optional
 
+
 class PlaceBase(SQLModel):
     name: str
     type: str = Field(default="Place")
     lat: float
     lon: float
+
 
 class Place(PlaceBase, table=True):
     __table_args__ = {"schema": "timestrolls"}
@@ -15,14 +17,17 @@ class Place(PlaceBase, table=True):
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)
 
+
 class PlaceCreate(PlaceBase):
     pass
+
 
 class PlacePublic(PlaceBase):
     id: int
     slug: str
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
 
 class PlaceUpdate(SQLModel):
     name: Optional[str] = None

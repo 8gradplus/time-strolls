@@ -8,9 +8,12 @@ from starlette.middleware.cors import CORSMiddleware
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins (for development - be more specific in production)
+    allow_origins=[
+        "*"
+    ],  # Allows all origins (for development - be more specific in production)
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"])
+    allow_headers=["*"],
+)
 cog = TilerFactory()
 app.include_router(cog.router, tags=["Cloud Optimized GeoTIFF"])

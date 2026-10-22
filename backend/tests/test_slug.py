@@ -11,16 +11,19 @@ from helpers.slug import generate_place_slug, slugify, validate_slug
 class TestSlugify:
     """Test basic slugification."""
 
-    @pytest.mark.parametrize("input_text,expected", [
-        ("Stephansdom", "stephansdom"),
-        ("St. Peter's Church", "st-peters-church"),
-        ("Mühlviertel", "muehlviertel"),
-        ("Café Österreich", "cafe-oesterreich"),
-        ("Sankt Oswald", "sankt-oswald"),
-        ("Über-Straße", "ueber-strasse"),
-        ("Multiple   Spaces", "multiple-spaces"),
-        ("123 Main Street", "123-main-street"),
-    ])
+    @pytest.mark.parametrize(
+        "input_text,expected",
+        [
+            ("Stephansdom", "stephansdom"),
+            ("St. Peter's Church", "st-peters-church"),
+            ("Mühlviertel", "muehlviertel"),
+            ("Café Österreich", "cafe-oesterreich"),
+            ("Sankt Oswald", "sankt-oswald"),
+            ("Über-Straße", "ueber-strasse"),
+            ("Multiple   Spaces", "multiple-spaces"),
+            ("123 Main Street", "123-main-street"),
+        ],
+    )
     def test_slugify_basic(self, input_text, expected):
         """Test slugification with various inputs."""
         assert slugify(input_text) == expected
@@ -42,12 +45,15 @@ class TestSlugify:
 class TestGeneratePlaceSlug:
     """Test place slug generation with coordinates."""
 
-    @pytest.mark.parametrize("name,lat,lon,expected", [
-        ("Stephansdom", 48.2082, 16.3738, "stephansdom-n48-208-e16-374"),
-        ("Unterurasch", 48.61017854, 14.04406485, "unterurasch-n48-610-e14-044"),
-        ("Sankt Oswald", 48.619035, 14.030765, "sankt-oswald-n48-619-e14-031"),
-        ("Mühlviertel", 48.4567, 13.8901, "muehlviertel-n48-457-e13-890"),
-    ])
+    @pytest.mark.parametrize(
+        "name,lat,lon,expected",
+        [
+            ("Stephansdom", 48.2082, 16.3738, "stephansdom-n48-208-e16-374"),
+            ("Unterurasch", 48.61017854, 14.04406485, "unterurasch-n48-610-e14-044"),
+            ("Sankt Oswald", 48.619035, 14.030765, "sankt-oswald-n48-619-e14-031"),
+            ("Mühlviertel", 48.4567, 13.8901, "muehlviertel-n48-457-e13-890"),
+        ],
+    )
     def test_generate_place_slug_northern_hemisphere(self, name, lat, lon, expected):
         """Test slug generation for places in northern/eastern hemisphere."""
         assert generate_place_slug(name, lat, lon) == expected
@@ -81,28 +87,34 @@ class TestGeneratePlaceSlug:
 class TestValidateSlug:
     """Test slug validation."""
 
-    @pytest.mark.parametrize("slug,expected", [
-        ("stephansdom-n48-208-e16-374", True),
-        ("valid-slug-123", True),
-        ("abc", True),
-        ("a-b-c", True),
-        ("test-123-456", True),
-    ])
+    @pytest.mark.parametrize(
+        "slug,expected",
+        [
+            ("stephansdom-n48-208-e16-374", True),
+            ("valid-slug-123", True),
+            ("abc", True),
+            ("a-b-c", True),
+            ("test-123-456", True),
+        ],
+    )
     def test_validate_slug_valid(self, slug, expected):
         """Test validation of valid slugs."""
         assert validate_slug(slug) == expected
 
-    @pytest.mark.parametrize("slug,expected", [
-        ("Invalid Slug", False),  # Contains space
-        ("invalid_slug", False),  # Contains underscore
-        ("-invalid", False),  # Starts with hyphen
-        ("invalid-", False),  # Ends with hyphen
-        ("", False),  # Empty
-        ("UPPERCASE", False),  # Uppercase
-        ("special@char", False),  # Special character
-        ("has.dot", False),  # Contains dot
-        ("has/slash", False),  # Contains slash
-    ])
+    @pytest.mark.parametrize(
+        "slug,expected",
+        [
+            ("Invalid Slug", False),  # Contains space
+            ("invalid_slug", False),  # Contains underscore
+            ("-invalid", False),  # Starts with hyphen
+            ("invalid-", False),  # Ends with hyphen
+            ("", False),  # Empty
+            ("UPPERCASE", False),  # Uppercase
+            ("special@char", False),  # Special character
+            ("has.dot", False),  # Contains dot
+            ("has/slash", False),  # Contains slash
+        ],
+    )
     def test_validate_slug_invalid(self, slug, expected):
         """Test validation of invalid slugs."""
         assert validate_slug(slug) == expected
@@ -190,8 +202,14 @@ class TestRealWorldExamples:
 
     def test_specific_real_places(self):
         """Test specific known slugs."""
-        assert generate_place_slug("Unterurasch", 48.61017854015886, 14.04406485511563) == "unterurasch-n48-610-e14-044"
-        assert generate_place_slug("Sankt Oswald", 48.61903490532756, 14.030726480131019) == "sankt-oswald-n48-619-e14-031"
+        assert (
+            generate_place_slug("Unterurasch", 48.61017854015886, 14.04406485511563)
+            == "unterurasch-n48-610-e14-044"
+        )
+        assert (
+            generate_place_slug("Sankt Oswald", 48.61903490532756, 14.030726480131019)
+            == "sankt-oswald-n48-619-e14-031"
+        )
 
 
 class TestEdgeCases:

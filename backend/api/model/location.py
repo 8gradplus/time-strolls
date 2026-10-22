@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel
 from typing import List, Optional
 
+
 class Place(SQLModel):
     name: str
     id: int
@@ -9,6 +10,7 @@ class Place(SQLModel):
     lat: float
     lon: float
 
+
 class Image(SQLModel):
     title: Optional[str] = None
     url: str
@@ -16,10 +18,12 @@ class Image(SQLModel):
     owner: Optional[str] = None
     year: Optional[int] = None
 
+
 class Podcast(SQLModel):
     title: str
     url: str
     owner: Optional[str]
+
 
 class Location(SQLModel):
     place: Place

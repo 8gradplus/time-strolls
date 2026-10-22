@@ -11,17 +11,15 @@ from api.model.podcast import Podcast
 from api.model.image import Image
 from api.controller.place import get_places
 
-router = APIRouter(
-    tags=['Locations'],
-    prefix='/api/locations'
-)
+router = APIRouter(tags=["Locations"], prefix="/api/locations")
 
-@router.get('/', response_model=list[LocationPlace])
+
+@router.get("/", response_model=list[LocationPlace])
 def get_locations():
     return get_places()
 
 
-@router.get('/{slug_or_id}', response_model=Location)
+@router.get("/{slug_or_id}", response_model=Location)
 def get_location_info(slug_or_id: str):
     with Session(engine) as session:
         # Try as slug first
@@ -34,17 +32,18 @@ def get_location_info(slug_or_id: str):
         if not place:
             raise HTTPException(
                 status_code=404,
-                detail=f"Location information for '{slug_or_id}' not found"
+                detail=f"Location information for '{slug_or_id}' not found",
             )
 
         # Get podcast
-        db_podcast = session.exec(select(Podcast).where(Podcast.place_id == place.id)).first()
+        db_podcast = session.exec(
+            select(Podcast).where(Podcast.place_id == place.id)
+        ).first()
 
         # Get images - we'll sort by year in Python to handle nulls simply
-        db_images = list(session.exec(
-            select(Image)
-            .where(Image.place_id == place.id)
-        ).all())
+        db_images = list(
+            session.exec(select(Image).where(Image.place_id == place.id)).all()
+        )
 
         # Sort by year, with None values at the end
         db_images.sort(key=lambda img: (img.year is None, img.year or 0))
@@ -60,15 +59,13 @@ def get_location_info(slug_or_id: str):
             name=place.name,
             type=place.type,
             lat=place.lat,
-            lon=place.lon
+            lon=place.lon,
         )
 
         location_podcast = None
         if db_podcast:
             location_podcast = LocationPodcast(
-                title=db_podcast.title,
-                url=db_podcast.url,
-                owner=db_podcast.owner
+                title=db_podcast.title, url=db_podcast.url, owner=db_podcast.owner
             )
 
         location_images = [
@@ -77,7 +74,7 @@ def get_location_info(slug_or_id: str):
                 url=img.url,
                 source_url=img.source_url,
                 owner=img.owner,
-                year=img.year
+                year=img.year,
             )
             for img in db_images
         ]
@@ -85,5 +82,5 @@ def get_location_info(slug_or_id: str):
         return Location(
             place=location_place,
             podcast=location_podcast,  # type: ignore
-            images=location_images
+            images=location_images,
         )
