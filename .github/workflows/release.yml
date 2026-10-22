@@ -20,6 +20,8 @@ concurrency:
 
 env:
   TAG: ${{ github.event.release.tag_name || inputs.tag }}
+  # The DigitalOcean container registry the images go to
+  REGISTRY: registry.digitalocean.com/debtray-registry
 
 jobs:
   build:
@@ -49,8 +51,8 @@ jobs:
           context: ${{ matrix.context }}
           push: true
           tags: |
-            registry.digitalocean.com/${{ secrets.DO_REGISTRY }}/${{ matrix.image }}:${{ steps.version.outputs.version }}
-            registry.digitalocean.com/${{ secrets.DO_REGISTRY }}/${{ matrix.image }}:latest
+            ${{ env.REGISTRY }}/${{ matrix.image }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ matrix.image }}:latest
           cache-from: type=gha,scope=${{ matrix.context }}
           cache-to: type=gha,mode=max,scope=${{ matrix.context }}
 
