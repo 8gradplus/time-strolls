@@ -50,6 +50,9 @@ jobs:
         with:
           context: ${{ matrix.context }}
           push: true
+          # No build record: the tag then points straight at the image, and
+          # the registry shows its real size without untagged entries
+          provenance: false
           tags: |
             ${{ env.REGISTRY }}/${{ matrix.image }}:${{ steps.version.outputs.version }}
             ${{ env.REGISTRY }}/${{ matrix.image }}:latest
