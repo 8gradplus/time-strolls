@@ -29,9 +29,6 @@ const Toast = ({ toast }) => {
         opacity: visible ? 1 : 0,
         transition: `opacity 240ms ease, transform 240ms ${motion.open}`,
         pointerEvents: "none",
-        display: "flex",
-        alignItems: "baseline",
-        gap: 1,
         px: 1.75,
         py: 0.75,
         bgcolor: "background.paper",
@@ -40,31 +37,19 @@ const Toast = ({ toast }) => {
         borderColor: "divider",
         borderRadius: 1.5,
         whiteSpace: "nowrap",
+        fontFamily: serif,
+        fontWeight: 600,
+        fontSize: "1.25rem",
+        lineHeight: 1.1,
       }}
     >
+      {/* Name and year in the same style; page translators leave the name */}
       {toast && (
         <>
-          <Box
-            translate="no"
-            className="notranslate"
-            sx={{
-              fontFamily: serif,
-              fontWeight: 600,
-              fontSize: "1.25rem",
-              lineHeight: 1.1,
-            }}
-          >
+          <span translate="no" className="notranslate">
             {toast.title}
-          </Box>{" "}
-          <Box
-            sx={{
-              fontSize: "0.9rem",
-              color: "text.secondary",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {toast.years}
-          </Box>
+          </span>{" "}
+          {toast.years}
         </>
       )}
     </Box>
