@@ -50,8 +50,6 @@ const translations = {
     modeSystem: "Automatisch",
     modeLight: "Hell",
     modeDark: "Dunkel",
-    startCompare: "Zum Vergleich auf {year} schieben",
-    startPlaces: "Rote Punkte: Fotos und Geschichten",
   },
   cz: {
     areas: "Oblasti",
@@ -100,8 +98,6 @@ const translations = {
     modeSystem: "Automaticky",
     modeLight: "Světlý",
     modeDark: "Tmavý",
-    startCompare: "Pro srovnání posuňte na {year}",
-    startPlaces: "Červené body: fotografie a příběhy",
   },
   en: {
     areas: "Areas",
@@ -149,8 +145,6 @@ const translations = {
     modeSystem: "Automatic",
     modeLight: "Light",
     modeDark: "Dark",
-    startCompare: "Slide to {year} to compare",
-    startPlaces: "Red dots: photos and stories",
   },
 };
 

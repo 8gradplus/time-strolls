@@ -183,13 +183,10 @@ const CoordinateMap = () => {
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const start = regionStart(region);
-    const hint =
-      start?.hint && t[start.hint.key].replace("{year}", start.hint.year);
     map.once("moveend", () =>
       setToast({
         title: localized(region.title, language),
         years: start ? start.time : yearRange(region.times),
-        hint,
         id: Date.now(),
       }),
     );

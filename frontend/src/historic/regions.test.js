@@ -71,7 +71,6 @@ describe("regionStart", () => {
       center: [13.402, 52.517],
       zoom: 15,
       time: "1928",
-      hint: { key: "startCompare", year: "1953" },
     },
     sumava: { center: [14.069, 48.616], zoom: 15, time: "1947" },
   };
@@ -79,11 +78,6 @@ describe("regionStart", () => {
   it("returns the start of an area", () => {
     const berlin = { id: "berlin", times: ["1928", "1953"] };
     expect(regionStart(berlin, starts)).toBe(starts.berlin);
-  });
-
-  it("drops a hint to a year the area no longer has", () => {
-    const berlin = { id: "berlin", times: ["1928"] };
-    expect(regionStart(berlin, starts).hint).toBeNull();
   });
 
   it("has no start when its year is gone or none is set", () => {
