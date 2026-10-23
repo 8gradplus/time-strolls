@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -30,11 +30,20 @@ import {
   localized,
   regionAt,
   regionList,
+  HOME_REGION,
+  REGION_STARTS,
   regionStart,
   yearRange,
 } from "./historic/regions";
 
-const fallbackCenter = [48.629371, 14.079059];
+// One default view: the home area's start (regions.js), also for the
+// location button's "whole area"; the page opens a little further out and
+// flies in
+const HOME = REGION_STARTS[HOME_REGION];
+const fallbackCenter = [HOME.center[1], HOME.center[0]];
+const OPENING_ZOOM = 12;
+// Choosing an area flies there no closer than this, then zooms in
+const FLY_ZOOM = 11;
 
 const CoordinateMap = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -175,40 +184,94 @@ const CoordinateMap = () => {
     });
   };
 
-  // Flies to an area's start (regions.js) in its year, or to its whole
-  // bounds, then shows its name for a moment
+  // Choosing an area: 1. fly there at a medium zoom, 2. zoom in to its start
+  // (regions.js) or its whole bounds, 3. only then its year comes on, and its
+  // name welcomes. A drag on the way stops it; reduced motion jumps there.
   const handleRegion = (region) => {
     if (!map) return;
     const reduced = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const start = regionStart(region);
-    const hint =
-      start?.hint && t[start.hint.key].replace("{year}", start.hint.year);
-    map.once("moveend", () =>
+    const arrive = () => {
+      if (start) {
+        handleMenuItemClick("year")(start.time);
+      } else if (year && !region.times.includes(year)) {
+        // A selected year the area doesn't have gives way to its earliest
+        handleMenuItemClick("year")(region.times[0]);
+      }
       setToast({
         title: localized(region.title, language),
         years: start ? start.time : yearRange(region.times),
-        hint,
         id: Date.now(),
-      }),
-    );
-    if (start) {
-      // The imagery always comes on, in the start's year
-      if (year !== start.time) handleMenuItemClick("year")(start.time);
-      const [lng, lat] = start.center;
-      map.flyTo([lat, lng], start.zoom, { animate: !reduced, duration: 1.6 });
+      });
+    };
+
+    const bounds = leafletBounds(region.bounds);
+    const target = start
+      ? [start.center[1], start.center[0]]
+      : bounds.getCenter();
+    const zoom = start ? start.zoom : map.getBoundsZoom(bounds);
+    if (reduced) {
+      map.setView(target, zoom, { animate: false });
+      arrive();
       return;
     }
-    // A selected year the area doesn't have gives way to its earliest
-    if (year && !region.times.includes(year)) {
-      handleMenuItemClick("year")(region.times[0]);
+
+    const far = map.getCenter().distanceTo(target) > 50;
+    const flyZoom = Math.min(map.getZoom(), FLY_ZOOM);
+    const steps = [];
+    if (far) steps.push(() => map.flyTo(target, flyZoom, { duration: 1.6 }));
+    if ((far ? flyZoom : map.getZoom()) !== zoom) {
+      steps.push(() => map.flyTo(target, zoom, { duration: 1.2 }));
     }
-    map.flyToBounds(leafletBounds(region.bounds), {
-      animate: !reduced,
-      duration: 1.2,
-    });
+    let stopped = false;
+    const stop = () => (stopped = true);
+    map.once("dragstart", stop);
+    const next = (i) => {
+      if (stopped) return;
+      if (i === steps.length) {
+        map.off("dragstart", stop);
+        arrive();
+        return;
+      }
+      map.once("moveend", () => next(i + 1));
+      steps[i]();
+    };
+    next(0);
   };
+
+  // A plain visit (no year, place or tour in the link) opens like choosing
+  // the home area: Track zooms in to its start, then its year comes on and
+  // its name welcomes
+  const welcomed = useRef(false);
+  useEffect(() => {
+    if (welcomed.current || !manifest || !map) return;
+    welcomed.current = true;
+    const home = regions.find((region) => region.id === HOME_REGION);
+    const start = home && regionStart(home);
+    const plain =
+      !year &&
+      !legacyHistoric &&
+      !locationSlug &&
+      !tourId &&
+      trackingMode === "area" &&
+      !userInteracted;
+    if (!start || !plain) return;
+    const welcome = () => {
+      handleMenuItemClick("year")(start.time);
+      setToast({
+        title: localized(home.title, language),
+        years: start.time,
+        id: Date.now(),
+      });
+    };
+    const arrived =
+      map.getZoom() === start.zoom &&
+      map.getCenter().distanceTo(fallbackCenter) < 50;
+    if (arrived) welcome();
+    else map.once("moveend", welcome);
+  }, [manifest, map]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMarkerClick = (id) => (toggle) => {
     // Find the location to get its slug
@@ -234,8 +297,8 @@ const CoordinateMap = () => {
         <MapContainer
           ref={setMap}
           zoomControl={false}
-          center={fallbackCenter} // Will be overwritten by track upon location found
-          zoom={14}
+          center={fallbackCenter}
+          zoom={OPENING_ZOOM}
           maxZoom={MAX_ZOOM}
           style={{ height: "100dvh", width: "100%" }}
         >
@@ -253,6 +316,7 @@ const CoordinateMap = () => {
             position={position}
             trackingMode={trackingMode}
             fallbackCenter={fallbackCenter}
+            fallbackZoom={HOME.zoom}
             onUserInteraction={(interacted) => {
               updateParams((params) => {
                 if (interacted) {
