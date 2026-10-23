@@ -1,5 +1,6 @@
 // Areas ("Gebiete") in the menu: every region with aerial imagery, from the
 // manifest's `regions` (published by aerial-timeline, spec in its CLAUDE.md).
+// Where choosing one lands is ours (REGION_STARTS below).
 import { MANIFEST_URL } from "./manifest";
 
 // The regions as a list, each with its id; regions without years are left out.
@@ -32,3 +33,36 @@ export const regionAt = (regions, [w, s, e, n]) =>
   regions.find((region) =>
     contains(region.bounds, [(w + e) / 2, (s + n) / 2]),
   ) ?? null;
+
+// Where choosing an area lands: a spot with a story, in a year whose imagery
+// covers it fully, close enough to see it ([lng, lat] like the manifest).
+// The hint in the toast invites to stay: compare with another year, or open
+// the places. An area without a start (or whose year is gone from the
+// manifest) shows its whole bounds instead.
+export const REGION_STARTS = {
+  // The Stadtschloss with Lustgarten, Dom and Unter den Linden; blown up in
+  // 1950, so 1953 shows the empty site
+  berlin: {
+    center: [13.402, 52.517],
+    zoom: 15,
+    time: "1928",
+    hint: { key: "startCompare", year: "1953" },
+  },
+  // Deutsch Reichenau, the project's home, with its places
+  sumava: {
+    center: [14.069, 48.616],
+    zoom: 15,
+    time: "1952",
+    hint: { key: "startPlaces" },
+  },
+};
+
+// The start of an area, or null
+export const regionStart = (region, starts = REGION_STARTS) => {
+  const start = starts[region.id];
+  if (!start || !region.times.includes(start.time)) return null;
+  if (start.hint?.year && !region.times.includes(start.hint.year)) {
+    return { ...start, hint: null };
+  }
+  return start;
+};

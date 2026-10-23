@@ -3,16 +3,22 @@ import Box from "@mui/material/Box";
 import { motion, serif } from "../theme";
 
 const SHOW_MS = 1700;
+// Longer with a hint, so there is time to read it
+const SHOW_HINT_MS = 3600;
 
-// An area's name, shown for a moment at the top of the map after flying
-// there. A new toast (new id) starts over.
+// An area's name and year, shown for a moment at the top of the map after
+// flying there, with an optional hint under it. A new toast (new id) starts
+// over.
 const Toast = ({ toast }) => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (!toast) return;
     setVisible(true);
-    const timer = setTimeout(() => setVisible(false), SHOW_MS);
+    const timer = setTimeout(
+      () => setVisible(false),
+      toast.hint ? SHOW_HINT_MS : SHOW_MS,
+    );
     return () => clearTimeout(timer);
   }, [toast]);
 
@@ -64,6 +70,11 @@ const Toast = ({ toast }) => {
           >
             {toast.years}
           </Box>
+          {toast.hint && (
+            <Box sx={{ mt: 0.5, fontSize: "0.85rem", color: "text.primary" }}>
+              {toast.hint}
+            </Box>
+          )}
         </>
       )}
     </Box>

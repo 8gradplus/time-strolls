@@ -3,6 +3,8 @@ import {
   previewUrl,
   regionAt,
   regionList,
+  REGION_STARTS,
+  regionStart,
   yearRange,
 } from "./regions";
 
@@ -61,4 +63,38 @@ test("regionAt finds the region around the centre of the view", () => {
   const regions = regionList(manifest);
   expect(regionAt(regions, [14.0, 48.6, 14.2, 48.7]).id).toBe("sumava");
   expect(regionAt(regions, [0, 0, 1, 1])).toBeNull();
+});
+
+describe("regionStart", () => {
+  const starts = {
+    berlin: {
+      center: [13.402, 52.517],
+      zoom: 15,
+      time: "1928",
+      hint: { key: "startCompare", year: "1953" },
+    },
+    sumava: { center: [14.069, 48.616], zoom: 15, time: "1947" },
+  };
+
+  it("returns the start of an area", () => {
+    const berlin = { id: "berlin", times: ["1928", "1953"] };
+    expect(regionStart(berlin, starts)).toBe(starts.berlin);
+  });
+
+  it("drops a hint to a year the area no longer has", () => {
+    const berlin = { id: "berlin", times: ["1928"] };
+    expect(regionStart(berlin, starts).hint).toBeNull();
+  });
+
+  it("has no start when its year is gone or none is set", () => {
+    expect(regionStart({ id: "sumava", times: ["1952"] }, starts)).toBeNull();
+    expect(regionStart({ id: "other", times: ["1952"] }, starts)).toBeNull();
+  });
+
+  it("gives every configured start a year key", () => {
+    // A typo in a year would silently fall back to the bounds
+    for (const start of Object.values(REGION_STARTS)) {
+      expect(start.time).toMatch(/^\d{4}$/);
+    }
+  });
 });
