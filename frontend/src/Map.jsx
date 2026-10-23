@@ -26,7 +26,13 @@ import {
   legacyHistoricYear,
   yearsInBounds,
 } from "./historic/manifest";
-import { localized, regionAt, regionList, yearRange } from "./historic/regions";
+import {
+  localized,
+  regionAt,
+  regionList,
+  regionStart,
+  yearRange,
+} from "./historic/regions";
 
 const fallbackCenter = [48.629371, 14.079059];
 
@@ -107,16 +113,26 @@ const CoordinateMap = () => {
     });
   };
 
+  // React Router hands an updater the query string of the last render; two
+  // updates in one go (choosing an area sets the year, and the flight that
+  // follows sets "centered") would undo each other. The browser's URL is
+  // always current (BrowserRouter writes it at once), so start from that.
+  const updateParams = (update) =>
+    setSearchParams(() => {
+      const params = new URLSearchParams(window.location.search);
+      update(params);
+      return params;
+    });
+
   const handleMenuItemClick = (item) => {
     if (item === "year") {
       return (newYear) => {
-        setSearchParams((params) => {
+        updateParams((params) => {
           if (newYear) {
             params.set("year", newYear);
           } else {
             params.delete("year");
           }
-          return params;
         });
       };
     } else if (item === "showMarkers") {
@@ -159,19 +175,31 @@ const CoordinateMap = () => {
     });
   };
 
-  // Flies to an area, then shows its name for a moment
+  // Flies to an area's start (regions.js) in its year, or to its whole
+  // bounds, then shows its name for a moment
   const handleRegion = (region) => {
     if (!map) return;
     const reduced = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+    const start = regionStart(region);
+    const hint =
+      start?.hint && t[start.hint.key].replace("{year}", start.hint.year);
     map.once("moveend", () =>
       setToast({
         title: localized(region.title, language),
-        years: yearRange(region.times),
+        years: start ? start.time : yearRange(region.times),
+        hint,
         id: Date.now(),
       }),
     );
+    if (start) {
+      // The imagery always comes on, in the start's year
+      if (year !== start.time) handleMenuItemClick("year")(start.time);
+      const [lng, lat] = start.center;
+      map.flyTo([lat, lng], start.zoom, { animate: !reduced, duration: 1.6 });
+      return;
+    }
     // A selected year the area doesn't have gives way to its earliest
     if (year && !region.times.includes(year)) {
       handleMenuItemClick("year")(region.times[0]);
@@ -198,7 +226,7 @@ const CoordinateMap = () => {
   };
 
   return (
-    <div id="map" style={{ position: "relative", height: "100vh" }}>
+    <div id="map" style={{ position: "relative", height: "100dvh" }}>
       {/* The map is always light grey, so everything in it (dots, tooltips,
           the OSM credit) uses the light scheme in both modes; the dock, the
           buttons and the panels follow the colour mode */}
@@ -209,7 +237,7 @@ const CoordinateMap = () => {
           center={fallbackCenter} // Will be overwritten by track upon location found
           zoom={14}
           maxZoom={MAX_ZOOM}
-          style={{ height: "100vh", width: "100%" }}
+          style={{ height: "100dvh", width: "100%" }}
         >
           <TileLayer
             className="base-map"
@@ -226,13 +254,12 @@ const CoordinateMap = () => {
             trackingMode={trackingMode}
             fallbackCenter={fallbackCenter}
             onUserInteraction={(interacted) => {
-              setSearchParams((params) => {
+              updateParams((params) => {
                 if (interacted) {
                   params.set("centered", "false");
                 } else {
                   params.delete("centered");
                 }
-                return params;
               });
             }}
             userInteracted={userInteracted}

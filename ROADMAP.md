@@ -30,21 +30,26 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   background GPS and audio. So offline lands as a PWA, and Capacitor wraps
   the same build later.
 
-## Next session (state on 2026-10-21)
-Step 2c is done and merged into `main` (#9, squash, 2026-10-21). It holds
-the calm map, `best` tiles per year, the dock and menu redesign (wordmark with the logo as its point, folding dock, √2 menu sheet, drawn
-icons), the podcast player with the mini player, and English as the fallback
-language. Details are in "2c. Calm map" below.
-1. **Test on a real phone** (not possible in the desktop browser): dragging
-   the time line in the dock, the folded pill and the menu sheet above the
-   home indicator, audio with the screen locked, the lock-screen and
-   headphone controls (Media Session), resuming an episode the next day.
+## Next session (state on 2026-10-22)
+Steps 2c (#9) and 4 (#10, #11) are done. Production now runs from the
+release workflow: v0.2.1 is live with the 2c look. On the switch-over the
+old database volume was deleted (`down -v` with the old compose file); the
+data came back cleanly from `replay/places.yml` (`make production` in
+`replay/`). `deploy_production.sh` and the notebooks are gone.
+1. **Phone test (2026-10-23, Pixel over USB, `make phone`):** the map,
+   dock, time line, folded pill, menu, place panel, photo viewer and mini
+   player work on Android; fixed on the way: `100dvh`, the place panel full
+   screen on phones, sticky hover after a tap, the menu height on sub-pages,
+   swiping in the viewer, and the viewer's label, ✕, arrows and closing.
+   Still to test by hand: audio with the screen locked, the lock-screen and
+   headphone controls (Media Session), resuming an episode the next day, and
+   an iPhone (Safari).
 2. **Open points:** place names next to the dots from zoom 15 on (keep or
    hide); the about text is a first draft; the Czech UI strings (player,
    dock) should be checked by a native speaker; in a desktop window narrower
-   than ~360 px the zoom pill squeezes the years (accepted for now).
-3. Then go on in the agreed order: 4 release workflow, 5 admin, 3 offline
-   PWA, 6 Android.
+   than ~360 px the zoom pill squeezes the years (accepted for now); the
+   droplet keeps old unused images (`docker image prune`).
+3. Then go on in the agreed order: 5 admin, 3 offline PWA, 6 Android.
 4. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
    wildcards after every upload (see `CLAUDE.md`, "CDN caching"); widening a
    region re-renders tiles under the same URLs.
@@ -59,7 +64,7 @@ language. Details are in "2c. Calm map" below.
 | 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
 | 2c | Calm map: only map and time line, the rest in the menu | Done (#9) |
 | 3 | Own base map and offline PWA | Open |
-| 4 | Release workflow (DOCR, deploy) | Building the images: done (#10); deploying: in progress (branch `deploy-workflow`) |
+| 4 | Release workflow (DOCR, deploy) | Done (#10, #11) |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
 | 6 | Capacitor Android: geofence notifications, background audio | Open |
 | 7 | MCP server on the same auth | Optional, once the admin API is stable |
@@ -142,8 +147,8 @@ in the menu. This is the normal view, not a separate mode.
 
 ## 2b. Styling polish — done (#8)
 All styling work, on top of step 2; merged into `main` as #8 on 2026-10-20.
-Merging does not deploy: CI only checks and builds, production is deployed by
-hand with `deployment/deploy_production.sh`.
+Merging did not deploy then: production was deployed by hand (since step 4,
+a GitHub release deploys).
 
 **State:** the theme lives in `frontend/src/theme.js` ("Wall label": MUI
 light/dark, one accent red `#c8372b`, neutral surfaces). The menu and the place
@@ -287,8 +292,8 @@ Adapted from the pricing-prediction-linear workflows:
   the secrets, `pull` and `up -d` (never `down`). Rollback = manual run with
   an earlier tag. One API config (`backend/config.yml`), user names written
   into the files; only passwords and keys are secrets. Locally one
-  `deployment/.env`. Then `deploy_production.sh`, `api-config.yml` and the
-  `credentials.*` files go.
+  `deployment/.env`. `deploy_production.sh`, `api-config.yml` and the
+  `credentials.*` files are gone.
 - **Database until the managed one:** the live data stays in the droplet's
   volume `deployment_postgres`; the only protection is that the workflow
   never runs `down` and the volume is `external` (compose can't delete it).

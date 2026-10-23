@@ -21,7 +21,9 @@ const Button = (props) => {
               border: 1,
               borderColor: "divider",
             }),
-        "&:hover": { bgcolor: "background.default" },
+        "@media (hover: hover)": {
+          "&:hover": { bgcolor: "background.default" },
+        },
       }}
     >
       {children}

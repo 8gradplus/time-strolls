@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import { FoldGlyph } from "../icons";
 import { LogoDisc } from "./Wordmark";
@@ -21,7 +21,9 @@ import { motion } from "../theme";
 // button keeps its place (TrackControl.jsx). Only the pill unfolds it.
 // Open, the dock is a portrait sheet: as high as √2 times its width (a sheet
 // of paper, like a wall label), as long as the screen leaves room for it and
-// some map above. 62 px is the row of controls below the menu.
+// some map above. 62 px is the row of controls below the menu. While it is
+// open it never gets lower (floor): a short sub-page such as the sources
+// keeps the height of a main menu that has outgrown the sheet.
 const DOCK_WIDTH = "min(580px, 100vw - 20px)";
 const MENU_MAX = "calc(100dvh - 136px - env(safe-area-inset-top))";
 const MENU_MIN = `min(calc(${DOCK_WIDTH} * 1.414 - 62px), ${MENU_MAX})`;
@@ -30,6 +32,19 @@ const Dock = (props) => {
   const { open, onClose, label, panel, children, ref } = props;
   const { folded, onFold, badge, foldLabel, unfoldLabel, float } = props;
   const handleStart = useRef(null);
+  const sheet = useRef(null);
+  const [floor, setFloor] = useState(0);
+
+  useEffect(() => {
+    if (!open) return;
+    setFloor(0);
+    const el = sheet.current;
+    const observer = new ResizeObserver(() =>
+      setFloor((f) => Math.max(f, el.offsetHeight)),
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [open]);
 
   return (
     <Box
@@ -109,10 +124,11 @@ const Dock = (props) => {
         >
           <Box sx={{ minHeight: 0, overflow: "hidden" }}>
             <Box
+              ref={sheet}
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                minHeight: MENU_MIN,
+                minHeight: `max(${MENU_MIN}, min(${floor}px, ${MENU_MAX}))`,
                 maxHeight: MENU_MAX,
                 overflowY: "auto",
                 overscrollBehavior: "contain",
