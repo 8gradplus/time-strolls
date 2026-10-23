@@ -14,6 +14,7 @@ const Track = ({
   position,
   trackingMode,
   fallbackCenter,
+  fallbackZoom,
   onUserInteraction,
   userInteracted,
 }) => {
@@ -48,15 +49,29 @@ const Track = ({
   useEffect(() => {
     if (!map) return;
 
+    // The whole area: the home area's start (Map.jsx), flown to
     if (trackingMode === "area" && !userInteracted) {
       programmaticMove.current = true;
-      map.setView(fallbackCenter, 12);
+      const reduced = window.matchMedia?.(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      map.flyTo(fallbackCenter, fallbackZoom, {
+        animate: !reduced,
+        duration: 1.6,
+      });
     }
     if (trackingMode === "follow" && position && !userInteracted) {
       programmaticMove.current = true;
       map.flyTo(position, 16);
     }
-  }, [map, trackingMode, position, fallbackCenter, userInteracted]);
+  }, [
+    map,
+    trackingMode,
+    position,
+    fallbackCenter,
+    fallbackZoom,
+    userInteracted,
+  ]);
 
   return <TrackMarker position={position} trackingMode={trackingMode} />;
 };

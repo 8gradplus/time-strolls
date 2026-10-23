@@ -34,6 +34,10 @@ export const regionAt = (regions, [w, s, e, n]) =>
     contains(region.bounds, [(w + e) / 2, (s + n) / 2]),
   ) ?? null;
 
+// The app's own area: the page opens on its start, and the location button's
+// "whole area" goes back to it
+export const HOME_REGION = "sumava";
+
 // Where choosing an area lands: a spot with a story, in a year whose imagery
 // covers it fully, close enough to see it ([lng, lat] like the manifest).
 // An area without a start (or whose year is gone from the
