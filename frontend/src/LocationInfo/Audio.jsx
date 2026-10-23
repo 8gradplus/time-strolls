@@ -29,7 +29,7 @@ export const PlayButton = ({ playing, loading, label, onClick, size = 48 }) => (
       color: "#fff",
       cursor: "pointer",
       transition: "background-color 160ms ease, transform 160ms ease",
-      "&:hover": { bgcolor: "primary.dark" },
+      "@media (hover: hover)": { "&:hover": { bgcolor: "primary.dark" } },
       "&:active": { transform: "scale(0.96)" },
       "&:focus-visible": {
         outline: 2,
@@ -178,7 +178,9 @@ const Skip = ({ label, onClick, children }) => (
       color: "text.primary",
       cursor: "pointer",
       transition: "background-color 160ms ease",
-      "&:hover": { bgcolor: "background.default" },
+      "@media (hover: hover)": {
+        "&:hover": { bgcolor: "background.default" },
+      },
       "&:focus-visible": { outline: 2, outlineColor: "primary.main" },
     }}
   >

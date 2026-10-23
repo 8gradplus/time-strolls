@@ -5,10 +5,13 @@ import LinearProgress from "@mui/material/LinearProgress";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { Icon } from "../icons";
 
-// A bottom sheet on phones, a side panel from sm upwards.
+// Full screen on phones (also held sideways, hence the height), a side
+// panel on larger screens.
 const Sheet = (props) => {
   const { open, onClose, header, loading = false, children } = props;
-  const mobile = useMediaQuery((theme) => theme.breakpoints.down("sm"));
+  const mobile = useMediaQuery(
+    (theme) => `${theme.breakpoints.down("sm")}, (max-height: 500px)`,
+  );
 
   return (
     <Drawer
@@ -20,30 +23,18 @@ const Sheet = (props) => {
         backdrop: { sx: { bgcolor: "rgba(23, 23, 22, 0.15)" } },
         paper: {
           sx: mobile
-            ? { maxHeight: "85dvh", borderRadius: "16px 16px 0 0" }
+            ? { height: "100dvh", pt: "env(safe-area-inset-top)" }
             : { width: 420, borderRight: 1, borderColor: "divider" },
         },
       }}
     >
-      {mobile && (
-        <Box
-          sx={{
-            width: 36,
-            height: 4,
-            borderRadius: 2,
-            bgcolor: "divider",
-            mx: "auto",
-            mt: 1,
-          }}
-        />
-      )}
       <Box
         sx={{
           display: "flex",
           alignItems: "flex-start",
           gap: 1,
           px: 2.5,
-          pt: mobile ? 1 : 2.5,
+          pt: 2.5,
           pb: 1.5,
         }}
       >
@@ -53,7 +44,14 @@ const Sheet = (props) => {
         </IconButton>
       </Box>
       <Box sx={{ height: 2 }}>{loading && <LinearProgress />}</Box>
-      <Box sx={{ borderTop: 1, borderColor: "divider", overflowY: "auto" }}>
+      <Box
+        sx={{
+          borderTop: 1,
+          borderColor: "divider",
+          overflowY: "auto",
+          pb: "env(safe-area-inset-bottom)",
+        }}
+      >
         {children}
       </Box>
     </Drawer>

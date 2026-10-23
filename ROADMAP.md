@@ -36,10 +36,14 @@ release workflow: v0.2.1 is live with the 2c look. On the switch-over the
 old database volume was deleted (`down -v` with the old compose file); the
 data came back cleanly from `replay/places.yml` (`make production` in
 `replay/`). `deploy_production.sh` and the notebooks are gone.
-1. **Test on a real phone** against production: dragging the time line in
-   the dock, the folded pill and the menu sheet above the home indicator,
-   audio with the screen locked, the lock-screen and headphone controls
-   (Media Session), resuming an episode the next day.
+1. **Phone test (2026-10-23, Pixel over USB, `make phone`):** the map,
+   dock, time line, folded pill, menu, place panel, photo viewer and mini
+   player work on Android; fixed on the way: `100dvh`, the place panel full
+   screen on phones, sticky hover after a tap, the menu height on sub-pages,
+   swiping in the viewer, and the viewer's label, ✕, arrows and closing.
+   Still to test by hand: audio with the screen locked, the lock-screen and
+   headphone controls (Media Session), resuming an episode the next day, and
+   an iPhone (Safari).
 2. **Open points:** place names next to the dots from zoom 15 on (keep or
    hide); the about text is a first draft; the Czech UI strings (player,
    dock) should be checked by a native speaker; in a desktop window narrower

@@ -27,9 +27,10 @@ const storedFolded = () => {
   }
 };
 
+// Only with a mouse: on touch screens :hover sticks after a tap
 const hover = {
   transition: "background-color 160ms ease",
-  "&:hover": { bgcolor: "action.hover" },
+  "@media (hover: hover)": { "&:hover": { bgcolor: "action.hover" } },
   "&:focus-visible": { outline: 2, outlineColor: "primary.main" },
 };
 

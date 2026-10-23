@@ -20,9 +20,22 @@ API_PROXY=http://127.0.0.1:8000 npm start
 
 ## Testing on a mobile phone
 
-1. Run the frontend: `npm start`
-2. Create a tunnel with localtunnel: `lt --port 3000`
-3. Open the printed address (the password is your public IP: `curl https://loca.lt/mytunnelpassword`)
+On a real Android phone over USB (Chrome's device mode misses the address bar,
+the gesture bar and real touch):
+
+1. Once: `brew install android-platform-tools`, turn on Developer options →
+   USB debugging on the phone, plug it in and allow the Mac.
+2. Run the frontend: `npm start`
+3. `make phone` forwards the phone's port 3000 to the Mac, so the phone opens
+   http://localhost:3000 in Chrome. Location works (localhost is a secure
+   context) and hot reload reaches the phone.
+4. `chrome://inspect` on the Mac gives DevTools and a screencast of the phone's page.
+
+Screenshot from the Mac: `adb exec-out screencap -p > phone.png`.
+
+Without USB (or on an iPhone), use a tunnel: `lt --port 3000` and open the
+printed address (the password is your public IP:
+`curl https://loca.lt/mytunnelpassword`).
 
 ## Docker
 

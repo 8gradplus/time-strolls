@@ -198,7 +198,7 @@ const CoordinateMap = () => {
   };
 
   return (
-    <div id="map" style={{ position: "relative", height: "100vh" }}>
+    <div id="map" style={{ position: "relative", height: "100dvh" }}>
       {/* The map is always light grey, so everything in it (dots, tooltips,
           the OSM credit) uses the light scheme in both modes; the dock, the
           buttons and the panels follow the colour mode */}
@@ -209,7 +209,7 @@ const CoordinateMap = () => {
           center={fallbackCenter} // Will be overwritten by track upon location found
           zoom={14}
           maxZoom={MAX_ZOOM}
-          style={{ height: "100vh", width: "100%" }}
+          style={{ height: "100dvh", width: "100%" }}
         >
           <TileLayer
             className="base-map"

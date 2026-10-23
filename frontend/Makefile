@@ -8,6 +8,11 @@ build: install
 run:
 	npm start
 
+# Real Android phone over USB: the phone reaches the dev server as localhost
+phone:
+	adb reverse tcp:3000 tcp:3000
+	@echo "Phone: open http://localhost:3000 in Chrome. Mac: chrome://inspect"
+
 test:
 	npx vitest run
 

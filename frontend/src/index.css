@@ -229,14 +229,14 @@
 
 /* Photo viewer (yet-another-react-lightbox) in the app's surface: a white
    gallery wall in light mode, near-black in dark mode. On phones the photo
-   gets the whole screen, with no borders, and the wall label (.viewer-label,
-   Images.jsx) lies over its bottom edge; on large screens the slides leave
-   room for the label below the photo. A tap on the photo (.photo-only) hides
-   the label and the buttons. */
+   gets the whole screen, with no borders; on large screens the slides leave
+   room below the photo. The wall label (.viewer-label, Images.jsx) is as wide
+   as the photo and sits under it, or over its bottom edge on a gradient where
+   there is no room (phones held sideways) and while zoomed in. */
 .yarl__root.viewer {
   --yarl__color_backdrop: var(--mui-palette-background-paper);
   --yarl__color_button: var(--mui-palette-text-primary);
-  --yarl__color_button_active: var(--mui-palette-primary-main);
+  --yarl__color_button_active: var(--mui-palette-text-primary);
   --yarl__color_button_disabled: var(--mui-palette-text-disabled);
   --yarl__button_filter: none;
   --yarl__counter_filter: none;
@@ -244,30 +244,18 @@
   --yarl__slide_icon_loading_color: var(--mui-palette-text-secondary);
   --yarl__toolbar_padding: 4px;
   --yarl__button_padding: 10px;
+  --yarl__navigation_button_padding: 10px;
   font-family: inherit;
-}
-
-.viewer .yarl__counter {
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
 }
 
 .viewer .yarl__slide {
   padding: 0;
 }
 
-.viewer .viewer-label {
-  background: color-mix(
-    in srgb,
-    var(--mui-palette-background-paper) 88%,
-    transparent
-  );
-}
-
-/* Long titles take two lines at most over the photo */
-.viewer .viewer-title {
+/* Over the photo (phones held sideways) long titles take three lines at most */
+.viewer .viewer-label-over .viewer-title {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -277,33 +265,22 @@
     padding: 56px 0 140px;
   }
 
-  .viewer .viewer-label {
-    background: var(--mui-palette-background-paper);
+  /* Large screens: ‹ › a size larger, and they, ✕ and the counter 16 px in
+     from the window's edges, so the glyphs line up 26 px from them */
+  .viewer .yarl__navigation_prev {
+    left: 16px;
   }
 
-  .viewer .viewer-title {
-    display: block;
+  .viewer .yarl__navigation_next {
+    right: 16px;
   }
-}
 
-.viewer .viewer-label,
-.viewer .yarl__toolbar,
-.viewer .yarl__counter {
-  transition: opacity 0.2s ease;
-}
+  .yarl__root.viewer .yarl__toolbar {
+    padding: 6px 16px 0 0;
+  }
 
-.viewer.photo-only .viewer-label,
-.viewer.photo-only .yarl__toolbar,
-.viewer.photo-only .yarl__counter {
-  opacity: 0;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .viewer .viewer-label,
-  .viewer .yarl__toolbar,
-  .viewer .yarl__counter {
-    transition: none;
+  .yarl__root.viewer .yarl__counter {
+    padding: 0 26px;
   }
 }
 
@@ -312,6 +289,37 @@
   .viewer .yarl__navigation_prev,
   .viewer .yarl__navigation_next {
     display: none;
+  }
+}
+
+/* ✕, ‹ and › look like the place panel's ✕ and the menu's back arrow: a
+   round 44 px area that only shows on hover with a mouse */
+.viewer .yarl__button {
+  border-radius: 50%;
+  transition: background-color 160ms ease;
+}
+
+/* A top bar like the place panel's header: the counter on the left and ✕ on
+   the right, 20 px in from the edges and centred in 56 px (the room large
+   screens leave above the photo) */
+.viewer .yarl__toolbar {
+  padding: calc(6px + env(safe-area-inset-top))
+    calc(8px + env(safe-area-inset-right)) 0 0;
+}
+
+.viewer .yarl__counter {
+  top: env(safe-area-inset-top);
+  left: env(safe-area-inset-left);
+  margin: 0;
+  padding: 0 20px;
+  line-height: 56px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (hover: hover) {
+  .viewer .yarl__button:hover {
+    background-color: var(--mui-palette-action-hover);
   }
 }
 
