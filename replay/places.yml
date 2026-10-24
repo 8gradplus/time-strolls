@@ -1,11 +1,41 @@
-# The curated content of Time Strolls: places with their Topothek images
-# and podcasts, and the tours. Replayed through the API with `make local` or
-# `make production` (replay.py): it only adds what is missing, never changes
-# or deletes. Created on 2026-10-22 from backend/notebooks/upload_data.ipynb.
+# The curated content of Time Strolls: the sources and the permissions to
+# show their content, places with their Topothek images and podcasts, and the
+# tours. Replayed through the API with `make local` or `make production`
+# (replay.py): it only adds what is missing, never changes or deletes, and
+# publishes what it adds. Created on 2026-10-22 from
+# backend/notebooks/upload_data.ipynb.
+#
+# Places: kind (village by default; see place_kind in the migrations), other
+# original names (names: {cs: ...}), part_of (the name of another place).
+# An image or podcast may be listed at several places.
 #
 # Sources:
 # - https://www.znicenekostely.cz/objekt/detail/13352
 # - https://www.zanikleobce.cz/
+
+sources:
+  - code: topothek:deutsch-reichenau
+    name: Topothek Deutsch Reichenau
+    base_url: https://deutsch-reichenau.topothek.at/
+  - code: topothek:lichtenau
+    name: Topothek Lichtenau
+    base_url: https://lichtenau.topothek.at/
+
+# Show only, no copy: the files stay on the sources' servers
+permissions:
+  - source: topothek:deutsch-reichenau
+    show: true
+    copy: false
+    note: personal communication
+  - source: topothek:lichtenau
+    show: true
+    copy: false
+    note: personal communication
+  - party: Geschichten aus der Geschichte
+    party_role: owner
+    show: true
+    copy: false
+    note: personal communication
 
 places:
   - name: Unterurasch
@@ -22,7 +52,8 @@ places:
       - https://deutsch-reichenau.topothek.at/?doc=951017
 
   - name: Waldkapelle Oberuresch
-    type: Chapel
+    kind: chapel
+    part_of: Oberuresch
     lat: 48.6113
     lon: 14.06166
     images:
@@ -70,10 +101,10 @@ places:
   - name: Sankt Thoma
     lat: 48.6412870685
     lon: 14.105554802
-    podcast:
-      title: "GAG83: 100 Jahre vor der Reformation – Jan Hus und die Hussitenkriege"
-      owner: Geschichten aus der Geschichte
-      url: https://audio.podigee-cdn.net/543211-m-64d99e1b9312e44e27a75be845df3628.mp3
+    podcasts:
+      - title: "GAG83: 100 Jahre vor der Reformation – Jan Hus und die Hussitenkriege"
+        owner: Geschichten aus der Geschichte
+        url: https://audio.podigee-cdn.net/543211-m-64d99e1b9312e44e27a75be845df3628.mp3
     images:
       - https://deutsch-reichenau.topothek.at/?doc=1771855
       - https://deutsch-reichenau.topothek.at/?doc=1547393
@@ -189,6 +220,7 @@ places:
       - https://deutsch-reichenau.topothek.at/?doc=891263
 
   - name: Schmiedmühle
+    kind: mill
     lat: 48.6275
     lon: 14.04942
     images:
@@ -270,6 +302,7 @@ places:
       - https://sankt-oswald.topothek.at/?doc=51847
 
   - name: Luagmühle
+    kind: mill
     lat: 48.63389
     lon: 14.04631
     images:
