@@ -355,6 +355,39 @@ const Imprint = () => (
   </Box>
 );
 
+// A section heading on the pages (as the year on the sources page)
+const Heading = ({ children }) => (
+  <Box sx={{ color: "text.primary", fontWeight: 500, mb: 0.5 }}>{children}</Box>
+);
+
+// A link out of the app as a full-width row between hairlines
+const LinkRow = ({ href, icon, children }) => (
+  <Link
+    href={href}
+    target="_blank"
+    rel="noopener"
+    underline="none"
+    color="text.primary"
+    sx={{
+      minHeight: 44,
+      display: "flex",
+      alignItems: "center",
+      gap: 1.25,
+      px: 0.5,
+      borderTop: 1,
+      borderColor: "divider",
+      "&:last-child": { borderBottom: 1, borderColor: "divider" },
+      ...hover,
+    }}
+  >
+    <Icon name={icon} size={20} />
+    <Box sx={{ flex: 1 }}>{children}</Box>
+    <Box sx={{ color: "text.secondary", display: "flex" }}>
+      <Icon name="arrow_outward" size={18} />
+    </Box>
+  </Link>
+);
+
 // The pages under the menu's links slide in inside the dock
 const subPages = {
   about: ({ t }) => (
@@ -363,7 +396,21 @@ const subPages = {
         {t.aboutText}
       </Box>
       <Box>
-        <Box sx={{ mb: 1 }}>{t.withSupportFrom}</Box>
+        <Heading>{t.contribute}</Heading>
+        <Box component="p" sx={{ m: 0, mb: 0.75 }}>
+          {t.openSource}
+        </Box>
+        <Box>
+          <LinkRow href="https://github.com/8gradplus/time-strolls" icon="code">
+            {t.codeOnGithub}
+          </LinkRow>
+          <LinkRow href={api.docs} icon="description">
+            {t.apiDocs}
+          </LinkRow>
+        </Box>
+      </Box>
+      <Box>
+        <Heading>{t.withSupportFrom}</Heading>
         <FundingLogo />
       </Box>
     </>

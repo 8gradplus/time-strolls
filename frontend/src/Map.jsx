@@ -193,6 +193,9 @@ const CoordinateMap = () => {
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const start = regionStart(region);
+    // The location button's "whole area" (Track) must not fly back home;
+    // its own flight may still be on, which hides ours from it
+    updateParams((params) => params.set("centered", "false"));
     const arrive = () => {
       if (start) {
         handleMenuItemClick("year")(start.time);
