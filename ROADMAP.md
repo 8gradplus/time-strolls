@@ -30,27 +30,28 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   background GPS and audio. So offline lands as a PWA, and Capacitor wraps
   the same build later.
 
-## Next session (state on 2026-10-22)
-Steps 2c (#9) and 4 (#10, #11) are done. Production now runs from the
-release workflow: v0.2.1 is live with the 2c look. On the switch-over the
-old database volume was deleted (`down -v` with the old compose file); the
-data came back cleanly from `replay/places.yml` (`make production` in
-`replay/`). `deploy_production.sh` and the notebooks are gone.
-1. **Phone test (2026-10-23, Pixel over USB, `make phone`):** the map,
-   dock, time line, folded pill, menu, place panel, photo viewer and mini
-   player work on Android; fixed on the way: `100dvh`, the place panel full
-   screen on phones, sticky hover after a tap, the menu height on sub-pages,
-   swiping in the viewer, and the viewer's label, ✕, arrows and closing.
-   Still to test by hand: audio with the screen locked, the lock-screen and
-   headphone controls (Media Session), resuming an episode the next day, and
-   an iPhone (Safari).
-2. **Open points:** place names next to the dots from zoom 15 on (keep or
-   hide); the about text is a first draft; the Czech UI strings (player,
-   dock) should be checked by a native speaker; in a desktop window narrower
-   than ~360 px the zoom pill squeezes the years (accepted for now); the
-   droplet keeps old unused images (`docker image prune`).
-3. Then go on in the agreed order: 5 admin, 3 offline PWA, 6 Android.
-4. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
+## Next session (state on 2026-10-24)
+Production runs v0.3.2 from the release workflow. Since the last hand-off:
+the phone test on a Pixel over USB (`make phone`) with the mobile polish and
+photo viewer (#12, v0.3.0), the area welcome and one default view (#13,
+v0.3.1), and the fix for the map flying back home on every GPS update (#14,
+v0.3.2, with a "Contribute" section on the About page).
+1. **Next:** switch the Topothek import to `time-strolls-scraper` (its v0.3.1
+   has the scraper; see `CLAUDE.md`, "Topothek crawler: planned move"), mount
+   its MCP tools behind the same auth as the API, and rework the database
+   schema (languages, authorship, permissions, approvals). Analysed and
+   planned before anything is built; this overlaps step 5.
+2. **Still to test by hand:** audio with the screen locked, the lock-screen
+   and headphone controls (Media Session), resuming an episode the next day,
+   and an iPhone (Safari).
+3. **Open points:** the repo has no LICENSE although the About page says
+   "open source" (deferred); place names next to the dots from zoom 15 on
+   (keep or hide); the about text is a first draft; the Czech UI strings
+   (player, dock) should be checked by a native speaker; in a desktop window
+   narrower than ~360 px the zoom pill squeezes the years (accepted for now);
+   the droplet keeps old unused images (`docker image prune`).
+4. Then go on in the agreed order: 5 admin, 3 offline PWA, 6 Android.
+5. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
    wildcards after every upload (see `CLAUDE.md`, "CDN caching"); widening a
    region re-renders tiles under the same URLs.
 
@@ -63,6 +64,7 @@ data came back cleanly from `replay/places.yml` (`make production` in
 | 2 | Theme, logo, mobile layout | Done (#8) |
 | 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
 | 2c | Calm map: only map and time line, the rest in the menu | Done (#9) |
+| 2d | Phone test and mobile polish, area start views | Done (#12, #13, #14) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Done (#10, #11) |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
