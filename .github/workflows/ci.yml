@@ -23,6 +23,10 @@ jobs:
           # Same as the Docker image; pyarrow (via swak) has no wheels for newer versions yet
           python-version: "3.13"
           enable-cache: true
+      - uses: webfactory/ssh-agent@v0.9.1
+        with:
+          # Read access to the private time-strolls-scraper (a deploy key there)
+          ssh-private-key: ${{ secrets.SCRAPER_DEPLOY_KEY }}
       - name: Install
         run: uv sync --extra test
       - name: Lint
@@ -79,10 +83,15 @@ jobs:
         service: [backend, frontend]
     steps:
       - uses: actions/checkout@v4
+      - uses: webfactory/ssh-agent@v0.9.1
+        with:
+          # Read access to the private time-strolls-scraper (a deploy key there)
+          ssh-private-key: ${{ secrets.SCRAPER_DEPLOY_KEY }}
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.service }}
           push: false
+          ssh: default
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}

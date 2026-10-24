@@ -17,11 +17,12 @@ dependencies = [
     "sqlmodel",
     "swak",
     "uvicorn",
-    "beautifulsoup4",
     "requests",
     "gpxpy>=1.6.2",
     "shapely>=2.1.2",
     "geoalchemy2>=0.18.0",
+    "time-strolls-scraping",
+    "httpx>=0.28.1",
 ]
 
 [project.optional-dependencies]
@@ -57,3 +58,6 @@ extend-exclude = ["notebooks"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F"]
+
+[tool.uv.sources]
+time-strolls-scraping = { git = "ssh://git@github.com/8gradplus/time-strolls-scraper.git", tag = "v0.3.1" }
