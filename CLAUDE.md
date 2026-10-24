@@ -21,9 +21,9 @@ Monorepo layout: `backend/` (FastAPI + SQLModel, Python ≥3.13, managed with `u
 - API docs: `http://localhost:8000/api/docs`.
 
 ### Content replay (run from `replay/`)
-- `replay/places.yml` is the curated content: places with their Topothek image links and podcasts, and the tours (GPX files in `replay/tours/`). Edit it by hand; it replaced the notebook `upload_data.ipynb` (the notebooks were removed on 2026-10-22).
-- `make local` / `make production` replay it through the API: only what is missing is added, nothing is changed or deleted, so it can run any number of times (an empty database gets everything). Each target has its own key in `replay/.env` (git-ignored, only on your Mac): `API_KEY_LOCAL` (the local stack's `API_KEY`) and `API_KEY_PRODUCTION`. The environment wins over the file. The script is a safety net run by hand on the Mac, never on a server.
-- `make check` (production) / `make check-local` only list what would be added and what differs, without a key.
+- `replay/places.yml` is the curated content: the sources and the permissions to show their content (show only, no copy), places (kind, other original names, `part_of`) with their Topothek image links and podcasts, and the tours (GPX files in `replay/tours/`). An image or podcast may be listed at several places. Edit it by hand; it replaced the notebook `upload_data.ipynb` (the notebooks were removed on 2026-10-22).
+- `make local` / `make production` replay it through the admin API (`/api/admin/...`): only what is missing is added (also missing links), nothing is changed or deleted, and what is added is published, so it can run any number of times (an empty database gets everything; a full run harvests about 560 Topothek documents, one per second). Each target has its own bearer token in `replay/.env` (git-ignored, only on your Mac): `API_KEY_LOCAL` (the local stack's `API_KEY`) and `API_KEY_PRODUCTION`. The environment wins over the file. The script is a safety net run by hand on the Mac, never on a server.
+- `make check` (production) / `make check-local` only list what would be added and what differs; they need the token too (they read the admin routes, which also see unpublished content). To try changes, replay a small file: `uv run replay.py local --file <subset>.yml`.
 - Its own uv project (httpx, pydantic, PyYAML), separate from the backend: it only talks to the HTTP API. `make lint`, `make test`.
 
 ### Frontend (run from `frontend/`)

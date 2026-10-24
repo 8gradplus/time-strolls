@@ -40,8 +40,8 @@ v0.3.2, with a "Contribute" section on the About page).
    work"). PR 1 (Topothek via `time-strolls-scraper`, #16) is merged. PR 2
    comes in three parts, released together once it feels right: 2a backend
    (schema on PostgreSQL 17, service layer, scoped tokens, admin routes under
-   `/api/admin`), 2b the replay, 2c the frontend. Until 2b the replay doesn't
-   work against `main`. Then MCP (PR 3). This overlaps step 5.
+   `/api/admin`, #17), 2b the replay (sources, permissions, kinds, links), 2c
+   the frontend. Then MCP (PR 3). This overlaps step 5.
 2. **Still to test by hand:** audio with the screen locked, the lock-screen
    and headphone controls (Media Session), resuming an episode the next day,
    and an iPhone (Safari).
