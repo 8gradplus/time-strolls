@@ -1,10 +1,11 @@
+import httpx
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select, Session
 from api.db import engine
 from api.model.image import Image, ImageCreate, ImagePublic, ImageUpdate
 from helpers import cdn
 from datetime import datetime as dt
-from topothek.crawl import crawl_document_async
+from importers import topothek
 # Todo: upload image directly
 
 router = APIRouter(tags=["Images"], prefix="/api/images")
@@ -61,10 +62,16 @@ def patch_podcast(id: int, image: ImageUpdate):
 @router.post("/topothek/", response_model=ImagePublic)
 async def post_topothek_document(image: ImageCreate):
     try:
-        topothek_image = await crawl_document_async(image.url)
-    except Exception:
+        topothek_image = await topothek.image(image.url)
+    except ValueError:
         raise HTTPException(
-            status_code=404, detail=f"Could not parse topothek document {image.url}."
+            status_code=422, detail=f"Not a Topothek document link: {image.url}"
+        )
+    except LookupError:
+        raise HTTPException(status_code=404, detail=f"No Topothek document {image.url}")
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=502, detail=f"Could not reach the Topothek for {image.url}"
         )
     db_image = Image(
         **dict(topothek_image, place_id=image.place_id, created_at=dt.utcnow())

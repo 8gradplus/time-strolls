@@ -36,11 +36,10 @@ the phone test on a Pixel over USB (`make phone`) with the mobile polish and
 photo viewer (#12, v0.3.0), the area welcome and one default view (#13,
 v0.3.1), and the fix for the map flying back home on every GPS update (#14,
 v0.3.2, with a "Contribute" section on the About page).
-1. **Next:** switch the Topothek import to `time-strolls-scraper` (its v0.3.1
-   has the scraper; see `CLAUDE.md`, "Topothek crawler: planned move"), mount
-   its MCP tools behind the same auth as the API, and rework the database
-   schema (languages, authorship, permissions, approvals). Analysed and
-   planned before anything is built; this overlaps step 5.
+1. **Next:** the Topothek import runs on `time-strolls-scraper` (PR 1 of
+   `SCHEMA_CONCEPT.md`). Then the new schema with the service layer and
+   scoped tokens (PR 2), and MCP (PR 3); see "Order of work" there. This
+   overlaps step 5.
 2. **Still to test by hand:** audio with the screen locked, the lock-screen
    and headphone controls (Media Session), resuming an episode the next day,
    and an iPhone (Safari).
@@ -362,7 +361,7 @@ protected by the same tokens.
 - `resources/` (raw GPX, TIFs, tiles, crawl output): once the admin exists, the
   database and Spaces are the source of truth. Archive it to Spaces or a data repo
   and keep only small test fixtures.
-- The Topothek crawler stays (the admin uses it) and moves to `backend/importers/`.
+- The Topothek import uses `time-strolls-scraper` (`backend/importers/topothek.py`).
 - The monorepo (`backend/`, `frontend/`, `deployment/`) stays. The only contract
   with aerial-timeline is the public `manifest.json`; neither repo imports the other.
 

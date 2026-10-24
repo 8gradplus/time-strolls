@@ -21,6 +21,8 @@ services:
   api:
     build:
       context: ../backend
+      # your SSH agent, for the private time-strolls-scraper
+      ssh: [default]
     ports:
       - "8000:8000"
 
