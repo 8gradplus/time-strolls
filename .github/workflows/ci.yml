@@ -16,6 +16,19 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      # The database tests (tests/conftest.py), as make test-db
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -35,6 +48,8 @@ jobs:
         run: uv run ruff format --check .
       - name: Test
         run: uv run pytest
+        env:
+          REQUIRE_TEST_DB: "1"
 
   replay:
     runs-on: ubuntu-latest

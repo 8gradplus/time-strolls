@@ -4,7 +4,6 @@ from typing import Optional
 
 class Api(BaseModel):
     key: str
-    headername: Optional[str] = "X-API-Key"
 
 
 class DataBase(BaseModel):

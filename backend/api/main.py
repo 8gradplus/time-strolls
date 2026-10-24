@@ -1,39 +1,30 @@
-# Todo: https://fastapi.tiangolo.com/tutorial/bigger-applications/#an-example-file-structure
-# Todo: https://fastapi.tiangolo.com/tutorial/bigger-applications/#an-example-file-structure
-# Todo: incorporate Relationships https://sqlmodel.tiangolo.com/tutorial/fastapi/teams/#add-teams-models
-# Todo: config: schema (views)
-# Todo: config: extract DB URI
-# Todo: Maybe this boilerplate should go to api.__init__.py and then just import it?
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
-# Docs
-# https://timberry.dev/fastapi-with-apikeys
-
-from fastapi import FastAPI
-from api.controller import place
-from api.controller import podcast
-from api.controller import image
-from api.controller import location
-from api.controller import tour
-from api.auth.api_key import get_api_key
-from fastapi import Depends
-
+from api.controller import admin_content, admin_rights, public
+from service import Conflict, Forbidden, Invalid, NotFound, ServiceError
 
 app = FastAPI(
     title="Timestrolls API",
+    description=(
+        "Public routes (/api/locations, /api/tours) return published and "
+        "permitted content. Admin routes (/api/admin/...) need "
+        "`Authorization: Bearer <token>` with the scope named on the route."
+    ),
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
 )
-app.include_router(place.router, dependencies=[Depends(get_api_key)])
-app.include_router(podcast.router, dependencies=[Depends(get_api_key)])
-app.include_router(image.router, dependencies=[Depends(get_api_key)])
-app.include_router(tour.router, dependencies=[Depends(get_api_key)])
-app.include_router(tour.router_public)
+app.include_router(public.router)
+app.include_router(admin_content.router)
+app.include_router(admin_rights.router)
 
-# Public available + assembled suitable for frontend
-# This is currently easier for the frontend.
-# One could alternatively define public and private routers as for the track endpoints.
-app.include_router(location.router)
+STATUS_CODES = {NotFound: 404, Conflict: 409, Invalid: 422, Forbidden: 403}
+
+
+@app.exception_handler(ServiceError)
+def service_error(request: Request, error: ServiceError):
+    return JSONResponse({"detail": str(error)}, STATUS_CODES.get(type(error), 400))
 
 
 @app.get("/api/ready")

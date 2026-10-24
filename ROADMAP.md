@@ -36,10 +36,12 @@ the phone test on a Pixel over USB (`make phone`) with the mobile polish and
 photo viewer (#12, v0.3.0), the area welcome and one default view (#13,
 v0.3.1), and the fix for the map flying back home on every GPS update (#14,
 v0.3.2, with a "Contribute" section on the About page).
-1. **Next:** the Topothek import runs on `time-strolls-scraper` (PR 1 of
-   `SCHEMA_CONCEPT.md`). Then the new schema with the service layer and
-   scoped tokens (PR 2), and MCP (PR 3); see "Order of work" there. This
-   overlaps step 5.
+1. **Next:** the new content model of `SCHEMA_CONCEPT.md` ("Order of
+   work"). PR 1 (Topothek via `time-strolls-scraper`, #16) is merged. PR 2
+   comes in three parts, released together once it feels right: 2a backend
+   (schema on PostgreSQL 17, service layer, scoped tokens, admin routes under
+   `/api/admin`), 2b the replay, 2c the frontend. Until 2b the replay doesn't
+   work against `main`. Then MCP (PR 3). This overlaps step 5.
 2. **Still to test by hand:** audio with the screen locked, the lock-screen
    and headphone controls (Media Session), resuming an episode the next day,
    and an iPhone (Safari).

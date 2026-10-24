@@ -6,8 +6,11 @@ configs:
     file: ./Caddyfile.local
 
 volumes:
+  # PostgreSQL 17 since v0.4.0; the old local volume deployment_postgres
+  # (PostgreSQL 13) is not used any more and can be removed
   postgres:
     external: false
+    name: timestrolls_pg17
 
 services:
   postgres:

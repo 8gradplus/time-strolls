@@ -1,4 +1,5 @@
 api:
+  # the admin's bearer token (all scopes; account 'admin')
   key: ${API_KEY}
 
 database:
@@ -6,9 +7,9 @@ database:
   ssl: false
   # postgres.timestrolls in docker compose (deployment/docker-compose.yml)
   host: ${POSTGRES_HOST|localhost}
-  port: 5432
-  name: timestrolls
-  user: user
+  port: ${POSTGRES_PORT|5432}
+  name: ${POSTGRES_DB|timestrolls}
+  user: ${POSTGRES_USER|user}
   password: ${POSTGRES_USER_PASSWORD}
 
 cdn:
