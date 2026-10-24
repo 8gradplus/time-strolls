@@ -14,7 +14,7 @@ configs:
 
 services:
   postgres:
-    image: postgis/postgis:13-3.3
+    image: postgis/postgis:17-3.5
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD:?}
@@ -110,6 +110,8 @@ volumes:
   # The live data. External: compose never creates or deletes it (not even
   # with "down -v") and refuses to start without it, instead of starting
   # with an empty database. Never run "docker compose down -v" on the droplet.
+  # PostgreSQL 17 since v0.4.0; the old volume deployment_postgres (PostgreSQL 13)
+  # is kept for a rollback to v0.3.x
   postgres:
     external: true
-    name: deployment_postgres
+    name: timestrolls_pg17

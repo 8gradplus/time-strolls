@@ -215,22 +215,26 @@ new, the known permissions and parties. It stays idempotent: places and tours
 by slug, media by (source, external id), files by hash.
 
 ## Migration
-- The current migrations (`V001_001`, `V001_002`) are replaced by a fresh set;
-  no data migration.
-- On production (done by hand): drop the schema `timestrolls` and Flyway's
-  history, deploy the release, run the replay.
-- The migration must create the app user only if it doesn't exist yet (the
-  volume keeps it).
-- Frontend: tours are linked by slug instead of numeric id (`?tour=`); old
-  numeric links can be mapped once via the replay's slugs.
+- The old migrations are replaced by a fresh set; no data migration.
+- A new volume `timestrolls_pg17` with PostgreSQL 17 (13 is out of support).
+  The old volume `deployment_postgres` stays untouched, so running the release
+  workflow with a v0.3.x tag rolls back to the old data.
+- On production (done by hand): `docker volume create timestrolls_pg17` on the
+  droplet, publish the release, run the replay (with the admin token).
+- The migration creates the app user only if it doesn't exist yet.
+- Old numeric place links (`?location=5`) are dropped: the ids changed when
+  the database was refilled on 2026-10-22. Tours are linked by slug or id.
 
 ## Order of work
 1. **Scraper switch:** the scraper as a dependency (deploy key in CI and the
    release build), `POST /api/images/topothek/` via `topothek.document`,
    remove `backend/topothek/` and `beautifulsoup4`. Small, on the old schema.
-2. **New schema, service layer, tokens:** migrations, models, the service
-   layer, accounts and scoped tokens, public views; REST adapted; replay
-   adapted; frontend adapted (`?lang=`, tours by slug).
+   Merged (#16).
+2. **New schema, service layer, tokens**, in three PRs released together:
+   2a backend (migrations, models, the service layer, accounts and scoped
+   tokens, public views, REST with admin routes under `/api/admin`, database
+   tests in CI); 2b the replay; 2c the frontend (`?lang=`, several podcasts,
+   credits for translations).
 3. **MCP:** both mounts on the service layer, scraper tools in the admin
    mount; harvesting and review tools.
 4. **Later:** OAuth 2.1 (roadmap step 5, with the admin UI), areas, more

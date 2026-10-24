@@ -23,15 +23,23 @@ lint:
 # Same checks as CI
 check: lint test
 
-# Testing
+# Testing. The database tests need a PostGIS server (else they are skipped):
+# make test-db starts one on :5433 (as in CI), make test-db-stop removes it.
 test:
 	uv run pytest
+
+test-db:
+	docker run -d --rm --name timestrolls-test-db -p 5433:5432 \
+		-e POSTGRES_PASSWORD=postgres postgis/postgis:17-3.5
+
+test-db-stop:
+	docker rm -f timestrolls-test-db
 
 test-verbose:
 	uv run pytest -vv
 
 test-cov:
-	uv run pytest --cov=helpers --cov=api --cov-report=term-missing --cov-report=html
+	uv run pytest --cov=helpers --cov=api --cov=service --cov-report=term-missing --cov-report=html
 
 test-watch:
 	uv run pytest --watch
