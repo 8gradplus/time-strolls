@@ -18,9 +18,3 @@ Comes with fastapi and is available under
 - **Local stack:** `make run` in `deployment/` (`docker compose up -d --build`; the override builds from source). Passwords and keys in `deployment/.env` (git-ignored). The site is at `http://localhost`.
 - **Local API development:** start the stack, stop the `api` service, then `make run-api` in `backend/`.
 - **Content:** `replay/places.yml`, replayed through the API with `make local` / `make production` in `replay/`.
-
-### Content Sources
-- Topothek
-- https://www.znicenekostely.cz/objekt/detail/13352
-- https://www.zanikleobce.cz/
-
