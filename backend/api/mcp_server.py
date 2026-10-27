@@ -28,7 +28,7 @@ from sqlmodel import Session
 
 from api.db import engine
 from config import config
-from importers import topothek
+from importers import suedboehmen, topothek, znicenekostely
 from service import (
     Actor,
     ServiceError,
@@ -192,6 +192,9 @@ admin_mcp = FastMCP(
 - Texts are per language (ISO codes); a translation names its method
   (machine or human), translated_from and, for machines, the model.
   Translate only when asked, titles before descriptions.
+- Houses and sacral buildings: import_suedboehmen_houses and
+  import_sacral_buildings store them directly (with their source record),
+  so don't copy scraper results into create_places.
 - Topothek: search with the scraping_ tools, then harvest_topothek; the
   archives are small, so harvest only what is needed. The scraping_ tools
   for suedboehmen and znicenekostely take numbers/categories, limit and
@@ -442,6 +445,55 @@ async def harvest_topothek(
             row["error"] = str(e) or type(e).__name__
         rows.append(row)
     return compact(rows)
+
+
+IMPORT_ERRORS = (LookupError, ValueError, httpx.HTTPError)
+
+
+@admin_mcp.tool(auth=WRITE)
+async def import_suedboehmen_houses(
+    village: str,
+    place: str,
+    numbers: list[str] | None = None,
+    status: str | None = None,
+) -> dict:
+    """Imports the houses of a village from the Südböhmen-Archiv (German
+    name, e.g. "Oberuresch") as house places, part of `place` (slug or id of
+    the village place), without passing them through you: names "<village>
+    <number>", attributes number, former_number, house_name, address.
+    `numbers` limits it to some houses. Importing again adds nothing new.
+    Returns created [{name, slug}], existing, duplicates (an existing place
+    looks the same: nothing created), skipped (no coordinates), errors."""
+    me = actor()
+    try:
+        data = await suedboehmen.village(village)
+    except IMPORT_ERRORS as e:
+        raise ToolError(str(e) or type(e).__name__)
+    return compact(
+        await call(harvest.suedboehmen_houses, me, data, place, numbers, status)
+    )
+
+
+@admin_mcp.tool(auth=WRITE)
+async def import_sacral_buildings(
+    lat: float,
+    lon: float,
+    place: str,
+    radius_km: float = 1.0,
+    status: str | None = None,
+) -> dict:
+    """Imports the destroyed or endangered sacral buildings within radius_km
+    of lat/lon from znicenekostely.cz as places, part of `place` (slug or
+    id), without passing them through you. Kinds: church, chapel,
+    wayside_shrine, else landmark; the Czech name is the name; category,
+    state and position become attributes. Importing again adds nothing new.
+    Returns created [{name, slug}], existing, duplicates, skipped, errors."""
+    me = actor()
+    try:
+        data = await znicenekostely.objects_near(lat, lon, radius_km)
+    except IMPORT_ERRORS as e:
+        raise ToolError(str(e) or type(e).__name__)
+    return compact(await call(harvest.sacral_buildings, me, data, place, status))
 
 
 @admin_mcp.tool(auth=WRITE)

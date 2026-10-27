@@ -306,3 +306,147 @@ def test_the_tool_list_stays_small(app):
     count, size = run(app, "/api/mcp/admin/", API_KEY, size)
     print(f"\nadmin tools: {count}, {size} bytes (without the scraper's)")
     assert size < 16000
+
+
+# Imports from the scrapers, without the network -----------------------------------
+
+SUEDBOEHMEN = {
+    "language": "de",
+    "retrieved_at": "2026-10-27T10:00:00Z",
+    "source": "suedboehmenarchiv",
+    "id": 3223,
+    "name": "Oberuresch",
+    "houses": [
+        {
+            "id": 12950 + n,
+            "number": str(n),
+            "name": name,
+            "address": "verfallen",
+            "history": "Lange Geschichte ...",
+            "lat": 48.6091 + n * 0.0003,
+            "lon": 14.0563,
+            "source_url": f"https://suedboehmenarchiv.eu/haus_sb.php?id_haus={12950 + n}",
+        }
+        for n, name in ((1, "Gregern"), (2, None), (3, "Jågl-Kårl"))
+    ]
+    + [{"id": 12999, "number": "9", "source_url": "https://suedboehmenarchiv.eu/"}],
+}
+
+KOSTELY = {
+    "language": "cs",
+    "retrieved_at": "2026-10-27T10:00:00Z",
+    "source": "znicenekostely",
+    "total": 2,
+    "objects": [
+        {
+            "id": 11154,
+            "name": "Kaple sv. Jana",
+            "category": "Velké kaple",
+            "state": "Zaniklé",
+            "lat": 48.609008,
+            "lon": 14.0562,
+            "source_url": "https://www.znicenekostely.cz/objekt/detail/11154",
+        },
+        {
+            "id": 11155,
+            "name": "Hřbitov",
+            "category": "Hřbitovy",
+            "lat": 48.612,
+            "lon": 14.058,
+            "source_url": "https://www.znicenekostely.cz/objekt/detail/11155",
+        },
+    ],
+}
+
+
+@pytest.fixture
+def importing(app, monkeypatch):
+    from importers import suedboehmen, znicenekostely
+
+    async def village(name):
+        if name != "Oberuresch":
+            raise LookupError(f"No village matches {name!r}")
+        return SUEDBOEHMEN
+
+    async def objects_near(lat, lon, radius_km):
+        return KOSTELY
+
+    monkeypatch.setattr(suedboehmen, "village", village)
+    monkeypatch.setattr(znicenekostely, "objects_near", objects_near)
+    return app
+
+
+def test_houses_and_chapels_are_imported_once(importing, admin):
+    async def steps(client):
+        async def tool(name, arguments):
+            return parse(await client.call_tool(name, arguments))
+
+        (village,) = await tool("create_places", {"places": [VILLAGE]})
+        # an agent made house 3 by hand before
+        await tool(
+            "create_places",
+            {
+                "places": [
+                    {
+                        "name": "Jågl-Kårl",
+                        "kind": "house",
+                        "lat": 48.6091 + 3 * 0.0003,
+                        "lon": 14.0563,
+                    }
+                ]
+            },
+        )
+        args = {"village": "Oberuresch", "place": village["slug"]}
+        first = await tool("import_suedboehmen_houses", args)
+        again = await tool("import_suedboehmen_houses", args)
+        sacral = await tool(
+            "import_sacral_buildings",
+            {"lat": 48.609, "lon": 14.056, "place": village["slug"]},
+        )
+        house = await tool("get_resource", {"key": first["created"][0]["slug"]})
+        return first, again, sacral, house
+
+    first, again, sacral, house = run(importing, "/api/mcp/admin/", API_KEY, steps)
+    assert [h["name"] for h in first["created"]] == ["Oberuresch 1", "Oberuresch 2"]
+    assert first["duplicates"][0]["duplicate_of"][0]["name"] == "Jågl-Kårl"
+    assert first["skipped"] == [{"number": "9", "reason": "no coordinates"}]
+    assert len(again["existing"]) == 2 and "created" not in again
+    assert {(c["name"]) for c in sacral["created"]} == {"Kaple sv. Jana", "Hřbitov"}
+    assert house["kind"] == "house"
+    assert house["attributes"] == {
+        "number": "1",
+        "house_name": "Gregern",
+        "address": "verfallen",
+    }
+    assert house["sources"] == [SUEDBOEHMEN["houses"][0]["source_url"]]
+    (parent,) = house["links"]
+    assert parent["predicate"] == "part_of" and parent["label"] == "Oberuresch"
+    # the history stays in the record
+    assert "description" not in house.get("texts", {})
+
+
+def test_sacral_kinds_and_an_unknown_village(importing, admin):
+    async def steps(client):
+        async def tool(name, arguments):
+            return parse(await client.call_tool(name, arguments))
+
+        (village,) = await tool("create_places", {"places": [VILLAGE]})
+        await tool(
+            "import_sacral_buildings",
+            {"lat": 48.609, "lon": 14.056, "place": village["slug"]},
+        )
+        kinds = {
+            row["name"]: row["kind"]
+            for row in await tool("find_places", {"lat": 48.609, "lon": 14.056})
+        }
+        try:
+            await client.call_tool(
+                "import_suedboehmen_houses", {"village": "Nirgendwo", "place": "x"}
+            )
+        except Exception as e:
+            return kinds, str(e)
+
+    kinds, error = run(importing, "/api/mcp/admin/", API_KEY, steps)
+    assert kinds["Kaple sv. Jana"] == "chapel"
+    assert kinds["Hřbitov"] == "landmark"
+    assert "No village matches" in error

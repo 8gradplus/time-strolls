@@ -87,7 +87,9 @@ def check_kind(session: Session, kind: str):
         raise Invalid(f"unknown place kind {kind!r}")
 
 
-def create(session: Session, actor: Actor, data: PlaceIn) -> PlaceView:
+def create(
+    session: Session, actor: Actor, data: PlaceIn, commit: bool = True
+) -> PlaceView:
     """A new place; one that looks like an existing place raises Duplicate,
     unless data.force."""
     require(actor, "write")
@@ -132,7 +134,10 @@ def create(session: Session, actor: Actor, data: PlaceIn) -> PlaceView:
         resource.id,
         data.model_dump() | {"slug": slug, "status": resource.status},
     )
-    session.commit()
+    if commit:
+        session.commit()
+    else:
+        session.flush()
     return get(session, resource.id)
 
 

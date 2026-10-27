@@ -61,4 +61,4 @@ extend-exclude = ["notebooks"]
 select = ["E4", "E7", "E9", "F"]
 
 [tool.uv.sources]
-time-strolls-scraping = { git = "ssh://git@github.com/8gradplus/time-strolls-scraper.git", tag = "v0.3.1" }
+time-strolls-scraping = { git = "ssh://git@github.com/8gradplus/time-strolls-scraper.git", tag = "v0.4.0" }

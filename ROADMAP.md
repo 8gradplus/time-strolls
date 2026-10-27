@@ -40,7 +40,7 @@ v0.3.2, with a "Contribute" section on the About page).
    (#20) are merged, not released. Now making the curation MCP cheaper
    before the release: A0 scraper v0.4.0 (record key, optional compact
    views; released), A1 batch tools, `find_places`, duplicate guard,
-   compact answers, A2 server-side imports from the scrapers; then a
+   compact answers (#21), A2 server-side imports from the scrapers; then a
    frontend round for houses and chapels (B). The local stack holds an agent test (Oberuresch, ~130 places from the
    agent; a local, git-excluded `.mcp.json` uses `${API_KEY}`). Findings:
    the agent was slow and token-heavy (114 single calls) -> bulk tools and
