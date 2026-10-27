@@ -37,9 +37,9 @@ released: the new content model (2a #17, 2b #18, 2c #19), the MCP server
 duplicate guard, compact answers; #22 server-side imports of houses and
 sacral buildings; scraper v0.4.0 with the record key).
 0. **Start here: the frontend round for houses and chapels (B).** The
-   agent test of 2026-10-27 left the local database full of them (35 public
-   places: 11 villages, 12 houses, 9 chapels, 1 church, 2 mills, and more
-   still `new`: the final "publish please!" was not sent). Every place is a
+   agent test of 2026-10-27 left the local database full of them, all
+   published: 148 places on the map (118 houses, 13 chapels, 13 villages,
+   2 churches, 2 mills; 2 houses and the podcast muted). Every place is a
    red dot today, which will overwhelm visitors. Plan (from the approved
    plan of 2026-10-27, part B):
    - Clickable mockups first, as an artifact, comparing a hierarchy: the map
@@ -58,9 +58,7 @@ sacral buildings; scraper v0.4.0 with the record key).
      `docker compose run --rm --no-deps migrate-postgres` (the override
      mounts `backend/migration`); in `backend/` `make run-api` (:8000); in
      `frontend/` `API_PROXY=http://127.0.0.1:8000 npm start` (:3000). The
-     data is in the local volume `timestrolls_pg17` (never `down -v`). To
-     publish the agent's `new` items: ask an agent with the local MCP
-     ("publish everything new"), or `set_status` via `/api/mcp/admin`.
+     data is in the local volume `timestrolls_pg17` (never `down -v`).
 1. **MCP, still to improve** (measured 2026-10-27 against 2026-10-24, the
    same prompts: 281 → 81 calls, 314 → 145 KB of answers, 1.41 M → 139 k
    output tokens, 77 M → 21 M cached input; script and numbers in the PRs
