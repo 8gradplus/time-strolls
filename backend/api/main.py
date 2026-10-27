@@ -53,7 +53,9 @@ STATUS_CODES = {NotFound: 404, Conflict: 409, Invalid: 422, Forbidden: 403}
 
 @app.exception_handler(ServiceError)
 def service_error(request: Request, error: ServiceError):
-    return JSONResponse({"detail": str(error)}, STATUS_CODES.get(type(error), 400))
+    # by the base class too: Duplicate is a Conflict
+    code = next((c for t, c in STATUS_CODES.items() if isinstance(error, t)), 400)
+    return JSONResponse({"detail": str(error)}, code)
 
 
 @app.get("/api/ready")

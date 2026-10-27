@@ -174,6 +174,16 @@ def test_unknown_kind_and_duplicate_slug(admin):
     assert r.status_code == 409
 
 
+def test_a_place_like_an_existing_one_needs_force(admin):
+    place(admin, "Sankt Thoma")
+    body = {"name": "St. Thoma", "lat": 48.6093, "lon": 14.056219}
+    r = admin.post("/api/admin/places/", json=body)
+    assert r.status_code == 409
+    assert "Sankt Thoma" in r.json()["detail"]
+    r = admin.post("/api/admin/places/", json=body | {"force": True})
+    assert r.status_code == 201, r.text
+
+
 # Media and permissions -----------------------------------------------------------------
 
 

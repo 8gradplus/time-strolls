@@ -6,7 +6,14 @@ from uuid import UUID
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
-from api.model.tables import Relation, Resource, ResourceSource, SourceRecord, Text
+from api.model.tables import (
+    Place,
+    Relation,
+    Resource,
+    ResourceSource,
+    SourceRecord,
+    Text,
+)
 from service import Invalid, resources
 from service import media, places, tours
 
@@ -30,12 +37,15 @@ def list_(
     type: str | None = None,
     status: str | None = None,
     limit: int = 200,
+    kind: str | None = None,
 ) -> list[Summary]:
     query = select(Resource).order_by(Resource.created_at.desc()).limit(limit)
     if type:
         query = query.where(Resource.type == type)
     if status:
         query = query.where(Resource.status == status)
+    if kind:  # places only
+        query = query.join(Place, Place.id == Resource.id).where(Place.kind == kind)
     return [
         Summary(
             id=r.id,

@@ -238,8 +238,10 @@ by slug, media by (source, external id), files by hash.
    credits for translations).
 3. **MCP:** both mounts on the service layer, scraper tools in the admin
    mount; harvesting and review tools. First version in
-   `backend/api/mcp_server.py`. Next: batch tools, compact answers and a
-   lookup of existing places (the first agent test made 114 single calls).
+   `backend/api/mcp_server.py`. The first agent test made 411 single calls
+   (2026-10-24); since then batch tools, compact answers, `find_places` and
+   a duplicate guard. Next: server-side imports of scraper records (houses,
+   sacral buildings) by the scraper's record key (`source` + `id`, v0.4.0).
 4. **Later:** OAuth 2.1 (roadmap step 5, with the admin UI), areas, more
    types (persons, events), copying permitted files for offline (step 3).
 
@@ -247,8 +249,8 @@ by slug, media by (source, external id), files by hash.
 Collected while building; to be raised in that repo.
 - The MCP view of a Topothek document drops `rights`; we need the licence text
   for permissions (the Python function keeps it).
-- A stable source key on every record, the same across scrapers (`source` plus
-  `id`), so `source_record` needs no per-scraper mapping.
+- ~~A stable source key on every record~~: done in v0.4.0 (`source` on every
+  result, plus each record's `id`).
 
 ## Open
 - The licence of this repo (see `ROADMAP.md`).
