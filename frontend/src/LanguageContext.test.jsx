@@ -5,8 +5,12 @@ describe("initialLanguage", () => {
     expect(initialLanguage("en", ["cs-CZ"])).toBe("en");
   });
 
-  test("maps a Czech device to cz", () => {
-    expect(initialLanguage(null, ["cs-CZ", "en"])).toBe("cz");
+  test("maps a Czech device to cs", () => {
+    expect(initialLanguage(null, ["cs-CZ", "en"])).toBe("cs");
+  });
+
+  test("turns a stored cz (before 2026-10) into cs", () => {
+    expect(initialLanguage("cz", ["en"])).toBe("cs");
   });
 
   test("takes the first device language we have", () => {

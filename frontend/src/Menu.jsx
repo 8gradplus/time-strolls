@@ -132,7 +132,8 @@ const ToggleRow = ({ icon, primary, secondary, on, onClick }) => (
   </Plain>
 );
 
-const langLabels = { de: "De", cz: "Cz", en: "En" };
+// The code is ISO "cs"; the button keeps the familiar "Cz"
+const langLabels = { de: "De", cs: "Cz", en: "En" };
 
 const LanguageSwitch = () => {
   const { language, setLanguage } = useLanguage();
@@ -309,8 +310,72 @@ const FundingLogo = () => (
   />
 );
 
+// A language code as a name in the UI language: "cs" -> "Tschechisch"
+const languageName = (code, language) => {
+  try {
+    return new Intl.DisplayNames([language], { type: "language" }).of(code);
+  } catch {
+    return code;
+  }
+};
+
+// Where the photos and audio come from (by permission) and how their texts
+// were translated, from the API
+const ContentCredits = () => {
+  const { language, t } = useLanguage();
+  const [credits, setCredits] = useState(null);
+
+  useEffect(() => {
+    fetch(api.credits)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setCredits(data))
+      .catch((error) => console.error("Error fetching credits:", error));
+  }, []);
+
+  if (!credits) return null;
+  const names = [
+    ...credits.sources,
+    ...credits.owners.map((name) => ({ name })),
+  ];
+  return (
+    <>
+      {names.length > 0 && (
+        <Box>
+          <Heading>{t.contentSources}</Heading>
+          {names.map(({ name, url }) => (
+            <Box key={name} translate="no" className="notranslate">
+              {url ? (
+                <Link href={url} target="_blank" rel="noopener" color="inherit">
+                  {name}
+                </Link>
+              ) : (
+                name
+              )}
+            </Box>
+          ))}
+          <Box>{t.withPermission}</Box>
+        </Box>
+      )}
+      {credits.translations.length > 0 && (
+        <Box>
+          <Heading>{t.translations}</Heading>
+          {credits.translations.map((tr) => (
+            <Box key={`${tr.lang}-${tr.method}-${tr.model}-${tr.by}`}>
+              {languageName(tr.lang, language)}:{" "}
+              {tr.method === "machine"
+                ? `${t.machineTranslation}${tr.model ? ` (${tr.model})` : ""}`
+                : `${t.translatedBy} ${tr.by ?? ""}`.trim()}
+            </Box>
+          ))}
+        </Box>
+      )}
+    </>
+  );
+};
+
 // The map's sources: OpenStreetMap (also credited on the map itself) and the
-// aerial imagery of the selected year. Quoted as published, not translated.
+// aerial imagery of the selected year, then the content's sources. Quoted as
+// published, not translated.
 const Sources = ({ time, year }) => {
   const { t } = useLanguage();
 
@@ -339,6 +404,7 @@ const Sources = ({ time, year }) => {
           ))}
         </Box>
       )}
+      <ContentCredits />
     </>
   );
 };
@@ -441,7 +507,7 @@ const Menu = (props) => {
   const [folded, setFolded] = useState(storedFolded);
   const [page, setPage] = useState(null);
   const [tours, setTours] = useState([]);
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
 
   useEffect(() => {
     if (!open) return;
@@ -458,7 +524,7 @@ const Menu = (props) => {
   }, [open]);
 
   useEffect(() => {
-    fetch(api.tours)
+    fetch(api.tours(language))
       .then((res) => {
         if (!res.ok) {
           throw new Error("Track response not ok");
@@ -467,7 +533,7 @@ const Menu = (props) => {
       })
       .then((data) => setTours(data))
       .catch((error) => console.error("Error fetching track:", error));
-  }, []);
+  }, [language]);
 
   const fold = (value) => {
     setFolded(value);

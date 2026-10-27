@@ -38,9 +38,9 @@ describe("regionList", () => {
   });
 });
 
-test("localized maps cz to cs and falls back to English", () => {
+test("localized picks the language and falls back to English", () => {
   const title = manifest.regions.sumava.title;
-  expect(localized(title, "cz")).toBe("Šumava");
+  expect(localized(title, "cs")).toBe("Šumava");
   expect(localized(title, "de")).toBe("Böhmerwald");
   expect(localized({ en: "Berlin" }, "de")).toBe("Berlin");
   expect(localized(null, "de")).toBeNull();

@@ -122,6 +122,7 @@ const WallLabel = ({ slide, zoomed }) => {
         </Box>
       )}
       <Box component="span" sx={{ fontSize: 13, color: "text.secondary" }}>
+        {slide.machine && `${t.machineTranslated} · `}
         {slide.owner && `${t.photo}: ${slide.owner}`}
         {slide.owner && slide.origin && " · "}
         {slide.origin && (
@@ -157,6 +158,8 @@ const DisplayImages = (props) => {
         title: img.title,
         year: img.year,
         owner: img.owner,
+        // the title is a machine translation (credited under sources)
+        machine: img.method === "machine",
       })),
     [images],
   );

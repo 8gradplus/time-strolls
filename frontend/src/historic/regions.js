@@ -9,12 +9,11 @@ export const regionList = (manifest) =>
     .map(([id, region]) => ({ id, ...region }))
     .filter((region) => region.times?.length > 0);
 
-// A title in the UI language. The manifest uses ISO 639-1 ("cs"), the
-// frontend "cz"; missing languages fall back to English, then to any.
+// A title in the UI language (ISO 639-1, as the manifest); missing
+// languages fall back to English, then to any.
 export const localized = (value, language) => {
   if (value == null || typeof value === "string") return value;
-  const code = language === "cz" ? "cs" : language;
-  return value[code] ?? value.en ?? Object.values(value)[0];
+  return value[language] ?? value.en ?? Object.values(value)[0];
 };
 
 // First and last year: "1947–2025", or one year.

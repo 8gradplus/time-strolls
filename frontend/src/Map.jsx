@@ -85,7 +85,7 @@ const CoordinateMap = () => {
 
   useEffect(() => {
     setLocationsFailed(false);
-    fetch(api.locations)
+    fetch(api.locations(language))
       .then((res) => {
         if (!res.ok) {
           throw new Error("Locations response not ok");
@@ -97,7 +97,7 @@ const CoordinateMap = () => {
         console.error("Error fetching places:", error);
         setLocationsFailed(true);
       });
-  }, [locationsRequest]);
+  }, [locationsRequest, language]);
 
   // Old deep links used historic=true (1945 overlay); map them to a manifest year
   useEffect(() => {

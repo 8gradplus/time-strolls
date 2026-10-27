@@ -33,6 +33,12 @@ const translations = {
     showArea: "Gebiet zeigen",
     followMe: "Meinem Standort folgen",
     sources: "Quellen",
+    contentSources: "Bilder und Hörstücke",
+    withPermission: "Mit freundlicher Genehmigung",
+    translations: "Übersetzungen",
+    machineTranslation: "maschinell",
+    translatedBy: "von",
+    machineTranslated: "Maschinell übersetzt",
     aerialImagery: "Luftbild",
     photo: "Foto",
     audio: "Hören",
@@ -55,7 +61,7 @@ const translations = {
     modeLight: "Hell",
     modeDark: "Dunkel",
   },
-  cz: {
+  cs: {
     areas: "Oblasti",
     here: "Zde",
     onTheMap: "Na mapě",
@@ -85,6 +91,12 @@ const translations = {
     showArea: "Zobrazit oblast",
     followMe: "Sledovat moji polohu",
     sources: "Zdroje",
+    contentSources: "Fotografie a nahrávky",
+    withPermission: "S laskavým svolením",
+    translations: "Překlady",
+    machineTranslation: "strojově",
+    translatedBy: "přeložil(a)",
+    machineTranslated: "Strojově přeloženo",
     aerialImagery: "Letecký snímek",
     photo: "Foto",
     audio: "Poslech",
@@ -136,6 +148,12 @@ const translations = {
     showArea: "Show the area",
     followMe: "Follow my location",
     sources: "Sources",
+    contentSources: "Photos and audio",
+    withPermission: "By kind permission",
+    translations: "Translations",
+    machineTranslation: "machine",
+    translatedBy: "by",
+    machineTranslated: "Machine translated",
     aerialImagery: "Aerial imagery",
     photo: "Photo",
     audio: "Listen",
@@ -163,12 +181,13 @@ const translations = {
 const STORAGE_KEY = "language";
 
 // The language picked earlier on this device, else the device's own language
-// if we have it (Czech is "cs" there, "cz" here), else English.
+// if we have it, else English. Codes are ISO 639 (Czech is "cs"; until
+// 2026-10 it was stored as "cz").
 export const initialLanguage = (stored, deviceLanguages = []) => {
+  if (stored === "cz") return "cs";
   if (stored in translations) return stored;
   for (const tag of deviceLanguages) {
     const code = tag.toLowerCase().split("-")[0];
-    if (code === "cs") return "cz";
     if (code in translations) return code;
   }
   return "en";
@@ -189,7 +208,7 @@ export const LanguageProvider = ({ children }) => {
   const t = translations[language];
 
   useEffect(() => {
-    document.documentElement.lang = language === "cz" ? "cs" : language;
+    document.documentElement.lang = language;
   }, [language]);
 
   const chooseLanguage = (lang) => {

@@ -36,12 +36,25 @@ the phone test on a Pixel over USB (`make phone`) with the mobile polish and
 photo viewer (#12, v0.3.0), the area welcome and one default view (#13,
 v0.3.1), and the fix for the map flying back home on every GPS update (#14,
 v0.3.2, with a "Contribute" section on the About page).
+0. **Where we stopped (2026-10-27):** 2c (frontend: `?lang=`, `cs`,
+   podcasts list, credits page; credits only name sources/owners with
+   content on the map) and PR 3 early (MCP server
+   `backend/api/mcp_server.py`: `/api/mcp` public, `/api/mcp/admin` with the
+   scraper tools; FastMCP 3.4; tests in `tests/test_mcp.py`) are open as two
+   PRs, MCP stacked on 2c. The local stack holds an agent test (Oberuresch, ~130 places from the
+   agent; a local, git-excluded `.mcp.json` uses `${API_KEY}`). Findings:
+   the agent was slow and token-heavy (114 single calls) -> bulk tools and
+   compact answers; it created "St. Thoma" beside the replay's "Sankt
+   Thoma" -> a tool to find existing places; houses crowd the map -> maybe
+   `map_visible = false` for houses.
 1. **Next:** the new content model of `SCHEMA_CONCEPT.md` ("Order of
    work"). PR 1 (Topothek via `time-strolls-scraper`, #16) is merged. PR 2
    comes in three parts, released together once it feels right: 2a backend
    (schema on PostgreSQL 17, service layer, scoped tokens, admin routes under
-   `/api/admin`, #17), 2b the replay (sources, permissions, kinds, links), 2c
-   the frontend. Then MCP (PR 3). This overlaps step 5.
+   `/api/admin`, #17), 2b the replay (sources, permissions, kinds, links,
+   #18), 2c the frontend (`?lang=`, `cs`, several podcasts, credits). Then
+   the release with the switch-over (`SCHEMA_CONCEPT.md`, "Migration"), then
+   MCP (PR 3). This overlaps step 5.
 2. **Still to test by hand:** audio with the screen locked, the lock-screen
    and headphone controls (Media Session), resuming an episode the next day,
    and an iPhone (Safari).

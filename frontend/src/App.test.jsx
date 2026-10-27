@@ -35,10 +35,26 @@ const manifest = {
 const json = (data) =>
   Promise.resolve({ ok: true, json: () => Promise.resolve(data) });
 
+const CREDITS = {
+  sources: [{ name: "Topothek Deutsch Reichenau", url: "https://dr.example/" }],
+  owners: ["Geschichten aus der Geschichte"],
+  translations: [{ lang: "en", method: "machine", model: "claude" }],
+};
+
+// The manifest, the credits, and empty lists for everything else
+const respond = (url, withManifest = manifest) =>
+  json(
+    url === MANIFEST_URL
+      ? withManifest
+      : url === "/api/credits/"
+        ? CREDITS
+        : [],
+  );
+
 beforeEach(() => {
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => json(url === MANIFEST_URL ? manifest : [])),
+    vi.fn((url) => respond(url)),
   );
   // jsdom has no geolocation API
   vi.stubGlobal("navigator", {
@@ -56,7 +72,10 @@ afterEach(() => {
 test("renders the map and loads locations", async () => {
   const { container } = render(<App />);
   expect(container.querySelector(".leaflet-container")).toBeInTheDocument();
-  await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/locations/"));
+  // in the device language (jsdom: English)
+  await waitFor(() =>
+    expect(fetch).toHaveBeenCalledWith("/api/locations/?lang=en"),
+  );
 });
 
 test("maps an old historic=true link to the earliest year in our region", async () => {
@@ -73,9 +92,9 @@ test("maps an old historic=true link to the earliest year in our region", async 
 test("offers a retry when the places fail to load", async () => {
   localStorage.setItem("language", "de");
   fetch.mockImplementation((url) =>
-    url === "/api/locations/"
+    url.startsWith("/api/locations/")
       ? Promise.resolve({ ok: false })
-      : json(url === MANIFEST_URL ? manifest : []),
+      : respond(url),
   );
   vi.spyOn(console, "error").mockImplementation(() => {});
   render(<App />);
@@ -84,7 +103,7 @@ test("offers a retry when the places fail to load", async () => {
     "Die Orte konnten nicht geladen werden.",
   );
 
-  fetch.mockImplementation((url) => json(url === MANIFEST_URL ? manifest : []));
+  fetch.mockImplementation((url) => respond(url));
   fireEvent.click(retry);
   await waitFor(() =>
     expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
@@ -131,7 +150,7 @@ test("the sources page in the menu lists the sources of the selected year", asyn
   };
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => json(url === MANIFEST_URL ? withSources : [])),
+    vi.fn((url) => respond(url, withSources)),
   );
   window.history.replaceState(null, "", "/?year=1952");
   render(<App />);
@@ -143,6 +162,16 @@ test("the sources page in the menu lists the sources of the selected year", asyn
     await within(menu).findByText("CENIA (CC-BY-4.0)"),
   ).toBeInTheDocument();
   expect(within(menu).getByText("OpenStreetMap")).toBeInTheDocument();
+  // the content's sources and translations, from /api/credits/
+  expect(
+    await within(menu).findByText("Topothek Deutsch Reichenau"),
+  ).toBeInTheDocument();
+  expect(
+    within(menu).getByText("Geschichten aus der Geschichte"),
+  ).toBeInTheDocument();
+  expect(
+    within(menu).getByText("Englisch: maschinell (claude)"),
+  ).toBeInTheDocument();
 
   fireEvent.keyDown(document, { key: "Escape" });
   await waitFor(() =>

@@ -347,3 +347,32 @@ def test_the_app_user_cannot_delete_content(admin):
     with engine.connect() as connection:
         with pytest.raises(Exception, match="permission denied"):
             connection.execute(text("DELETE FROM timestrolls.resource"))
+
+
+def test_credits_name_permitted_sources_and_translations(admin, harvested):
+    slug, result = harvested
+    admin.post("/api/admin/permissions/", json={"source": "topothek:deutsch-reichenau"})
+    # a permission for a party with nothing on the map credits nobody
+    admin.post(
+        "/api/admin/permissions/", json={"party": "Geschichten aus der Geschichte"}
+    )
+    admin.put(
+        f"/api/admin/resources/{result['media']['id']}/texts/title/cs",
+        json={
+            "body": "Karel",
+            "method": "machine",
+            "translated_from": "de",
+            "model": "claude",
+        },
+    )
+    credits = admin.get("/api/credits/").json()
+    assert credits["sources"] == [
+        {
+            "name": "Topothek Deutsch Reichenau",
+            "url": "https://deutsch-reichenau.topothek.at/",
+        }
+    ]
+    assert credits["owners"] == []
+    assert credits["translations"] == [
+        {"lang": "cs", "method": "machine", "model": "claude", "by": None}
+    ]

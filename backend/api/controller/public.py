@@ -31,3 +31,9 @@ def get_tours(session: SessionDep, lang: str | None = Lang):
 def get_tour(key: str, session: SessionDep, lang: str | None = Lang):
     """A tour by slug or id, with its track."""
     return public.tour(session, key, lang)
+
+
+@router.get("/credits/", response_model=public.Credits)
+def get_credits(session: SessionDep):
+    """Where the content comes from and how its texts were translated."""
+    return public.credits(session)
