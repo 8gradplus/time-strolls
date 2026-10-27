@@ -3,16 +3,16 @@ import { useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import LocationMarker from "./LocationMarker";
 import {
-  HOUSE_ZOOM,
+  CLOSE_UP_ZOOM,
   clusterRadius,
   hoverName,
-  isHouse,
+  isCloseUp,
   labelAt,
   markOf,
 } from "./hierarchy";
 
-// Villages first, so churches, chapels and the open place lie on top
-const LAYER = { ring: 1, dot: 2, chapel: 3, church: 4 };
+// Mills first, so villages and the open place lie on top
+const LAYER = { ring: 1, dot: 2 };
 
 // Leaflet.markercluster sometimes leaves a cluster of an earlier zoom on the
 // map when one zoom follows another (a stale "3" beside the places it holds).
@@ -42,8 +42,9 @@ const useStaleClusterFix = (mounted) => {
   return ref;
 };
 
-// Houses that touch join in a cluster too (HOUSE_ZOOM and closer)
-const HOUSE_CLUSTER_RADIUS = 16;
+// Houses, churches and chapels that touch join in a cluster too
+// (CLOSE_UP_ZOOM and closer)
+const CLOSE_UP_CLUSTER_RADIUS = 16;
 
 const LocationMarkers = (props) => {
   // focusSlug: the house with the wall label (WallLabel.jsx) gets a ring
@@ -53,7 +54,7 @@ const LocationMarkers = (props) => {
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
 
   const placesGroup = useStaleClusterFix(open);
-  const housesGroup = useStaleClusterFix(open && zoom >= HOUSE_ZOOM);
+  const closeUpGroup = useStaleClusterFix(open && zoom >= CLOSE_UP_ZOOM);
 
   if (!open) return null;
 
@@ -75,21 +76,21 @@ const LocationMarkers = (props) => {
   );
 
   const places = locations
-    .filter((place) => !isHouse(place))
+    .filter((place) => !isCloseUp(place))
     .sort(
       (a, b) =>
         LAYER[markOf(a.kind)] - LAYER[markOf(b.kind)] ||
         Number(isActive(a)) - Number(isActive(b)),
     );
-  const houses = locations.filter(isHouse);
-  const closeUp = zoom >= HOUSE_ZOOM;
-  // Further out, only the open house, on its own
-  const openHouse = !closeUp && houses.find((house) => isActive(house));
+  const closeUpPlaces = locations.filter(isCloseUp);
+  const closeUp = zoom >= CLOSE_UP_ZOOM;
+  // Further out, only the open one, on its own
+  const openOne = !closeUp && closeUpPlaces.find((place) => isActive(place));
 
   // Places that overlap join in a cluster, which splits as you zoom in;
   // those on the same point spread out around it at the closest zoom. The
-  // houses have their own group from HOUSE_ZOOM on, so the places' clusters
-  // never count houses.
+  // houses, churches and chapels have their own group from CLOSE_UP_ZOOM on,
+  // so the clusters further out count only villages and the like.
   return (
     <>
       <MarkerClusterGroup
@@ -104,17 +105,17 @@ const LocationMarkers = (props) => {
       </MarkerClusterGroup>
       {closeUp && (
         <MarkerClusterGroup
-          ref={housesGroup}
+          ref={closeUpGroup}
           chunkedLoading
-          maxClusterRadius={HOUSE_CLUSTER_RADIUS}
+          maxClusterRadius={CLOSE_UP_CLUSTER_RADIUS}
           spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
           zoomToBoundsOnClick={true}
         >
-          {houses.map(marker)}
+          {closeUpPlaces.map(marker)}
         </MarkerClusterGroup>
       )}
-      {openHouse && marker(openHouse)}
+      {openOne && marker(openOne)}
     </>
   );
 };

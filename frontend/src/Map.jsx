@@ -7,9 +7,9 @@ import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
 import WallLabel, { useWallLabel } from "./LocationMarkers/WallLabel";
 import {
-  HOUSE_ZOOM,
+  CLOSE_UP_ZOOM,
   LANDMARK_LABEL_ZOOM,
-  isHouse,
+  isCloseUp,
 } from "./LocationMarkers/hierarchy";
 import { api } from "./api";
 import Tour from "./Tours/Tour";
@@ -290,7 +290,7 @@ const CoordinateMap = () => {
       return params;
     });
     if (!map) return;
-    const zoom = isHouse(place) ? HOUSE_ZOOM : LANDMARK_LABEL_ZOOM;
+    const zoom = isCloseUp(place) ? CLOSE_UP_ZOOM : LANDMARK_LABEL_ZOOM;
     map.flyTo([place.lat, place.lon], Math.max(map.getZoom(), zoom), {
       duration: 0.8,
     });

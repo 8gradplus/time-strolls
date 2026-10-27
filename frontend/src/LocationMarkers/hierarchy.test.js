@@ -3,6 +3,7 @@ import {
   clusterRadius,
   groupsOf,
   hoverName,
+  isCloseUp,
   labelAt,
   labelTarget,
   markOf,
@@ -11,6 +12,16 @@ import {
 const village = { kind: "village", name: "Oberuresch" };
 const house = { kind: "house", name: "Oberuresch 3", number: "3" };
 const chapel = { kind: "chapel", name: "kaple" };
+
+describe("isCloseUp", () => {
+  test("shows houses, churches and chapels only close up", () => {
+    expect(isCloseUp(house)).toBe(true);
+    expect(isCloseUp(chapel)).toBe(true);
+    expect(isCloseUp({ kind: "church" })).toBe(true);
+    expect(isCloseUp(village)).toBe(false);
+    expect(isCloseUp({ kind: "mill" })).toBe(false);
+  });
+});
 
 describe("markOf", () => {
   test("gives each kind its mark", () => {
@@ -47,7 +58,7 @@ describe("hoverName", () => {
   test("names a house by its house name, else by its address", () => {
     expect(hoverName({ ...house, house_name: "Jogl" })).toBe("Jogl");
     expect(hoverName(house)).toBe("Oberuresch 3");
-    expect(hoverName(chapel)).toBeNull();
+    expect(hoverName(chapel)).toBe("kaple");
   });
 });
 

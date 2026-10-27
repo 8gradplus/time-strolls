@@ -1,19 +1,19 @@
-// What the map shows of a place, by its kind and the zoom: villages always,
-// churches and chapels as dark discs with a cross, houses only close up. Pure
-// functions, so the rules are tested (hierarchy.test.js).
+// What the map shows of a place, by its kind and the zoom: villages and
+// mills always, houses, churches and chapels (dark discs with a cross) only
+// close up. Pure functions, so the rules are tested (hierarchy.test.js).
 
-// Houses appear from this zoom. They have no names next to them: the house
-// nearest the centre of the map gets the wall label (WallLabel.jsx)
-export const HOUSE_ZOOM = 17;
+// Houses, churches and chapels appear from this zoom. They have no names
+// next to them: the one nearest the centre of the map gets the wall label
+// (WallLabel.jsx)
+export const CLOSE_UP_ZOOM = 17;
 // Names next to villages from this zoom on (also for touch screens, where
-// there is no hover), next to mills from LANDMARK_LABEL_ZOOM. Churches and
-// chapels have no name on the map at all: a tap opens them
+// there is no hover), next to mills from LANDMARK_LABEL_ZOOM
 export const LABEL_ZOOM = 15;
 export const LANDMARK_LABEL_ZOOM = 16;
 // Marks that overlap join in a cluster (as before round B) that splits as
 // you zoom in; places on the same point split around it at the closest zoom.
-// Close up, where the houses are, only marks that really touch.
-export const clusterRadius = (zoom) => (zoom >= HOUSE_ZOOM ? 16 : 60);
+// Close up, only marks that really touch.
+export const clusterRadius = (zoom) => (zoom >= CLOSE_UP_ZOOM ? 16 : 60);
 
 const SACRAL = ["church", "chapel", "wayside_shrine"];
 const HOUSES = ["house", "farm"];
@@ -30,18 +30,21 @@ export const markOf = (kind) => {
 
 export const isHouse = (place) => HOUSES.includes(place.kind);
 
+// Shown only close up, with the wall label instead of names
+export const isCloseUp = (place) =>
+  isHouse(place) || SACRAL.includes(place.kind);
+
 // The text next to the mark at this zoom, or null (then only on hover)
 export const labelAt = (place, zoom, name) => {
-  if (isHouse(place) || SACRAL.includes(place.kind)) return null;
+  if (isCloseUp(place)) return null;
   const mark = markOf(place.kind);
   const from = mark === "dot" ? LABEL_ZOOM : LANDMARK_LABEL_ZOOM;
   return zoom >= from ? name : null;
 };
 
 // Hover: a house by its house name ("Jogl"), "Reiterschlag 7" only where it
-// has none; churches and chapels by nothing; other places by their name
-export const hoverName = (place) =>
-  SACRAL.includes(place.kind) ? null : place.house_name || place.name;
+// has none; other places by their name
+export const hoverName = (place) => place.house_name || place.name;
 
 // The village panel's groups: churches and chapels, houses, the rest
 export const groupsOf = (children) => {

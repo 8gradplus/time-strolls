@@ -4,20 +4,20 @@ import { Icon } from "../icons";
 import { useLanguage } from "../LanguageContext";
 import { usePlayer } from "../podcast/PlayerContext";
 import { serif } from "../theme";
-import { HOUSE_ZOOM, isHouse, labelTarget } from "./hierarchy";
+import { CLOSE_UP_ZOOM, isCloseUp, labelTarget } from "./hierarchy";
 
-// Like the one label a gallery hangs beside a work: close up (HOUSE_ZOOM),
-// the house nearest the centre of the map gets its name in a label above the
-// dock, and a ring on the map. Panning moves it from house to house; while
-// the map follows the GPS position, it names the house you pass. When you
-// let go of the map, it glides the last bit so the house sits in the centre.
-// Returns the house's slug, or null.
+// Like the one label a gallery hangs beside a work: close up (CLOSE_UP_ZOOM),
+// the house, church or chapel nearest the centre of the map gets its name in
+// a label above the dock, and a ring on the map. Panning moves it from one
+// to the next; while the map follows the GPS position, it names the one you
+// pass. When you let go of the map, it glides the last bit so it sits in the
+// centre. Returns the place's slug, or null.
 export const useWallLabel = (map, locations, enabled) => {
   const [slug, setSlug] = useState(null);
   const current = useRef(null);
 
   useEffect(() => {
-    const houses = enabled && locations ? locations.filter(isHouse) : [];
+    const houses = enabled && locations ? locations.filter(isCloseUp) : [];
     const show = (next) => {
       if (next === current.current) return;
       current.current = next;
@@ -29,7 +29,7 @@ export const useWallLabel = (map, locations, enabled) => {
     }
 
     const update = () => {
-      if (map.getZoom() < HOUSE_ZOOM) return show(null);
+      if (map.getZoom() < CLOSE_UP_ZOOM) return show(null);
       const centre = map.latLngToContainerPoint(map.getCenter());
       const distances = houses.map((house) => ({
         slug: house.slug,
