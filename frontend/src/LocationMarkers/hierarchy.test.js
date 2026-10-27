@@ -42,10 +42,8 @@ describe("labelAt", () => {
 });
 
 describe("hoverName", () => {
-  test("adds the house name", () => {
-    expect(hoverName({ ...house, house_name: "Jogl" })).toBe(
-      "Oberuresch 3 · Jogl",
-    );
+  test("names a house by its house name, else by its address", () => {
+    expect(hoverName({ ...house, house_name: "Jogl" })).toBe("Jogl");
     expect(hoverName(house)).toBe("Oberuresch 3");
   });
 });

@@ -37,10 +37,9 @@ export const labelAt = (place, zoom, name) => {
   return zoom >= from ? name : null;
 };
 
-// Hover or tap: the name, for a house also its house name ("Oberuresch 3 ·
-// Jogl")
-export const hoverName = (place) =>
-  [place.name, place.house_name].filter(Boolean).join(" · ");
+// Hover: a house by its house name ("Jogl"), "Reiterschlag 7" only where it
+// has none; other places by their name
+export const hoverName = (place) => place.house_name || place.name;
 
 // The village panel's groups: churches and chapels, houses, the rest
 export const groupsOf = (children) => {
