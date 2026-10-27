@@ -1,14 +1,6 @@
 import { describe, expect, test } from "vitest";
-import {
-  displayName,
-  groupsOf,
-  hoverName,
-  labelAt,
-  markOf,
-  visibleAt,
-} from "./hierarchy";
+import { groupsOf, hoverName, labelAt, markOf, visibleAt } from "./hierarchy";
 
-const t = { kinds: { chapel: "Kapelle", church: "Kirche" } };
 const village = { kind: "village", name: "Oberuresch" };
 const house = { kind: "house", name: "Oberuresch 3", number: "3" };
 const chapel = { kind: "chapel", name: "kaple" };
@@ -57,25 +49,12 @@ describe("labelAt", () => {
   });
 });
 
-describe("displayName", () => {
-  test("names a chapel called only 'kaple' after its village", () => {
-    expect(displayName(chapel, village, t)).toBe("Kapelle · Oberuresch");
-    expect(displayName({ kind: "chapel", name: "Kaplička " }, village, t)).toBe(
-      "Kapelle · Oberuresch",
-    );
-  });
-
-  test("keeps real names, and generic ones without a village", () => {
-    const named = { kind: "chapel", name: "Waldkapelle Oberuresch" };
-    expect(displayName(named, village, t)).toBe("Waldkapelle Oberuresch");
-    expect(displayName(chapel, null, t)).toBe("kaple");
-  });
-
-  test("adds the house name on hover", () => {
-    expect(hoverName({ ...house, house_name: "Jogl" }, village, t)).toBe(
+describe("hoverName", () => {
+  test("adds the house name", () => {
+    expect(hoverName({ ...house, house_name: "Jogl" })).toBe(
       "Oberuresch 3 · Jogl",
     );
-    expect(hoverName(house, village, t)).toBe("Oberuresch 3");
+    expect(hoverName(house)).toBe("Oberuresch 3");
   });
 });
 

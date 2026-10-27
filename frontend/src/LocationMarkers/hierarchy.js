@@ -15,6 +15,8 @@ export const LANDMARK_LABEL_ZOOM = 16;
 export const APART_ZOOM = 16;
 // Closer than this (in pixels) counts as on the village's point
 export const SAME_POINT = 14;
+// Marks closer than this (in pixels) join in a cluster below HOUSE_ZOOM
+export const CLUSTER_RADIUS = 24;
 
 const SACRAL = ["church", "chapel", "wayside_shrine"];
 const HOUSES = ["house", "farm"];
@@ -53,21 +55,10 @@ export const labelAt = (place, zoom, name) => {
   return zoom >= from ? name : null;
 };
 
-// Some chapels are named only with a word for chapel ("kaple"); they show
-// as "Kapelle · Oberuresch" in the UI language. The data stays as it is.
-const GENERIC = /^(kaple|kaplička|kapelle|chapel)$/i;
-
-export const displayName = (place, parent, t) => {
-  if (parent && GENERIC.test(place.name.trim())) {
-    return `${t.kinds[place.kind] ?? place.name} · ${parent.name}`;
-  }
-  return place.name;
-};
-
 // Hover or tap: the name, for a house also its house name ("Oberuresch 3 ·
 // Jogl")
-export const hoverName = (place, parent, t) =>
-  [displayName(place, parent, t), place.house_name].filter(Boolean).join(" · ");
+export const hoverName = (place) =>
+  [place.name, place.house_name].filter(Boolean).join(" · ");
 
 // The village panel's groups: churches and chapels, houses, the rest
 export const groupsOf = (children) => {

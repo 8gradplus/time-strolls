@@ -132,33 +132,28 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
 }
 
-/* Churches and chapels: an accent cross on a white ring and a thin dark edge */
+/* Churches and chapels: a dark disc in a white ring with a white cross
+   (icons.jsx draws the sizes) */
 svg.place-mark {
   overflow: visible;
 }
 
-.place-mark path {
-  fill: none;
-  stroke-linecap: square;
-}
-
 .place-mark .edge {
-  stroke: rgba(0, 0, 0, 0.35);
-  stroke-width: 6.4;
+  fill: rgba(0, 0, 0, 0.4);
 }
 
 .place-mark .ring {
+  fill: #fff;
+}
+
+.place-mark .disc {
+  fill: #2a2a28;
+}
+
+.place-mark .cross {
+  fill: none;
   stroke: #fff;
-  stroke-width: 5.2;
-}
-
-.place-mark .core {
-  stroke: var(--mui-palette-primary-main);
-  stroke-width: 2.6;
-}
-
-.place-chapel .core {
-  stroke-width: 2.4;
+  stroke-linecap: square;
 }
 
 /* Mills: a ring */
@@ -205,11 +200,8 @@ svg.place-mark {
 
 svg.place-mark.active {
   border-radius: 50%;
-  background: color-mix(
-    in srgb,
-    var(--mui-palette-primary-main) 30%,
-    transparent
-  );
+  box-shadow: 0 0 0 5px
+    color-mix(in srgb, var(--mui-palette-primary-main) 35%, transparent);
 }
 
 .pulsating-icon {
@@ -247,6 +239,29 @@ svg.place-mark.active {
     r: 6;
     opacity: 1;
   }
+}
+
+/* Clusters: places that overlap at this zoom, a bigger dot with the count;
+   they split as you zoom in */
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background: none !important;
+}
+
+.marker-cluster div {
+  box-sizing: border-box;
+  background-color: var(--mui-palette-primary-main) !important;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.marker-cluster span {
+  line-height: 26px;
 }
 
 /* Leaflet's attribution is only the small OpenStreetMap credit (the aerial

@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useMap, useMapEvents } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
 import LocationMarker from "./LocationMarker";
-import { useLanguage } from "../LanguageContext";
 import {
+  CLUSTER_RADIUS,
+  HOUSE_ZOOM,
   SAME_POINT,
-  displayName,
   hoverName,
   labelAt,
   markOf,
@@ -17,7 +18,6 @@ const LAYER = { house: 0, ring: 1, dot: 2, chapel: 3, church: 4 };
 const LocationMarkers = (props) => {
   const { open, onClick, locations, activeSlug } = props;
   const map = useMap();
-  const { t } = useLanguage();
   const [zoom, setZoom] = useState(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
   if (!open) return null;
@@ -51,22 +51,32 @@ const LocationMarkers = (props) => {
         LAYER[a.mark] - LAYER[b.mark] || Number(a.active) - Number(b.active),
     );
 
-  return shown.map(({ place, parent, active, mark }) => {
-    const name = displayName(place, parent, t);
-    return (
-      <LocationMarker
-        key={place.id}
-        lat={place.lat}
-        lon={place.lon}
-        mark={mark}
-        filled={place.images > 0}
-        label={labelAt(place, zoom, name)}
-        hoverLabel={hoverName(place, parent, t)}
-        active={active}
-        onClick={onClick(place.id)}
-      />
-    );
-  });
+  // Places that overlap join in a cluster, which splits as you zoom in;
+  // houses (from HOUSE_ZOOM) are small enough to stay apart
+  return (
+    <MarkerClusterGroup
+      chunkedLoading
+      maxClusterRadius={CLUSTER_RADIUS}
+      disableClusteringAtZoom={HOUSE_ZOOM}
+      spiderfyOnMaxZoom={true}
+      showCoverageOnHover={false}
+      zoomToBoundsOnClick={true}
+    >
+      {shown.map(({ place, active, mark }) => (
+        <LocationMarker
+          key={place.id}
+          lat={place.lat}
+          lon={place.lon}
+          mark={mark}
+          filled={place.images > 0}
+          label={labelAt(place, zoom, place.name)}
+          hoverLabel={hoverName(place)}
+          active={active}
+          onClick={onClick(place.id)}
+        />
+      ))}
+    </MarkerClusterGroup>
+  );
 };
 
 export default LocationMarkers;

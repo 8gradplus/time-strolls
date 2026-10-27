@@ -118,22 +118,30 @@ export const PlayPauseGlyph = ({ size = 22 }) => (
 // A place: a mark by its kind (LocationMarkers/hierarchy.js; .place-* in
 // index.css), inside a larger transparent area that is easy to tap. A
 // village is a dot in the map accent with a white ring, a church or chapel
-// a cross, a mill a ring, a house a small hollow dot (filled where it has
-// photos). The open place gets a halo.
+// a dark disc with a white cross, a mill a ring, a house a small hollow dot
+// (filled where it has photos). The open place gets a halo.
 const PLACE_TAP_SIZE = 44;
 
-const CROSSES = {
-  church: "M12 2.5v19M7 8h10",
-  chapel: "M12 5v14M8.2 9.5h7.6",
+// Churches and chapels: a dark disc in a white ring with a white cross cut
+// into it (the red stays for villages and what is open); a church larger
+const SACRAL_SCALE = { church: 1.15, chapel: 0.85 };
+
+const sacralMark = (scale, classes) => {
+  const r = 8.6 * scale;
+  const h = r * 0.62;
+  const arm = r * 0.4;
+  const bar = -h * 0.32;
+  const f = (n) => n.toFixed(2);
+  return `<svg class="${classes}" width="24" height="24" viewBox="-12 -12 24 24" aria-hidden="true"><circle class="edge" r="${f(r + 1.2)}"/><circle class="ring" r="${f(r + 0.4)}"/><circle class="disc" r="${f(r - 1.8)}"/><path class="cross" d="M0 ${f(-h)}V${f(h)}M${f(-arm)} ${f(bar)}H${f(arm)}" stroke-width="${f(2 * scale)}"/></svg>`;
 };
 
 export const placeIcon = (mark = "dot", active = false, filled = false) => {
   const classes = ["place-mark", `place-${mark}`];
   if (active) classes.push("active");
   if (filled) classes.push("filled");
-  const cross = CROSSES[mark];
-  const html = cross
-    ? `<svg class="${classes.join(" ")}" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path class="edge" d="${cross}"/><path class="ring" d="${cross}"/><path class="core" d="${cross}"/></svg>`
+  const scale = SACRAL_SCALE[mark];
+  const html = scale
+    ? sacralMark(scale, classes.join(" "))
     : `<span class="${classes.join(" ")}"></span>`;
 
   return L.divIcon({

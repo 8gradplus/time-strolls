@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
+import Collapse from "@mui/material/Collapse";
 import Typography from "@mui/material/Typography";
 import Podcasts from "./Audio";
 import DisplayImages from "./Images";
@@ -9,7 +10,8 @@ import { api } from "../api";
 import { useLanguage } from "../LanguageContext";
 import { formatCoordinates } from "./coordinates";
 import { serif } from "../theme";
-import { displayName, groupsOf, isHouse } from "../LocationMarkers/hierarchy";
+import { Icon } from "../icons";
+import { groupsOf, isHouse } from "../LocationMarkers/hierarchy";
 
 // Small caps heading with a count, e.g. "HÖREN 1" or "BILDER 70"
 const SectionLabel = ({ title, count }) => (
@@ -39,12 +41,12 @@ const yearRange = (images) => {
   return min === max ? `${min}` : `${min} – ${max}`;
 };
 
-// "Haus · verfallen · frühere Nr. 78, 155"; a standing house with today's
-// address: "Haus · steht · Pasečná 111"
+// "Haus · verfallen · frühere Nr. 78, 155". The state and the address are
+// in the archive's language, as stored ("Zaniklé", "Wüstung", "Pasečná 111")
 const factsLine = (place, t) =>
   [
     t.kinds[place.kind],
-    place.state && t.states[place.state],
+    place.state,
     place.address,
     place.former_number && `${t.formerNumber} ${place.former_number}`,
   ]
@@ -53,7 +55,8 @@ const factsLine = (place, t) =>
 
 // One row of a village's list: the house number (or a cross), the name, the
 // number of photos
-const PlaceRow = ({ place, parent, onOpen, t }) => {
+const PlaceRow = ({ place, onOpen, t }) => {
+  const state = place.state || place.address;
   const house = isHouse(place);
   return (
     <ButtonBase
@@ -98,13 +101,13 @@ const PlaceRow = ({ place, parent, onOpen, t }) => {
                 {place.house_name}
               </Box>
             )
-          : displayName(place, parent, t)}
-        {place.state && (
+          : place.name}
+        {state && (
           <Box
             component="span"
             sx={{ color: "text.secondary", fontSize: "0.85rem", ml: 0.75 }}
           >
-            {t.states[place.state]}
+            {state}
           </Box>
         )}
       </Box>
@@ -119,6 +122,58 @@ const PlaceRow = ({ place, parent, onOpen, t }) => {
         {place.images > 0 && `${place.images} ${t.photos}`}
       </Box>
     </ButtonBase>
+  );
+};
+
+// A village's churches, chapels or houses: a heading with the count that
+// unfolds the list
+const PlaceGroup = ({ title, places, onOpen, t }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <Box>
+      <ButtonBase
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        sx={{
+          display: "flex",
+          width: "100%",
+          alignItems: "center",
+          gap: 0.5,
+          px: 2.5,
+          pt: 1.25,
+          pb: 0.75,
+          font: "inherit",
+          color: "text.secondary",
+        }}
+      >
+        <Typography
+          variant="overline"
+          component="h3"
+          sx={{ flexGrow: 1, textAlign: "left" }}
+        >
+          {title}
+        </Typography>
+        <Typography variant="overline" component="span">
+          {places.length}
+        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            transition: "transform 0.2s",
+            transform: open ? "rotate(90deg)" : "none",
+          }}
+        >
+          <Icon name="chevron_right" size={20} />
+        </Box>
+      </ButtonBase>
+      <Collapse in={open}>
+        <Box sx={{ px: 1, pb: 1 }}>
+          {places.map((child) => (
+            <PlaceRow key={child.id} place={child} onOpen={onOpen} t={t} />
+          ))}
+        </Box>
+      </Collapse>
+    </Box>
   );
 };
 
@@ -182,9 +237,7 @@ const LocationInfo = (props) => {
             >
               {formatCoordinates(place.lat, place.lon)}
             </Typography>
-            <Typography variant="h1">
-              {displayName(place, parent, t)}
-            </Typography>
+            <Typography variant="h1">{place.name}</Typography>
             {place.house_name && (
               <Typography
                 sx={{
@@ -215,6 +268,15 @@ const LocationInfo = (props) => {
     >
       {info && (
         <Box sx={{ pt: 0.5, pb: 2.5 }}>
+          {groupsOf(info.children ?? []).map((group) => (
+            <PlaceGroup
+              key={`${slug}-${group.key}`}
+              title={t[group.key]}
+              places={group.places}
+              onOpen={onOpen}
+              t={t}
+            />
+          ))}
           {podcasts.length > 0 && (
             <>
               <SectionLabel title={t.audio} count={podcasts.length} />
@@ -222,7 +284,7 @@ const LocationInfo = (props) => {
                 podcasts={podcasts}
                 place={{
                   slug: place.slug,
-                  name: displayName(place, parent, t),
+                  name: place.name,
                   image: info.images[0]?.url,
                 }}
               />
@@ -234,22 +296,6 @@ const LocationInfo = (props) => {
               <DisplayImages images={info.images} />
             </>
           )}
-          {groupsOf(info.children ?? []).map((group) => (
-            <Box key={group.key}>
-              <SectionLabel title={t[group.key]} count={group.places.length} />
-              <Box sx={{ px: 1 }}>
-                {group.places.map((child) => (
-                  <PlaceRow
-                    key={child.id}
-                    place={child}
-                    parent={place}
-                    onOpen={onOpen}
-                    t={t}
-                  />
-                ))}
-              </Box>
-            </Box>
-          ))}
         </Box>
       )}
       {failed && (

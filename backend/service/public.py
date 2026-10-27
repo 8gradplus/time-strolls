@@ -46,8 +46,8 @@ class LocationPlace(BaseModel):
     number: str | None = None
     house_name: str | None = None
     former_number: str | None = None
-    state: str | None = None  # standing | ruined | vanished
-    address: str | None = None  # today's address of a standing house
+    state: str | None = None  # as the archive says, e.g. "Zaniklé"
+    address: str | None = None  # e.g. "verfallen", or today's address
 
 
 class LocationImage(Translated):
@@ -115,34 +115,13 @@ def body(text) -> str | None:
     return text.body if text else None
 
 
-# The archives' words for a building's state. The Südböhmen archive keeps it
-# in the address: "verfallen", "Wüstung", or today's address where the house
-# still stands.
-STATES = {
-    "verfallen": "ruined",
-    "Wüstung": "vanished",
-    "Zaniklé": "vanished",
-    "Opravené": "standing",
-}
-NO_ADDRESS = {"ohne Nummer"}
-
-
 def facts(attributes: dict | None) -> dict:
+    """A building's facts as the archive gives them, in its language (the
+    Südböhmen archive keeps the state in the address: "verfallen",
+    "Wüstung", or today's address)."""
     a = attributes or {}
-    address = a.get("address")
-    state = STATES.get(a.get("state") or "")
-    today = None
-    if address in STATES:
-        state = STATES[address]
-    elif address and address not in NO_ADDRESS:
-        state, today = "standing", address
-    return dict(
-        number=a.get("number"),
-        house_name=a.get("house_name"),
-        former_number=a.get("former_number"),
-        state=state,
-        address=today,
-    )
+    keys = ("number", "house_name", "former_number", "state", "address")
+    return {key: a.get(key) for key in keys}
 
 
 def parents_of(session: Session, ids) -> dict[UUID, UUID]:

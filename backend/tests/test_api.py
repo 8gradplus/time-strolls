@@ -168,12 +168,10 @@ def test_a_village_lists_its_houses_and_chapels(admin):
     listed = {p["name"]: p for p in admin.get("/api/locations/").json()}
     assert listed["Oberuresch 3"]["part_of"] == village["id"]
     assert listed["Oberuresch 3"]["house_name"] == "Jogl"
-    assert listed["Oberuresch 3"]["state"] == "ruined"
-    assert listed["Oberuresch 12"]["state"] == "vanished"
+    assert listed["Oberuresch 3"]["address"] == "verfallen"
     assert listed["Oberuresch 12"]["former_number"] == "78, 155"
-    assert listed["Oberuresch 4"]["state"] == "standing"
     assert listed["Oberuresch 4"]["address"] == "Pasečná 111"
-    assert listed["kaple"]["state"] == "vanished"
+    assert listed["kaple"]["state"] == "Zaniklé"
     assert listed["Oberuresch"]["part_of"] is None
 
     detail = admin.get(f"/api/locations/{village['slug']}").json()
