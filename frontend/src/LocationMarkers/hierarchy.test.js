@@ -4,8 +4,8 @@ import {
   groupsOf,
   hoverName,
   labelAt,
+  labelTarget,
   markOf,
-  visibleAt,
 } from "./hierarchy";
 
 const village = { kind: "village", name: "Oberuresch" };
@@ -24,19 +24,6 @@ describe("markOf", () => {
   });
 });
 
-describe("visibleAt", () => {
-  test("shows houses only close up, or while open", () => {
-    expect(visibleAt(house, 16)).toBe(false);
-    expect(visibleAt(house, 17)).toBe(true);
-    expect(visibleAt(house, 12, true)).toBe(true);
-  });
-
-  test("shows villages, churches and chapels at every zoom", () => {
-    expect(visibleAt(village, 10)).toBe(true);
-    expect(visibleAt(chapel, 10)).toBe(true);
-  });
-});
-
 describe("clusterRadius", () => {
   test("joins only touching marks where the houses are", () => {
     expect(clusterRadius(14)).toBe(60);
@@ -45,13 +32,12 @@ describe("clusterRadius", () => {
 });
 
 describe("labelAt", () => {
-  test("names villages from 15, landmarks from 16, house numbers from 18", () => {
+  test("names villages from 15, landmarks from 16, never houses", () => {
     expect(labelAt(village, 14, "Oberuresch")).toBeNull();
     expect(labelAt(village, 15, "Oberuresch")).toBe("Oberuresch");
     expect(labelAt(chapel, 15, "Kapelle")).toBeNull();
     expect(labelAt(chapel, 16, "Kapelle")).toBe("Kapelle");
-    expect(labelAt(house, 17, "Oberuresch 3")).toBeNull();
-    expect(labelAt(house, 18, "Oberuresch 3")).toBe("3");
+    expect(labelAt(house, 19, "Oberuresch 3")).toBeNull();
   });
 });
 
@@ -73,5 +59,31 @@ describe("groupsOf", () => {
       "placesHere",
     ]);
     expect(groupsOf([house])).toEqual([{ key: "houses", places: [house] }]);
+  });
+});
+
+describe("labelTarget", () => {
+  const options = { reach: 70, hysteresis: 12 };
+  test("takes the nearest house within reach", () => {
+    const d = [
+      { slug: "a", d: 40 },
+      { slug: "b", d: 20 },
+      { slug: "c", d: 90 },
+    ];
+    expect(labelTarget(d, null, options)).toBe("b");
+    expect(labelTarget([{ slug: "c", d: 90 }], "c", options)).toBeNull();
+  });
+
+  test("keeps the current house until another is clearly closer", () => {
+    const close = [
+      { slug: "a", d: 30 },
+      { slug: "b", d: 22 },
+    ];
+    expect(labelTarget(close, "a", options)).toBe("a");
+    const clear = [
+      { slug: "a", d: 40 },
+      { slug: "b", d: 20 },
+    ];
+    expect(labelTarget(clear, "a", options)).toBe("b");
   });
 });

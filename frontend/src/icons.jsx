@@ -135,7 +135,19 @@ const sacralMark = (scale, classes) => {
   return `<svg class="${classes}" width="24" height="24" viewBox="-12 -12 24 24" aria-hidden="true"><circle class="edge" r="${f(r + 1.2)}"/><circle class="ring" r="${f(r + 0.4)}"/><circle class="disc" r="${f(r - 1.8)}"/><path class="cross" d="M0 ${f(-h)}V${f(h)}M${f(-arm)} ${f(bar)}H${f(arm)}" stroke-width="${f(2 * scale)}"/></svg>`;
 };
 
+// One icon per look: react-leaflet replaces a marker's icon (its DOM element)
+// whenever it gets a new object, so every render would rebuild every marker
+const placeIcons = new Map();
+
 export const placeIcon = (mark = "dot", active = false, filled = false) => {
+  const key = `${mark}-${active}-${filled}`;
+  if (!placeIcons.has(key)) {
+    placeIcons.set(key, makePlaceIcon(mark, active, filled));
+  }
+  return placeIcons.get(key);
+};
+
+const makePlaceIcon = (mark, active, filled) => {
   const classes = ["place-mark", `place-${mark}`];
   if (active) classes.push("active");
   if (filled) classes.push("filled");

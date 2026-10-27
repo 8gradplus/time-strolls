@@ -1,10 +1,10 @@
 // What the map shows of a place, by its kind and the zoom: villages always,
-// churches and chapels as crosses, houses only close up. Pure functions, so
-// the rules are tested (hierarchy.test.js).
+// churches and chapels as dark discs with a cross, houses only close up. Pure
+// functions, so the rules are tested (hierarchy.test.js).
 
-// Houses appear from this zoom, their numbers from HOUSE_LABEL_ZOOM
+// Houses appear from this zoom. They have no names next to them: the house
+// nearest the centre of the map gets the wall label (WallLabel.jsx)
 export const HOUSE_ZOOM = 17;
-export const HOUSE_LABEL_ZOOM = 18;
 // Names next to villages from this zoom on (also for touch screens, where
 // there is no hover), next to churches and chapels from LANDMARK_LABEL_ZOOM
 export const LABEL_ZOOM = 15;
@@ -29,12 +29,9 @@ export const markOf = (kind) => {
 
 export const isHouse = (place) => HOUSES.includes(place.kind);
 
-export const visibleAt = (place, zoom, active = false) =>
-  active || !isHouse(place) || zoom >= HOUSE_ZOOM;
-
 // The text next to the mark at this zoom, or null (then only on hover)
 export const labelAt = (place, zoom, name) => {
-  if (isHouse(place)) return zoom >= HOUSE_LABEL_ZOOM ? place.number : null;
+  if (isHouse(place)) return null;
   const mark = markOf(place.kind);
   const from = mark === "dot" ? LABEL_ZOOM : LANDMARK_LABEL_ZOOM;
   return zoom >= from ? name : null;
@@ -55,4 +52,19 @@ export const groupsOf = (children) => {
     { key: "houses", places: houses },
     { key: "placesHere", places: other },
   ].filter((group) => group.places.length > 0);
+};
+
+// The wall label's house: the nearest to the centre within `reach` pixels.
+// The current one stays until another is closer by `hysteresis` pixels, so
+// the label doesn't flicker between neighbours. `distances`: [{ slug, d }]
+export const WALL_LABEL = { reach: 70, hysteresis: 12 };
+
+export const labelTarget = (distances, current, options = WALL_LABEL) => {
+  const near = distances
+    .filter(({ d }) => d <= options.reach)
+    .sort((a, b) => a.d - b.d);
+  if (near.length === 0) return null;
+  const kept = near.find(({ slug }) => slug === current);
+  if (kept && near[0].d + options.hysteresis >= kept.d) return kept.slug;
+  return near[0].slug;
 };

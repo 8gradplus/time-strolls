@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
+import WallLabel, { useWallLabel } from "./LocationMarkers/WallLabel";
 import {
   HOUSE_ZOOM,
   LANDMARK_LABEL_ZOOM,
@@ -295,6 +296,10 @@ const CoordinateMap = () => {
     });
   };
 
+  // The house nearest the centre, close up (no label while a panel is open)
+  const labelSlug = useWallLabel(map, locations, showMarkers && !showInfo);
+  const labelPlace = locations?.find((loc) => loc.slug === labelSlug);
+
   const handleMarkerClick = (id) => (toggle) => {
     // Find the location to get its slug
     const location = locations?.find((loc) => loc.id === id);
@@ -357,6 +362,7 @@ const CoordinateMap = () => {
               onClick={handleMarkerClick}
               locations={locations}
               activeSlug={locationSlug}
+              focusSlug={labelSlug}
             />
           )}
 
@@ -400,6 +406,16 @@ const CoordinateMap = () => {
               position={position}
               failed={positionFailed}
               onModeChange={handleTrackingModeChange}
+            />
+            <WallLabel
+              place={labelPlace}
+              openSlug={locationSlug}
+              onOpen={(place) =>
+                setSearchParams((params) => {
+                  params.set("location", place.slug);
+                  return params;
+                })
+              }
             />
             <MiniPlayer
               openSlug={locationSlug}
