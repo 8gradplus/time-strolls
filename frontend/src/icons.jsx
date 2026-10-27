@@ -115,16 +115,29 @@ export const PlayPauseGlyph = ({ size = 22 }) => (
   </svg>
 );
 
-// A place: one plain dot in the map accent with a white ring (.place-dot in
-// index.css), inside a larger transparent area that is easy to tap. The open
-// place gets a halo.
+// A place: a mark by its kind (LocationMarkers/hierarchy.js; .place-* in
+// index.css), inside a larger transparent area that is easy to tap. A
+// village is a dot in the map accent with a white ring, a church or chapel
+// a cross, a mill a ring, a house a small hollow dot (filled where it has
+// photos). The open place gets a halo.
 const PLACE_TAP_SIZE = 44;
 
-export const placeIcon = (active = false) => {
-  const className = active ? "place-dot active" : "place-dot";
+const CROSSES = {
+  church: "M12 2.5v19M7 8h10",
+  chapel: "M12 5v14M8.2 9.5h7.6",
+};
+
+export const placeIcon = (mark = "dot", active = false, filled = false) => {
+  const classes = ["place-mark", `place-${mark}`];
+  if (active) classes.push("active");
+  if (filled) classes.push("filled");
+  const cross = CROSSES[mark];
+  const html = cross
+    ? `<svg class="${classes.join(" ")}" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path class="edge" d="${cross}"/><path class="ring" d="${cross}"/><path class="core" d="${cross}"/></svg>`
+    : `<span class="${classes.join(" ")}"></span>`;
 
   return L.divIcon({
-    html: `<span class="${className}"></span>`,
+    html,
     className: "place-marker",
     iconSize: [PLACE_TAP_SIZE, PLACE_TAP_SIZE],
     iconAnchor: [PLACE_TAP_SIZE / 2, PLACE_TAP_SIZE / 2],

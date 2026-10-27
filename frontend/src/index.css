@@ -97,11 +97,18 @@
   padding: 2px 8px;
 }
 
+/* A house's number, close up: smaller, so a row of houses stays readable */
+.leaflet-tooltip.location-tooltip.house-number {
+  font-size: 12px;
+  padding: 0 5px;
+  font-variant-numeric: tabular-nums;
+}
+
 .leaflet-tooltip.location-tooltip::before {
   display: none;
 }
 
-/* Places, clusters and tours are the same in light and dark mode, because the
+/* Places and tours are the same in light and dark mode, because the
    base map is always light grey: the map accent with a white ring and a thin
    dark edge, so they read on the grey map, the grey 1949/1952 aerials and the
    colour orthophotos alike. */
@@ -110,19 +117,76 @@
   place-items: center;
 }
 
-.place-dot {
+.place-mark {
   display: block;
   box-sizing: border-box;
+  transition: transform 0.15s ease;
+}
+
+.place-dot {
   width: 20px;
   height: 20px;
   border-radius: 50%;
   background: var(--mui-palette-primary-main);
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-  transition: transform 0.15s ease;
 }
 
-.place-marker:hover .place-dot {
+/* Churches and chapels: an accent cross on a white ring and a thin dark edge */
+svg.place-mark {
+  overflow: visible;
+}
+
+.place-mark path {
+  fill: none;
+  stroke-linecap: square;
+}
+
+.place-mark .edge {
+  stroke: rgba(0, 0, 0, 0.35);
+  stroke-width: 6.4;
+}
+
+.place-mark .ring {
+  stroke: #fff;
+  stroke-width: 5.2;
+}
+
+.place-mark .core {
+  stroke: var(--mui-palette-primary-main);
+  stroke-width: 2.6;
+}
+
+.place-chapel .core {
+  stroke-width: 2.4;
+}
+
+/* Mills: a ring */
+.place-ring {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--mui-palette-primary-main);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+/* Houses: small and quiet, filled where there are photos */
+.place-house {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.75px solid var(--mui-palette-primary-main);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.place-house.filled {
+  background: var(--mui-palette-primary-main);
+  border-color: #fff;
+}
+
+.place-marker:hover .place-mark {
   transform: scale(1.25);
 }
 
@@ -130,10 +194,22 @@
 .place-dot.active {
   width: 24px;
   height: 24px;
+}
+
+.place-mark.active:not(svg) {
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.35),
     0 0 0 6px
       color-mix(in srgb, var(--mui-palette-primary-main) 35%, transparent);
+}
+
+svg.place-mark.active {
+  border-radius: 50%;
+  background: color-mix(
+    in srgb,
+    var(--mui-palette-primary-main) 30%,
+    transparent
+  );
 }
 
 .pulsating-icon {
@@ -171,28 +247,6 @@
     r: 6;
     opacity: 1;
   }
-}
-
-/* Clusters: a bigger place dot with the count */
-.marker-cluster-small,
-.marker-cluster-medium,
-.marker-cluster-large {
-  background: none !important;
-}
-
-.marker-cluster div {
-  box-sizing: border-box;
-  background-color: var(--mui-palette-primary-main) !important;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-  color: #fff;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.marker-cluster span {
-  line-height: 26px;
 }
 
 /* Leaflet's attribution is only the small OpenStreetMap credit (the aerial

@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
+import { APART_ZOOM, HOUSE_ZOOM, isHouse } from "./LocationMarkers/hierarchy";
 import { api } from "./api";
 import Tour from "./Tours/Tour";
 import TrackControl from "./Track/TrackControl";
@@ -276,6 +277,20 @@ const CoordinateMap = () => {
     else map.once("moveend", welcome);
   }, [manifest, map]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // A place chosen in a panel (a village's house, a house's village): open
+  // it and bring it into view, close enough to see it
+  const handleOpenPlace = (place) => {
+    setSearchParams((params) => {
+      params.set("location", place.slug);
+      return params;
+    });
+    if (!map) return;
+    const zoom = isHouse(place) ? HOUSE_ZOOM : APART_ZOOM;
+    map.flyTo([place.lat, place.lon], Math.max(map.getZoom(), zoom), {
+      duration: 0.8,
+    });
+  };
+
   const handleMarkerClick = (id) => (toggle) => {
     // Find the location to get its slug
     const location = locations?.find((loc) => loc.id === id);
@@ -345,6 +360,7 @@ const CoordinateMap = () => {
             <LocationInfo
               open={showInfo}
               onClose={handleInfoClose}
+              onOpen={handleOpenPlace}
               slug={locationSlug}
             />
           )}

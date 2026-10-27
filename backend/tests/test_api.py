@@ -134,6 +134,66 @@ def test_muted_places_disappear(admin):
     )
 
 
+def test_a_village_lists_its_houses_and_chapels(admin):
+    village = place(admin)
+    houses = [
+        place(
+            admin,
+            f"Oberuresch {number}",
+            kind="house",
+            lat=48.6081 + i / 1000,
+            attributes=attributes | {"number": number},
+        )
+        for i, (number, attributes) in enumerate(
+            [
+                ("12", {"address": "Wüstung", "former_number": "78, 155"}),
+                ("3", {"address": "verfallen", "house_name": "Jogl"}),
+                ("4", {"address": "Pasečná 111"}),
+            ]
+        )
+    ]
+    chapel = place(
+        admin, "kaple", kind="chapel", attributes={"state": "Zaniklé"}, force=True
+    )
+    for child in houses + [chapel]:
+        admin.post(
+            "/api/admin/relations/",
+            json={
+                "subject": child["slug"],
+                "predicate": "part_of",
+                "object": village["slug"],
+            },
+        )
+
+    listed = {p["name"]: p for p in admin.get("/api/locations/").json()}
+    assert listed["Oberuresch 3"]["part_of"] == village["id"]
+    assert listed["Oberuresch 3"]["house_name"] == "Jogl"
+    assert listed["Oberuresch 3"]["state"] == "ruined"
+    assert listed["Oberuresch 12"]["state"] == "vanished"
+    assert listed["Oberuresch 12"]["former_number"] == "78, 155"
+    assert listed["Oberuresch 4"]["state"] == "standing"
+    assert listed["Oberuresch 4"]["address"] == "Pasečná 111"
+    assert listed["kaple"]["state"] == "vanished"
+    assert listed["Oberuresch"]["part_of"] is None
+
+    detail = admin.get(f"/api/locations/{village['slug']}").json()
+    assert [c["name"] for c in detail["children"]] == [
+        "kaple",
+        "Oberuresch 3",
+        "Oberuresch 4",
+        "Oberuresch 12",
+    ]
+    house = admin.get(f"/api/locations/{houses[1]['slug']}").json()
+    assert house["parent"]["name"] == "Oberuresch" and house["children"] == []
+
+    admin.put(
+        f"/api/admin/resources/{houses[1]['id']}/status",
+        json={"status": "muted", "reason": "test"},
+    )
+    detail = admin.get(f"/api/locations/{village['slug']}").json()
+    assert "Oberuresch 3" not in [c["name"] for c in detail["children"]]
+
+
 def test_slug_stays_when_the_place_moves(admin):
     p = place(admin)
     r = admin.patch(
