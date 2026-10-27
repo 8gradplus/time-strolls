@@ -3,9 +3,7 @@ import { useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import LocationMarker from "./LocationMarker";
 import {
-  CLUSTER_RADIUS,
-  HOUSE_ZOOM,
-  SAME_POINT,
+  clusterRadius,
   hoverName,
   labelAt,
   markOf,
@@ -22,42 +20,23 @@ const LocationMarkers = (props) => {
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
   if (!open) return null;
 
-  const byId = new Map(locations.map((place) => [place.id, place]));
-  // Is a place on its village's point at this zoom (or at the closest)?
-  const apart = (place, parent, at) =>
-    map
-      .project([place.lat, place.lon], at)
-      .distanceTo(map.project([parent.lat, parent.lon], at));
-  const onParent = (place, parent) =>
-    !!parent && apart(place, parent, zoom) < SAME_POINT;
-  const sameSpot = (place, parent) =>
-    !!parent && apart(place, parent, map.getMaxZoom()) < 1;
-
   const shown = locations
     .map((place) => {
-      const parent = byId.get(place.part_of);
       const active = place.slug === activeSlug;
-      return { place, parent, active, mark: markOf(place.kind) };
+      return { place, active, mark: markOf(place.kind) };
     })
-    .filter(({ place, parent, active }) =>
-      visibleAt(place, zoom, {
-        active,
-        onParent: onParent(place, parent),
-        sameSpot: sameSpot(place, parent),
-      }),
-    )
+    .filter(({ place, active }) => visibleAt(place, zoom, active))
     .sort(
       (a, b) =>
         LAYER[a.mark] - LAYER[b.mark] || Number(a.active) - Number(b.active),
     );
 
   // Places that overlap join in a cluster, which splits as you zoom in;
-  // houses (from HOUSE_ZOOM) are small enough to stay apart
+  // those on the same point spread out around it at the closest zoom
   return (
     <MarkerClusterGroup
       chunkedLoading
-      maxClusterRadius={CLUSTER_RADIUS}
-      disableClusteringAtZoom={HOUSE_ZOOM}
+      maxClusterRadius={clusterRadius}
       spiderfyOnMaxZoom={true}
       showCoverageOnHover={false}
       zoomToBoundsOnClick={true}

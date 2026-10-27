@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { groupsOf, hoverName, labelAt, markOf, visibleAt } from "./hierarchy";
+import {
+  clusterRadius,
+  groupsOf,
+  hoverName,
+  labelAt,
+  markOf,
+  visibleAt,
+} from "./hierarchy";
 
 const village = { kind: "village", name: "Oberuresch" };
 const house = { kind: "house", name: "Oberuresch 3", number: "3" };
@@ -19,22 +26,21 @@ describe("markOf", () => {
 
 describe("visibleAt", () => {
   test("shows houses only close up, or while open", () => {
-    expect(visibleAt(house, 16, {})).toBe(false);
-    expect(visibleAt(house, 17, {})).toBe(true);
-    expect(visibleAt(house, 12, { active: true })).toBe(true);
+    expect(visibleAt(house, 16)).toBe(false);
+    expect(visibleAt(house, 17)).toBe(true);
+    expect(visibleAt(house, 12, true)).toBe(true);
   });
 
-  test("hides a chapel on its village's point until zoom 16", () => {
-    expect(visibleAt(chapel, 15, { onParent: true })).toBe(false);
-    expect(visibleAt(chapel, 16, { onParent: true })).toBe(true);
-    expect(visibleAt(chapel, 12, {})).toBe(true);
-    expect(visibleAt(village, 10, {})).toBe(true);
+  test("shows villages, churches and chapels at every zoom", () => {
+    expect(visibleAt(village, 10)).toBe(true);
+    expect(visibleAt(chapel, 10)).toBe(true);
   });
+});
 
-  test("keeps a chapel on exactly its village's point hidden", () => {
-    const options = { onParent: true, sameSpot: true };
-    expect(visibleAt(chapel, 19, options)).toBe(false);
-    expect(visibleAt(chapel, 12, { ...options, active: true })).toBe(true);
+describe("clusterRadius", () => {
+  test("joins only touching marks where the houses are", () => {
+    expect(clusterRadius(14)).toBe(60);
+    expect(clusterRadius(17)).toBe(16);
   });
 });
 

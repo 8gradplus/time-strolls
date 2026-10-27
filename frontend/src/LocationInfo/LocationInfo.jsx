@@ -53,8 +53,8 @@ const factsLine = (place, t) =>
     .filter(Boolean)
     .join(" · ");
 
-// One row of a village's list: the house number (or a cross), the name, the
-// number of photos
+// One row of a village's list: the house number, the name, the number of
+// photos
 const PlaceRow = ({ place, onOpen, t }) => {
   const state = place.state || place.address;
   const house = isHouse(place);
@@ -63,7 +63,10 @@ const PlaceRow = ({ place, onOpen, t }) => {
       onClick={() => onOpen(place)}
       sx={{
         display: "grid",
-        gridTemplateColumns: "2.2em minmax(0, 1fr) auto",
+        // a house's number in front; churches and chapels without
+        gridTemplateColumns: house
+          ? "2.2em minmax(0, 1fr) auto"
+          : "minmax(0, 1fr) auto",
         gap: 1.25,
         alignItems: "baseline",
         width: "100%",
@@ -77,16 +80,18 @@ const PlaceRow = ({ place, onOpen, t }) => {
         },
       }}
     >
-      <Box
-        component="span"
-        sx={{
-          color: "text.secondary",
-          textAlign: "right",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        {house ? place.number : "✝"}
-      </Box>
+      {house && (
+        <Box
+          component="span"
+          sx={{
+            color: "text.secondary",
+            textAlign: "right",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {place.number}
+        </Box>
+      )}
       <Box component="span">
         {house
           ? place.house_name && (

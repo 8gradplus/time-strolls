@@ -9,14 +9,10 @@ export const HOUSE_LABEL_ZOOM = 18;
 // there is no hover), next to churches and chapels from LANDMARK_LABEL_ZOOM
 export const LABEL_ZOOM = 15;
 export const LANDMARK_LABEL_ZOOM = 16;
-// A church or chapel on its village's point hides under the village's dot
-// until this zoom; on exactly the same point (the source had no position of
-// its own) at every zoom, and it is listed in the village's panel
-export const APART_ZOOM = 16;
-// Closer than this (in pixels) counts as on the village's point
-export const SAME_POINT = 14;
-// Marks closer than this (in pixels) join in a cluster below HOUSE_ZOOM
-export const CLUSTER_RADIUS = 24;
+// Marks that overlap join in a cluster (as before round B) that splits as
+// you zoom in; places on the same point split around it at the closest zoom.
+// Close up, where the houses are, only marks that really touch.
+export const clusterRadius = (zoom) => (zoom >= HOUSE_ZOOM ? 16 : 60);
 
 const SACRAL = ["church", "chapel", "wayside_shrine"];
 const HOUSES = ["house", "farm"];
@@ -33,19 +29,8 @@ export const markOf = (kind) => {
 
 export const isHouse = (place) => HOUSES.includes(place.kind);
 
-// `onParent`: the place sits on its village's point at this zoom;
-// `sameSpot`: on exactly the same point
-export const visibleAt = (
-  place,
-  zoom,
-  { active = false, onParent = false, sameSpot = false },
-) => {
-  if (active) return true;
-  if (isHouse(place)) return zoom >= HOUSE_ZOOM;
-  if (sameSpot) return false;
-  if (onParent) return zoom >= APART_ZOOM;
-  return true;
-};
+export const visibleAt = (place, zoom, active = false) =>
+  active || !isHouse(place) || zoom >= HOUSE_ZOOM;
 
 // The text next to the mark at this zoom, or null (then only on hover)
 export const labelAt = (place, zoom, name) => {
