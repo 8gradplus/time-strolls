@@ -330,8 +330,10 @@ def apply(client: httpx.Client, todo: Plan, live: Live) -> list[str]:
 
     for place in todo.places:
         body = place.model_dump(include={"name", "kind", "lat", "lon", "names"})
+        # curated by hand: create it even near a similar place (the API's
+        # duplicate guard is for agents)
         live.places[place.name] = post(
-            "/admin/places/", json=body | {"status": "published"}
+            "/admin/places/", json=body | {"status": "published", "force": True}
         )
         print(f"+ place {place.name}")
 

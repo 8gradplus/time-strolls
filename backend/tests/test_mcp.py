@@ -1,7 +1,9 @@
 """The MCP servers over HTTP, as a client sees them: tokens, which tools a
-scope lists, drafts and review, and the public server's view."""
+scope lists, batches of drafts and review, duplicates, what an agent reads,
+and the public server's view."""
 
 import asyncio
+import json
 
 import httpx
 import pytest
@@ -40,6 +42,11 @@ def run(app, path, bearer, steps):
     return asyncio.run(go())
 
 
+def parse(result):
+    """A tool's answer as the model reads it (an empty list has no text)."""
+    return json.loads(result.content[0].text) if result.content else result.data
+
+
 async def names(client):
     return {t.name for t in await client.list_tools()}
 
@@ -50,6 +57,8 @@ def app(clean, monkeypatch):
     from importers import topothek
 
     async def document(url):
+        if "?doc=" not in url:
+            raise ValueError(f"not a Topothek document link: {url}")
         return DOCUMENT
 
     monkeypatch.setattr(topothek, "document", document)
@@ -64,90 +73,213 @@ def test_a_wrong_token_is_refused(app):
 def test_tools_follow_the_scopes(app, admin):
     agent = token(admin, ["read:all", "write"])
     tools = run(app, "/api/mcp/admin/", agent, names)
-    assert {"harvest_topothek", "create_place", "set_text"} <= tools
+    assert {"harvest_topothek", "create_places", "set_texts", "find_places"} <= tools
     assert "set_status" not in tools  # no review scope
     assert not any(t.startswith("scraping_") for t in tools)  # no scrape scope
     tools = run(app, "/api/mcp/admin/", API_KEY, names)
     assert {"set_status", "scraping_scrape_topothek_search"} <= tools
 
 
-def test_an_agent_drafts_and_a_reviewer_publishes(app, admin):
+VILLAGE = {"name": "Oberuresch", "lat": 48.609008, "lon": 14.056219}
+HOUSES = [
+    {
+        "name": f"Oberuresch {n}",
+        "kind": "house",
+        # about 30 m apart
+        "lat": 48.6091 + n * 0.0003,
+        "lon": 14.0563,
+        "attributes": {"number": str(n)},
+        "part_of": "Oberuresch",
+    }
+    for n in range(1, 11)
+]
+
+
+class Meter:
+    """Counts the calls and the bytes the model reads (the text content)."""
+
+    def __init__(self, client):
+        self.client, self.calls, self.bytes = client, 0, 0
+
+    async def __call__(self, name, arguments):
+        result = await self.client.call_tool(name, arguments)
+        self.calls += 1
+        self.bytes += sum(len(c.text.encode()) for c in result.content)
+        return parse(result)
+
+
+def test_an_agent_drafts_a_village_and_a_reviewer_publishes_it(app, admin):
     agent = token(admin, ["read:all", "write"])
 
     async def draft(client):
-        place = (
-            await client.call_tool(
-                "create_place",
-                {"name": "Oberuresch", "lat": 48.609008, "lon": 14.056219},
-            )
-        ).data
-        house = (
-            await client.call_tool(
-                "create_place",
-                {
-                    "name": "Oberuresch 3",
-                    "kind": "house",
-                    "lat": 48.6091,
-                    "lon": 14.0563,
-                    "attributes": {"number": "3", "house_name": "Jågl-Kårl"},
-                    "part_of": place["slug"],
-                },
-            )
-        ).data
-        harvested = (
-            await client.call_tool(
-                "harvest_topothek",
-                {
-                    "url": DOCUMENT["source_url"],
-                    "places": [place["slug"], house["slug"]],
-                },
-            )
-        ).data
-        await client.call_tool(
-            "set_text",
+        call = Meter(client)
+        assert await call("find_places", {"text": "Oberuresch"}) == []
+        places = await call("create_places", {"places": [VILLAGE, *HOUSES]})
+        harvested = await call(
+            "harvest_topothek",
             {
-                "resource": harvested["media"]["id"],
-                "field": "title",
-                "lang": "en",
-                "body": "Karl and Anna",
-                "method": "machine",
-                "translated_from": "de",
-                "model": "test",
+                "documents": [
+                    {"url": DOCUMENT["source_url"], "places": [places[0]["slug"]]},
+                    {"url": "https://example.org/", "places": []},
+                ]
             },
         )
-        return place, house, harvested
+        media = harvested[0]["id"]
+        texts = await call(
+            "set_texts",
+            {
+                "texts": [
+                    {
+                        "resource": media,
+                        "field": "title",
+                        "lang": lang,
+                        "body": body,
+                        "method": "machine",
+                        "translated_from": "de",
+                        "model": "test",
+                    }
+                    for lang, body in (("en", "Karl and Anna"), ("cs", "Karel a Anna"))
+                ]
+            },
+        )
+        links = await call(
+            "link",
+            {
+                "links": [
+                    {"subject": media, "predicate": "shows", "object": p["slug"]}
+                    for p in places[1:3]
+                ]
+            },
+        )
+        return call, places, harvested, texts, links
 
-    place, house, harvested = run(app, "/api/mcp/admin/", agent, draft)
-    assert place["status"] == house["status"] == "new"
-    assert harvested["created"] and harvested["media"]["status"] == "new"
-    assert admin.get("/api/locations/").json() == []
+    call, places, harvested, texts, links = run(app, "/api/mcp/admin/", agent, draft)
+    assert [p["name"] for p in places] == ["Oberuresch"] + [h["name"] for h in HOUSES]
+    assert all(p["slug"] for p in places)
+    assert harvested[0]["created"] and harvested[0]["year"] == 1945
+    assert "error" in harvested[1]  # not a Topothek link; the first still counts
+    assert texts == {"done": 2} and links == {"done": 2}
+    # one call per step, not per item
+    assert call.calls == 5
+    drafting = call.bytes
 
-    async def publish(client):
-        new = (await client.call_tool("list_resources", {"status": "new"})).data
-        await client.call_tool(
+    async def review(client):
+        call = Meter(client)
+        new = await call("list_resources", {"status": "new", "limit": 100})
+        await call(
             "grant_permission", {"source": "topothek:deutsch-reichenau", "note": "test"}
         )
-        for item in new:
-            await client.call_tool(
-                "set_status", {"resource": item["id"], "status": "published"}
-            )
-        return new, (await client.call_tool("history", {"id": place["id"]})).data
+        done = await call(
+            "set_status",
+            {"resources": [item["id"] for item in new], "status": "published"},
+        )
+        house = await call("get_resource", {"key": places[1]["slug"]})
+        return call, new, done, house
 
-    new, history = run(app, "/api/mcp/admin/", API_KEY, publish)
-    assert len(new) == 3
-    assert history[0]["run"] == {"model": "test"}
+    call, new, done, house = run(app, "/api/mcp/admin/", API_KEY, review)
+    assert len(new) == 12 and done == {"done": 12}
+    assert house["status"] == "published" and house["attributes"] == {"number": "1"}
+    (parent,) = [link for link in house["links"] if link["predicate"] == "part_of"]
+    assert parent["direction"] == "out" and parent["label"] == "Oberuresch"
+    assert call.calls == 4
+    # what 11 places, a harvest, 2 translations, 2 links and a review cost the
+    # model to read; the first agent test needed one call per item
+    print(f"\nMCP scenario: {5 + call.calls} calls, {drafting + call.bytes} bytes")
+    assert drafting + call.bytes < 8000
 
     async def read(client):
         found = (await client.call_tool("find_places", {"text": "ober"})).data
         detail = (
-            await client.call_tool("get_place", {"slug": house["slug"], "lang": "en"})
+            await client.call_tool(
+                "get_place", {"slug": places[1]["slug"], "lang": "en"}
+            )
         ).data
         return found, detail
 
     found, detail = run(app, "/api/mcp/", token(admin, ["read"], "reader"), read)
-    assert {p["name"] for p in found} == {"Oberuresch", "Oberuresch 3"}
+    assert len(found) == 11
     (image,) = detail["images"]
     assert image["title"] == "Karl and Anna" and image["method"] == "machine"
+
+
+def test_find_places_by_other_spelling_and_position(app, admin):
+    async def steps(client):
+        await client.call_tool(
+            "create_places",
+            {
+                "places": [
+                    {
+                        "name": "Sankt Thoma",
+                        "names": {"cs": "Svatý Tomáš"},
+                        "lat": 48.62,
+                        "lon": 14.1,
+                    }
+                ]
+            },
+        )
+
+        async def find(**query):
+            result = await client.call_tool("find_places", query)
+            return parse(result)
+
+        return (
+            await find(text="St. Thoma"),
+            await find(text="svaty tomas"),
+            await find(lat=48.6201, lon=14.1, radius_m=50),
+            await find(lat=48.63, lon=14.1, radius_m=50),
+        )
+
+    by_short, by_czech, near, far = run(app, "/api/mcp/admin/", API_KEY, steps)
+    assert by_short[0]["name"] == "Sankt Thoma"
+    assert by_czech[0]["names"] == ["Svatý Tomáš"]
+    assert near[0]["distance_m"] == pytest.approx(11, abs=1)
+    assert far == []
+
+
+def test_create_places_refuses_duplicates(app, admin):
+    async def steps(client):
+        async def create(*places):
+            result = await client.call_tool("create_places", {"places": list(places)})
+            return parse(result)
+
+        first = await create(
+            {"name": "Sankt Thoma", "lat": 48.62, "lon": 14.1},
+            {
+                "name": "Haus 1",
+                "kind": "house",
+                "lat": 48.621,
+                "lon": 14.1,
+                "attributes": {"number": "1"},
+            },
+        )
+        again = await create(
+            # another spelling, 30 m away
+            {"name": "St. Thoma", "lat": 48.6203, "lon": 14.1},
+            # the same kind on the same spot
+            {"name": "Kapelle", "kind": "house", "lat": 48.62101, "lon": 14.1},
+            # the next house on the same spot is another house
+            {
+                "name": "Haus 2",
+                "kind": "house",
+                "lat": 48.62101,
+                "lon": 14.1,
+                "attributes": {"number": "2"},
+            },
+            # a different place altogether, created anyway
+            {"name": "St. Thoma", "lat": 48.6203, "lon": 14.1, "force": True},
+            {"name": "Nowhere", "kind": "castle", "lat": 48.0, "lon": 14.0},
+        )
+        return first, again
+
+    first, (spelling, spot, house, forced, invalid) = run(
+        app, "/api/mcp/admin/", API_KEY, steps
+    )
+    assert all("slug" in row for row in first)
+    assert spelling["duplicate_of"][0]["name"] == "Sankt Thoma"
+    assert "slug" not in spelling
+    assert spot["duplicate_of"][0]["name"] == "Haus 1"
+    assert "slug" in house and "slug" in forced
+    assert "unknown place kind" in invalid["error"]
 
 
 def test_paths_without_the_trailing_slash(app):
@@ -160,3 +292,17 @@ def test_paths_without_the_trailing_slash(app):
 def test_the_public_server_needs_the_read_scope(app, admin):
     agent = token(admin, ["write"])
     assert run(app, "/api/mcp/", agent, names) == set()
+
+
+def test_the_tool_list_stays_small(app):
+    """The model reads the tool list (names, docs, schemas) on every turn."""
+
+    async def size(client):
+        tools = await client.list_tools()
+        ours = [t for t in tools if not t.name.startswith("scraping_")]
+        listed = [t.model_dump(mode="json", exclude_none=True) for t in ours]
+        return len(ours), len(json.dumps(listed, ensure_ascii=False).encode())
+
+    count, size = run(app, "/api/mcp/admin/", API_KEY, size)
+    print(f"\nadmin tools: {count}, {size} bytes (without the scraper's)")
+    assert size < 16000

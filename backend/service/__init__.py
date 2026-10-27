@@ -1,6 +1,7 @@
 """The service layer: every read and write of content, used by the REST
-controllers (api/controller/) and later the MCP tools alike. Functions take
-a session and, for writes, the Actor; writes commit and go to the change log.
+controllers (api/controller/) and the MCP tools (api/mcp_server.py) alike.
+Functions take a session and, for writes, the Actor; writes commit and go to
+the change log.
 """
 
 from dataclasses import dataclass, field

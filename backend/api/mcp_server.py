@@ -15,11 +15,13 @@ from functools import partial
 from uuid import UUID
 
 import anyio
+import httpx
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from fastmcp.server.auth import AccessToken, TokenVerifier
 from fastmcp.server.dependencies import get_access_token, get_http_headers
 from fastmcp.server.middleware.authorization import AuthMiddleware
+from pydantic import BaseModel
 from pydantic_core import to_jsonable_python
 from scrape_time_strolls.mcp.server import mcp as scraping
 from sqlmodel import Session
@@ -34,12 +36,13 @@ from service import (
     audit,
     harvest,
     media,
-    places,
     public,
     resources,
     review,
     rights,
 )
+from service import places as place_service
+from service import resources as resource_service
 
 # Calling the service layer -----------------------------------------------------
 
@@ -162,28 +165,39 @@ async def credits() -> dict:
 
 
 # The admin server ----------------------------------------------------------------
+#
+# Built for agents that curate many items: the writing tools take lists (one
+# call for a village's houses), and the answers are compact (ids and slugs,
+# no timestamps; get_resource(full=True) for everything).
 
 admin_mcp = FastMCP(
     "Time Strolls admin",
-    instructions="""Curate the content of Time Strolls (see SCHEMA_CONCEPT.md in the repo).
+    instructions="""Curate the content of Time Strolls.
 
-- Every object is a resource: a place (kinds: village, hamlet, house, farm,
-  chapel, church, wayside_shrine, mill, ruin, landmark), a media (image,
-  document, audio) or a tour. Status: new (waiting for review), published,
-  muted (hidden, with a reason), withdrawn. Nothing is deleted.
-- Links between resources are optional: part_of (place -> place, e.g. a
-  house in a village), shows (media -> place), about (media or tour ->
-  place or tour), stop (tour -> place), same_as (media -> media).
-- What you add stays 'new' until a reviewer publishes it; only tokens with
-  the review scope may set another status.
-- Texts are per language (ISO codes). A translation names its method
-  (human, machine), the language it comes from and, for machines, the model.
-- Harvest Topothek documents with harvest_topothek: it keeps the record,
-  creates the media once and links it; harvesting again adds nothing.
-  Search with the scraping_ tools first. The archives are small: one request
-  at a time, only what is needed.
-- Look up places by slug or id. The public map only shows published
-  content whose source or owner gave a permission.""",
+- Resources: places (kinds: village, hamlet, house, farm, chapel, church,
+  wayside_shrine, mill, ruin, landmark), media (image, document, audio) and
+  tours. Status: new (waiting for review), published, muted, withdrawn.
+  Nothing is deleted.
+- Links: part_of (place -> place, a house in a village), shows (media ->
+  place), about (media or tour -> place or tour), stop (tour -> place),
+  same_as (media -> media).
+- Before creating places, call find_places (by name and position): the
+  place may exist under another spelling or language ("St. Thoma" = "Sankt
+  Thoma"). create_places refuses near-duplicates and names them
+  (duplicate_of); use the existing place, or force only if it really is
+  another place.
+- Work in batches: the writing tools take lists (up to 50 items per call)
+  and report errors per item without stopping the rest.
+- What you add stays 'new' until a reviewer publishes it.
+- Texts are per language (ISO codes); a translation names its method
+  (machine or human), translated_from and, for machines, the model.
+  Translate only when asked, titles before descriptions.
+- Topothek: search with the scraping_ tools, then harvest_topothek; the
+  archives are small, so harvest only what is needed. The scraping_ tools
+  for suedboehmen and znicenekostely take numbers/categories, limit and
+  url_template to answer with less.
+- The public map shows only published content whose source or owner gave a
+  permission.""",
     auth=Tokens(),
     middleware=[AuthMiddleware(auth=scraper_scope)],
 )
@@ -192,20 +206,114 @@ admin_mcp.mount(scraping, namespace="scraping")
 READ_ALL, WRITE, REVIEW = scope("read:all"), scope("write"), scope("review")
 
 
+def compact(value):
+    """Leaves out everything without a value, at every level."""
+    if isinstance(value, dict):
+        items = ((key, compact(item)) for key, item in value.items())
+        return {key: item for key, item in items if item not in (None, "", [], {})}
+    if isinstance(value, list):
+        return [compact(item) for item in value]
+    return value
+
+
+def each(session, items, fn) -> dict:
+    """Runs fn(session, item) for every item. An item that fails is reported
+    with its position and doesn't stop the rest."""
+    done, errors = 0, []
+    for position, item in enumerate(items):
+        try:
+            fn(session, item)
+            done += 1
+        except ServiceError as e:
+            session.rollback()
+            errors.append({"item": position, "error": str(e)})
+    return {"done": done, "errors": errors}
+
+
+# Reading
+
+
+@admin_mcp.tool(auth=READ_ALL, name="find_places")
+async def find_any_places(
+    text: str | None = None,
+    lat: float | None = None,
+    lon: float | None = None,
+    radius_m: float | None = None,
+    kind: str | None = None,
+    status: str | None = None,
+    limit: int = 50,
+) -> list[dict]:
+    """Places of any status by name (any language; part of a name is enough;
+    case, accents and "St."/"Sankt" don't count) and/or within radius_m of
+    lat/lon, nearest first. Rows: id, slug, name, kind, status, lat, lon,
+    number (houses), names (other names), part_of, distance_m."""
+    found = await call(
+        place_service.search, text, lat, lon, radius_m, kind, status, limit
+    )
+    return compact(found)
+
+
 @admin_mcp.tool(auth=READ_ALL)
 async def list_resources(
-    type: str | None = None, status: str | None = None, limit: int = 50
+    type: str | None = None,
+    status: str | None = None,
+    kind: str | None = None,
+    limit: int = 50,
 ) -> list[dict]:
-    """Resources, newest first (id, type, status, label). status='new' is the
-    review queue; type is place, media or tour."""
-    return await call(review.list_, type, status, limit)
+    """Resources, newest first: id, type, status, label. status='new' is the
+    review queue; type: place, media or tour; kind: a place kind."""
+    rows = await call(review.list_, type, status, limit, kind)
+    return [
+        compact({k: v for k, v in row.items() if k != "created_at"}) for row in rows
+    ]
+
+
+def resource_brief(session, key: str) -> dict:
+    detail = review.detail(session, key)
+    id = detail.resource.id
+    texts: dict = {}
+    for t in detail.texts:
+        texts.setdefault(t.field, {})[t.lang] = (
+            t.body
+            if t.method == "original"
+            else {"body": t.body, "method": t.method, "from": t.translated_from}
+        )
+    links = []
+    for r in detail.relations:
+        out = r.subject_id == id
+        other = r.object_id if out else r.subject_id
+        links.append(
+            {
+                "id": r.id,
+                "predicate": r.predicate,
+                "direction": "out" if out else "in",
+                "other": other,
+                "label": review.label(session, resources.get(session, other)),
+            }
+        )
+    skip = {"id", "created_by", "created_at", "updated_at", "published_at"}
+    return compact(
+        {
+            "id": id,
+            "type": detail.resource.type,
+            "status": detail.resource.status,
+            "status_reason": detail.resource.status_reason,
+            **{k: v for k, v in detail.item.items() if k not in skip},
+            "texts": texts,
+            "links": links,
+            "sources": [s["url"] for s in detail.sources],
+        }
+    )
 
 
 @admin_mcp.tool(auth=READ_ALL)
-async def get_resource(key: str) -> dict:
-    """One resource (id or slug) with its fields, texts in all languages,
-    links and source records."""
-    return await call(review.detail, key)
+async def get_resource(key: str, full: bool = False) -> dict:
+    """One resource (id or slug): its fields, texts {field: {lang: body}}
+    (translations with method), links (with the relation id for unlink) and
+    source URLs. full=True: every row as stored, with timestamps."""
+    if full:
+        return await call(review.detail, key)
+    return await call(resource_brief, key)
 
 
 @admin_mcp.tool(auth=READ_ALL)
@@ -231,46 +339,49 @@ async def list_permissions() -> dict:
     return await call(all_rights)
 
 
+# Writing
+
+
+class NewPlace(place_service.PlaceIn):
+    # slug or id of an existing place, or the name of one earlier in the list
+    part_of: str | None = None
+
+
 @admin_mcp.tool(auth=WRITE)
-async def create_place(
-    name: str,
-    lat: float,
-    lon: float,
-    kind: str = "village",
-    lang: str = "de",
-    names: dict[str, str] | None = None,
-    attributes: dict | None = None,
-    part_of: str | None = None,
-    status: str | None = None,
-) -> dict:
-    """A new place. `names`: other original names, e.g. {"cs": "Horní Ureš"};
-    `attributes`: facts of the kind (house number, house name, ...);
-    `part_of`: slug or id of the place it belongs to."""
+async def create_places(places: list[NewPlace]) -> list[dict]:
+    """New places, one row each: {name, id, slug}, {name, duplicate_of} when
+    it looks like an existing place (nothing created; force: true creates it
+    anyway) or {name, error}. names: other original names, e.g. {"cs":
+    "Horní Ureš"}; attributes: facts of the kind (number, house_name, ...);
+    part_of: the place it belongs to."""
     me = actor()
-    data = places.PlaceIn(
-        name=name,
-        lat=lat,
-        lon=lon,
-        kind=kind,
-        lang=lang,
-        names=names or {},
-        attributes=attributes or {},
-        status=status,
-    )
-    place = await call(places.create, me, data)
-    if part_of:
 
-        def link(session):
-            return resources.link(
-                session,
-                me,
-                UUID(place["id"]),
-                "part_of",
-                resources.resolve(session, part_of, "place"),
-            )
+    def create(session):
+        created: dict[str, UUID] = {}
+        rows = []
+        for item in places:
+            row = {"name": item.name}
+            try:
+                data = place_service.PlaceIn(**item.model_dump(exclude={"part_of"}))
+                place = place_service.create(session, me, data)
+                created[item.name] = place.id
+                row |= {"id": place.id, "slug": place.slug}
+                if item.part_of:
+                    parent = created.get(item.part_of) or resources.resolve(
+                        session, item.part_of, "place"
+                    )
+                    resources.link(session, me, place.id, "part_of", parent)
+            except place_service.Duplicate as e:
+                session.rollback()
+                keep = {"id", "slug", "name", "kind", "status", "distance_m"}
+                row["duplicate_of"] = [m.model_dump(include=keep) for m in e.matches]
+            except ServiceError as e:
+                session.rollback()
+                row["error"] = str(e)
+            rows.append(row)
+        return rows
 
-        await call(link)
-    return place
+    return compact(await call(create))
 
 
 @admin_mcp.tool(auth=WRITE)
@@ -292,25 +403,45 @@ async def update_place(
 
     def update(session):
         id = resources.resolve(session, key, "place")
-        return places.update(session, me, id, places.PlaceUpdate(**changes))
+        place = place_service.update(
+            session, me, id, place_service.PlaceUpdate(**changes)
+        )
+        return place.model_dump(include={"id", "slug", "kind", "lat", "lon"})
 
     return await call(update)
 
 
+class Harvest(BaseModel):
+    url: str  # the share URL, https://<name>.topothek.at/?doc=<id>
+    places: list[str] = []  # slugs or ids, linked with 'shows'
+
+
 @admin_mcp.tool(auth=WRITE)
 async def harvest_topothek(
-    url: str, places: list[str] | None = None, status: str | None = None
-) -> dict:
-    """Harvests a Topothek document by its share URL
-    (https://<name>.topothek.at/?doc=<id>) as a media, linked to `places`
-    (slugs or ids) with 'shows'. Returns the media and whether it is new."""
+    documents: list[Harvest], status: str | None = None
+) -> list[dict]:
+    """Harvests Topothek documents (one after another) as media linked to
+    their places. Rows: {url, id, title, year, created} (created: false for a
+    document harvested before; its places are linked) or {url, error}."""
     me = actor()
-    try:
-        document = await topothek.document(url)
-    except (ValueError, LookupError) as e:
-        raise ToolError(str(e))
-    id, created = await call(harvest.topothek, me, document, places or [], status)
-    return {"media": await call(media.get, UUID(id)), "created": created}
+    rows = []
+    for item in documents:
+        row = {"url": item.url}
+        try:
+            document = await topothek.document(item.url)
+            id, created = await call(
+                harvest.topothek, me, document, item.places, status
+            )
+            row |= {
+                "id": id,
+                "title": document.get("title"),
+                "year": document.get("year"),
+                "created": created,
+            }
+        except (ValueError, LookupError, httpx.HTTPError, ToolError) as e:
+            row["error"] = str(e) or type(e).__name__
+        rows.append(row)
+    return compact(rows)
 
 
 @admin_mcp.tool(auth=WRITE)
@@ -330,7 +461,7 @@ async def add_media(
     """A media whose file stays where it is (image, document or audio, e.g. a
     podcast episode), linked to `places` (shows; about for audio).
     `creator` and `rights_holder` are party names; showing it needs their
-    permission (or one for its source)."""
+    permission (or one for its source). Returns its id."""
     data = media.MediaIn(
         kind=kind,
         url=url,
@@ -344,74 +475,90 @@ async def add_media(
         places=places or [],
         status=status,
     )
-    id = await call(media.create, actor(), data)
-    return await call(media.get, UUID(id))
+    return {"id": await call(media.create, actor(), data)}
+
+
+class Link(BaseModel):
+    subject: str  # id or slug
+    predicate: str  # part_of, shows, about, stop, same_as
+    object: str  # id or slug
+    position: int | None = None  # the order of a tour's stops
 
 
 @admin_mcp.tool(auth=WRITE)
-async def link(
-    subject: str, predicate: str, object: str, position: int | None = None
-) -> dict:
-    """Links two resources (ids or slugs): part_of, shows, about, stop,
-    same_as. An existing link is returned as it is."""
+async def link(links: list[Link]) -> dict:
+    """Links resources; an existing link counts as done. Returns {done,
+    errors: [{item, error}]}."""
     me = actor()
 
-    def add(session):
-        return resources.link(
+    def add(session, item: Link):
+        resources.link(
             session,
             me,
-            resources.resolve(session, subject),
-            predicate,
-            resources.resolve(session, object),
-            position,
+            resources.resolve(session, item.subject),
+            item.predicate,
+            resources.resolve(session, item.object),
+            item.position,
         )
 
-    return await call(add)
+    return compact(await call(each, links, add))
 
 
 @admin_mcp.tool(auth=WRITE)
-async def unlink(relation_id: str) -> str:
-    """Removes a link (the change log keeps it)."""
-    await call(resources.unlink, actor(), UUID(relation_id))
-    return "removed"
-
-
-@admin_mcp.tool(auth=WRITE)
-async def set_text(
-    resource: str,
-    field: str,
-    lang: str,
-    body: str,
-    method: str = "original",
-    translated_from: str | None = None,
-    model: str | None = None,
-) -> dict:
-    """Adds or replaces a text (field: name, title, description, ...) of a
-    resource (id or slug) in one language. A translation: method 'machine'
-    or 'human', translated_from the original's language, model for machines."""
+async def unlink(relation_ids: list[str]) -> dict:
+    """Removes links by relation id (from get_resource); the change log keeps
+    them. Returns {done, errors}."""
     me = actor()
-    text = resources.TextIn(
-        body=body, method=method, translated_from=translated_from, model=model
-    )
 
-    def put(session):
-        id = resources.resolve(session, resource)
-        return resources.set_text(session, me, id, field, lang, text)
+    def remove(session, id: str):
+        resources.unlink(session, me, UUID(id))
 
-    return await call(put)
+    return compact(await call(each, relation_ids, remove))
+
+
+class TextItem(BaseModel):
+    resource: str  # id or slug
+    field: str  # name, title, description, ...
+    lang: str
+    body: str
+    method: str = "original"  # original, machine or human
+    translated_from: str | None = None
+    model: str | None = None  # for machine translations
+
+
+@admin_mcp.tool(auth=WRITE)
+async def set_texts(texts: list[TextItem]) -> dict:
+    """Adds or replaces texts, one per resource, field and language. A
+    translation: method 'machine' or 'human', translated_from the original's
+    language, model for machines. Returns {done, errors: [{item, error}]}."""
+    me = actor()
+
+    def put(session, item: TextItem):
+        text = resources.TextIn(
+            **item.model_dump(include={"body", "method", "translated_from", "model"})
+        )
+        id = resources.resolve(session, item.resource)
+        resources.set_text(session, me, id, item.field, item.lang, text)
+
+    return compact(await call(each, texts, put))
+
+
+# Reviewing
 
 
 @admin_mcp.tool(auth=REVIEW)
-async def set_status(resource: str, status: str, reason: str | None = None) -> dict:
-    """Publishes, mutes (give a reason), withdraws or resets a resource (id or
-    slug) to new."""
+async def set_status(
+    resources: list[str], status: str, reason: str | None = None
+) -> dict:
+    """Publishes, mutes (give a reason), withdraws or resets resources (ids
+    or slugs) to new. Returns {done, errors: [{item, error}]}."""
     me = actor()
 
-    def change(session):
-        id = resources.resolve(session, resource)
-        return resources.set_status(session, me, id, status, reason)
+    def change(session, key: str):
+        id = resource_service.resolve(session, key)
+        resource_service.set_status(session, me, id, status, reason)
 
-    return await call(change)
+    return compact(await call(each, resources, change))
 
 
 @admin_mcp.tool(auth=REVIEW)
