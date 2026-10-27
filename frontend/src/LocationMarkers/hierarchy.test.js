@@ -32,11 +32,13 @@ describe("clusterRadius", () => {
 });
 
 describe("labelAt", () => {
-  test("names villages from 15, landmarks from 16, never houses", () => {
+  test("names villages from 15, mills from 16, never houses or chapels", () => {
     expect(labelAt(village, 14, "Oberuresch")).toBeNull();
     expect(labelAt(village, 15, "Oberuresch")).toBe("Oberuresch");
-    expect(labelAt(chapel, 15, "Kapelle")).toBeNull();
-    expect(labelAt(chapel, 16, "Kapelle")).toBe("Kapelle");
+    expect(labelAt(chapel, 19, "kaple")).toBeNull();
+    const mill = { kind: "mill", name: "Luagmühle" };
+    expect(labelAt(mill, 15, "Luagmühle")).toBeNull();
+    expect(labelAt(mill, 16, "Luagmühle")).toBe("Luagmühle");
     expect(labelAt(house, 19, "Oberuresch 3")).toBeNull();
   });
 });
@@ -45,6 +47,7 @@ describe("hoverName", () => {
   test("names a house by its house name, else by its address", () => {
     expect(hoverName({ ...house, house_name: "Jogl" })).toBe("Jogl");
     expect(hoverName(house)).toBe("Oberuresch 3");
+    expect(hoverName(chapel)).toBeNull();
   });
 });
 

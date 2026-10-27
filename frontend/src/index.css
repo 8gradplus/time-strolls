@@ -97,13 +97,6 @@
   padding: 2px 8px;
 }
 
-/* A house's number, close up: smaller, so a row of houses stays readable */
-.leaflet-tooltip.location-tooltip.house-number {
-  font-size: 12px;
-  padding: 0 5px;
-  font-variant-numeric: tabular-nums;
-}
-
 .leaflet-tooltip.location-tooltip::before {
   display: none;
 }

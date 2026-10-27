@@ -69,6 +69,7 @@ const LocationMarkers = (props) => {
       label={labelAt(place, zoom, place.name)}
       hoverLabel={hoverName(place)}
       active={isActive(place)}
+      zoom={zoom}
       onClick={onClick(place.id)}
     />
   );
