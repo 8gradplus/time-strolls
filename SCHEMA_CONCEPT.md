@@ -240,8 +240,9 @@ by slug, media by (source, external id), files by hash.
    mount; harvesting and review tools. First version in
    `backend/api/mcp_server.py`. The first agent test made 411 single calls
    (2026-10-24); since then batch tools, compact answers, `find_places` and
-   a duplicate guard. Next: server-side imports of scraper records (houses,
-   sacral buildings) by the scraper's record key (`source` + `id`, v0.4.0).
+   a duplicate guard; server-side imports of houses (Südböhmen-Archiv) and
+   sacral buildings (znicenekostely) by the scraper's record key (`source` +
+   `id`, v0.4.0). Next: the agent test again, compared with 411 calls.
 4. **Later:** OAuth 2.1 (roadmap step 5, with the admin UI), areas, more
    types (persons, events), copying permitted files for offline (step 3).
 

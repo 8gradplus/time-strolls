@@ -2968,8 +2968,8 @@ wheels = [
 
 [[package]]
 name = "time-strolls-scraping"
-version = "0.3.1"
-source = { git = "ssh://git@github.com/8gradplus/time-strolls-scraper.git?tag=v0.3.1#13ad0250d4e106f13b50e8b2e0ff9f147ff09aa9" }
+version = "0.4.0"
+source = { git = "ssh://git@github.com/8gradplus/time-strolls-scraper.git?tag=v0.4.0#1641370c81b06b1c75d6f67df01d5ef388bb60af" }
 dependencies = [
     { name = "fastmcp" },
     { name = "httpx" },
@@ -3055,7 +3055,7 @@ requires-dist = [
     { name = "sqlmodel" },
     { name = "swak" },
     { name = "tenacity", marker = "extra == 'dev'" },
-    { name = "time-strolls-scraping", git = "ssh://git@github.com/8gradplus/time-strolls-scraper.git?tag=v0.3.1" },
+    { name = "time-strolls-scraping", git = "ssh://git@github.com/8gradplus/time-strolls-scraper.git?tag=v0.4.0" },
     { name = "timestrolls", extras = ["test"], marker = "extra == 'dev'" },
     { name = "titiler-core", marker = "extra == 'dev'" },
     { name = "uvicorn" },
