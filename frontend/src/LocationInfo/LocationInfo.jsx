@@ -38,33 +38,34 @@ const yearRange = (images) => {
 
 const LocationInfo = (props) => {
   const { open, onClose, slug } = props;
+  // { slug, data }: the slug asked for (the place may answer under its
+  // current slug when an earlier one was asked for)
   const [locationInfo, setLocationInfo] = useState(null);
   const [failedSlug, setFailedSlug] = useState(null);
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
 
   useEffect(() => {
     if (!slug) return;
 
-    fetch(api.locationInfo(slug))
+    fetch(api.locationInfo(slug, language))
       .then((res) => {
         if (!res.ok) {
           throw new Error("Places response not ok");
         }
         return res.json();
       })
-      .then((data) => setLocationInfo(data))
+      .then((data) => setLocationInfo({ slug, data }))
       .catch((error) => {
         console.error("Error fetching place:", error);
         setFailedSlug(slug);
       });
-  }, [slug]);
+  }, [slug, language]);
 
   // Until the new slug has loaded, don't show the previous place
-  const info = locationInfo?.place.slug === slug ? locationInfo : null;
+  const info = locationInfo?.slug === slug ? locationInfo.data : null;
   const years = info && yearRange(info.images);
   const failed = !info && failedSlug === slug;
-  // The API has one podcast per place today; the panel already takes a list
-  const podcasts = info?.podcast?.url ? [info.podcast] : [];
+  const podcasts = info?.podcasts ?? [];
 
   return (
     <Sheet

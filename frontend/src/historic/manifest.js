@@ -43,7 +43,7 @@ export const sources = (time) =>
 export const legacyHistoricYear = (manifest) =>
   yearsInBounds(manifest, REGION_BOUNDS)[0] ?? null;
 
-const locales = { de: "de-AT", cz: "cs-CZ", en: "en-GB" };
+const locales = { de: "de-AT", cs: "cs-CZ", en: "en-GB" };
 
 // One ISO 8601 date ("1952", "1953-06", "1953-06-01") as "1952" or "Juni 1953".
 const formatDate = (iso, language) => {

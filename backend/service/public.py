@@ -7,6 +7,14 @@ from geoalchemy2.shape import to_shape
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from api.model.tables import (
+    Account,
+    Party,
+    Permission,
+    ResourceSource,
+    Source,
+    SourceRecord,
+)
 from api.model.views import (
     PublicMedia,
     PublicPlace,
@@ -202,4 +210,69 @@ def tour(session: Session, key: str, lang: str | None = None) -> TourDetail:
     return TourDetail(
         **tour_summary(row, texts[row.id], lang),
         geom=[list(c) for c in to_shape(row.geom).coords],
+    )
+
+
+class CreditSource(BaseModel):
+    name: str
+    url: str | None = None
+
+
+class CreditTranslation(BaseModel):
+    lang: str
+    method: str  # human | machine
+    model: str | None = None
+    by: str | None = None  # the translator's name, where the account has one
+
+
+class Credits(BaseModel):
+    """For the menu's sources: where the content that is shown comes from
+    (by permission) and how its texts were translated."""
+
+    sources: list[CreditSource]
+    owners: list[str]
+    translations: list[CreditTranslation]
+
+
+def credits(session: Session) -> Credits:
+    """Only sources and parties with a permission and at least one media on
+    the map: a permission alone credits nobody."""
+    active = (Permission.show) & (Permission.revoked_at.is_(None))
+    sources = session.exec(
+        select(Source)
+        .join(Permission, Permission.source_id == Source.id)
+        .join(SourceRecord, SourceRecord.source_id == Source.id)
+        .join(ResourceSource, ResourceSource.source_record_id == SourceRecord.id)
+        .join(PublicMedia, PublicMedia.id == ResourceSource.resource_id)
+        .where(active)
+        .distinct()
+        .order_by(Source.name)
+    )
+    owners = session.exec(
+        select(Party.name)
+        .join(Permission, Permission.party_id == Party.id)
+        .join(
+            PublicMedia,
+            (PublicMedia.rights_holder == Party.name)
+            | (PublicMedia.creator == Party.name),
+        )
+        .where(active)
+        .distinct()
+        .order_by(Party.name)
+    )
+    rows = session.exec(
+        select(PublicText.lang, PublicText.method, PublicText.model, Party.name)
+        .join(Account, Account.id == PublicText.created_by)
+        .join(Party, Party.id == Account.party_id, isouter=True)
+        .where(PublicText.method != "original")
+        .distinct()
+        .order_by(PublicText.lang, PublicText.method)
+    )
+    return Credits(
+        sources=[CreditSource(name=s.name, url=s.base_url) for s in sources],
+        owners=list(owners),
+        translations=[
+            CreditTranslation(lang=lang, method=method, model=model, by=by)
+            for lang, method, model, by in rows
+        ],
     )
