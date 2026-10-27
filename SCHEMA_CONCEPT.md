@@ -205,8 +205,9 @@ our CDN copies are removed and the media becomes `withdrawn`.
     scope `scrape`); harvest into `source_record` and create draft resources
     (`write`); list new content, publish, mute, link, add translations, record
     permissions (`review`). External LLMs never see these tools.
-- The scraper's polite throttling and cache live in the process: run the API
-  with one worker.
+- The scraper's polite throttling and cache live in the process; the MCP
+  mounts are stateless HTTP, so several API workers are fine for single
+  harvests (`backend/api/mcp_server.py`).
 
 ## Replay
 `replay/places.yml` stays the curated content and is adapted to the new API:
@@ -236,7 +237,9 @@ by slug, media by (source, external id), files by hash.
    tests in CI); 2b the replay; 2c the frontend (`?lang=`, several podcasts,
    credits for translations).
 3. **MCP:** both mounts on the service layer, scraper tools in the admin
-   mount; harvesting and review tools.
+   mount; harvesting and review tools. First version in
+   `backend/api/mcp_server.py`. Next: batch tools, compact answers and a
+   lookup of existing places (the first agent test made 114 single calls).
 4. **Later:** OAuth 2.1 (roadmap step 5, with the admin UI), areas, more
    types (persons, events), copying permitted files for offline (step 3).
 
