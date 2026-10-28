@@ -149,6 +149,37 @@ svg.place-mark {
   stroke-linecap: square;
 }
 
+/* A mark moved aside from its village's dot: a hairline back to its true
+   point, under the mark */
+.place-leader {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.place-leader line {
+  stroke: rgba(23, 23, 22, 0.55);
+  stroke-width: 1;
+}
+
+/* Its tap area is a circle instead of the square, so it stays off the
+   village's dot (the square's corner would reach it) */
+.leaflet-marker-icon.leaflet-interactive.place-marker.leader {
+  pointer-events: none;
+}
+
+.place-marker.leader .place-hit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  border-radius: 50%;
+  pointer-events: auto;
+}
+
 /* Mills: a ring */
 .place-ring {
   width: 14px;
@@ -174,8 +205,10 @@ svg.place-mark {
   border-color: #fff;
 }
 
-.place-marker:hover .place-mark {
-  transform: scale(1.25);
+@media (hover: hover) {
+  .place-marker:hover .place-mark {
+    transform: scale(1.25);
+  }
 }
 
 /* The place whose panel is open */

@@ -42,6 +42,26 @@ export const labelAt = (place, zoom, name) => {
   return zoom >= from ? name : null;
 };
 
+// Close up, a house, church or chapel on its village's dot (Oberuresch's
+// chapel, Sankt Thoma's church) moves a little up and to the left, with a
+// hairline back to its true point: both stay visible and clickable, and the
+// village's name on the right stays clear of it. Returns the moved places'
+// offsets in pixels by slug. `project`: a place's position in pixels ({ x, y })
+export const COVER_RADIUS = 24;
+export const LEADER = { dx: -22, dy: -22 };
+
+export const displaced = (closeUps, places, project, radius = COVER_RADIUS) => {
+  const dots = places.map(project);
+  return new Map(
+    closeUps
+      .filter((place) => {
+        const { x, y } = project(place);
+        return dots.some((d) => Math.hypot(d.x - x, d.y - y) < radius);
+      })
+      .map((place) => [place.slug, LEADER]),
+  );
+};
+
 // Hover: a house by its house name ("Jogl"), "Reiterschlag 7" only where it
 // has none; other places by their name
 export const hoverName = (place) => place.house_name || place.name;

@@ -139,26 +139,40 @@ const sacralMark = (scale, classes) => {
 // whenever it gets a new object, so every render would rebuild every marker
 const placeIcons = new Map();
 
-export const placeIcon = (mark = "dot", active = false, filled = false) => {
-  const key = `${mark}-${active}-${filled}`;
+// leader: a mark moved aside from its true point by { dx, dy } pixels gets a
+// hairline back to it (LocationMarkers/hierarchy.js `displaced`)
+export const placeIcon = (
+  mark = "dot",
+  active = false,
+  filled = false,
+  leader,
+) => {
+  const key = `${mark}-${active}-${filled}-${leader ? `${leader.dx},${leader.dy}` : ""}`;
   if (!placeIcons.has(key)) {
-    placeIcons.set(key, makePlaceIcon(mark, active, filled));
+    placeIcons.set(key, makePlaceIcon(mark, active, filled, leader));
   }
   return placeIcons.get(key);
 };
 
-const makePlaceIcon = (mark, active, filled) => {
+const leaderLine = ({ dx, dy }) => {
+  const c = PLACE_TAP_SIZE / 2;
+  return `<svg class="place-leader" width="${PLACE_TAP_SIZE}" height="${PLACE_TAP_SIZE}" aria-hidden="true"><line x1="${c}" y1="${c}" x2="${c - dx}" y2="${c - dy}"/></svg>`;
+};
+
+const makePlaceIcon = (mark, active, filled, leader) => {
   const classes = ["place-mark", `place-${mark}`];
   if (active) classes.push("active");
   if (filled) classes.push("filled");
   const scale = SACRAL_SCALE[mark];
-  const html = scale
-    ? sacralMark(scale, classes.join(" "))
-    : `<span class="${classes.join(" ")}"></span>`;
+  const html =
+    (leader ? leaderLine(leader) + `<span class="place-hit"></span>` : "") +
+    (scale
+      ? sacralMark(scale, classes.join(" "))
+      : `<span class="${classes.join(" ")}"></span>`);
 
   return L.divIcon({
     html,
-    className: "place-marker",
+    className: leader ? "place-marker leader" : "place-marker",
     iconSize: [PLACE_TAP_SIZE, PLACE_TAP_SIZE],
     iconAnchor: [PLACE_TAP_SIZE / 2, PLACE_TAP_SIZE / 2],
   });

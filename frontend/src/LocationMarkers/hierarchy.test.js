@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   clusterRadius,
+  displaced,
   groupsOf,
   hoverName,
   isCloseUp,
@@ -51,6 +52,24 @@ describe("labelAt", () => {
     expect(labelAt(mill, 15, "Luagmühle")).toBeNull();
     expect(labelAt(mill, 16, "Luagmühle")).toBe("Luagmühle");
     expect(labelAt(house, 19, "Oberuresch 3")).toBeNull();
+  });
+});
+
+describe("displaced", () => {
+  const project = (place) => ({ x: place.x, y: place.y });
+  test("moves a chapel or house aside where it covers a village's dot", () => {
+    const villages = [
+      { slug: "oberuresch", x: 100, y: 100 },
+      { slug: "reiterschlag", x: 300, y: 100 },
+    ];
+    const closeUps = [
+      { slug: "kaple", x: 100, y: 100 },
+      { slug: "house", x: 300, y: 160 },
+    ];
+    expect(displaced(closeUps, villages, project)).toEqual(
+      new Map([["kaple", { dx: -22, dy: -22 }]]),
+    );
+    expect(displaced(closeUps, [], project)).toEqual(new Map());
   });
 });
 

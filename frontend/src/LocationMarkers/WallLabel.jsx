@@ -4,11 +4,13 @@ import { Icon } from "../icons";
 import { useLanguage } from "../LanguageContext";
 import { usePlayer } from "../podcast/PlayerContext";
 import { serif } from "../theme";
-import { CLOSE_UP_ZOOM, isCloseUp, labelTarget } from "./hierarchy";
+import { CLOSE_UP_ZOOM, hoverName, isCloseUp, labelTarget } from "./hierarchy";
+import { markPositions } from "./position";
 
-// Like the one label a gallery hangs beside a work: close up (CLOSE_UP_ZOOM),
-// the house, church or chapel nearest the centre of the map gets its name in
-// a label above the dock, and a ring on the map. Panning moves it from one
+// On touch screens, in place of hover (Map.jsx), like the one label a
+// gallery hangs beside a work: close up (CLOSE_UP_ZOOM), the house, church
+// or chapel nearest the centre of the map gets its name in a label above the
+// dock, and a ring on the map. Panning moves it from one
 // to the next; while the map follows the GPS position, it names the one you
 // pass. When you let go of the map, it glides the last bit so it sits in the
 // centre. Returns the place's slug, or null.
@@ -17,13 +19,13 @@ export const useWallLabel = (map, locations, enabled) => {
   const current = useRef(null);
 
   useEffect(() => {
-    const houses = enabled && locations ? locations.filter(isCloseUp) : [];
+    const places = enabled && locations ? locations.filter(isCloseUp) : [];
     const show = (next) => {
       if (next === current.current) return;
       current.current = next;
       setSlug(next);
     };
-    if (!map || houses.length === 0) {
+    if (!map || places.length === 0) {
       show(null);
       return;
     }
@@ -31,12 +33,14 @@ export const useWallLabel = (map, locations, enabled) => {
     const update = () => {
       if (map.getZoom() < CLOSE_UP_ZOOM) return show(null);
       const centre = map.latLngToContainerPoint(map.getCenter());
-      const distances = houses.map((house) => ({
-        slug: house.slug,
-        d: map
-          .latLngToContainerPoint([house.lat, house.lon])
-          .distanceTo(centre),
-      }));
+      const positionOf = markPositions(map, locations, map.getZoom());
+      const distances = places.map((place) => {
+        const { lat, lon } = positionOf(place);
+        return {
+          slug: place.slug,
+          d: map.latLngToContainerPoint([lat, lon]).distanceTo(centre),
+        };
+      });
       show(labelTarget(distances, current.current));
     };
     // After a drag, once Leaflet's glide (inertia) has come to rest
@@ -48,10 +52,11 @@ export const useWallLabel = (map, locations, enabled) => {
       update();
       if (!dragged) return;
       dragged = false;
-      const house = houses.find((h) => h.slug === current.current);
-      if (!house) return;
+      const place = places.find((p) => p.slug === current.current);
+      if (!place) return;
+      const { lat, lon } = markPositions(map, locations, map.getZoom())(place);
       const still = window.matchMedia("(prefers-reduced-motion: reduce)");
-      map.panTo([house.lat, house.lon], {
+      map.panTo([lat, lon], {
         animate: !still.matches,
         duration: 0.28,
       });
@@ -73,7 +78,7 @@ export const useWallLabel = (map, locations, enabled) => {
   return slug;
 };
 
-// The label: only the house name (the rest is in its panel), and › to open
+// The label: only the name as on hover (the rest is in its panel), and › to open
 // it. Level with the location button like the mini player (MiniPlayer.jsx),
 // and above it while a story plays.
 const WallLabel = ({ place, openSlug, onOpen }) => {
@@ -82,7 +87,7 @@ const WallLabel = ({ place, openSlug, onOpen }) => {
   if (!place) return null;
 
   const playerShown = current && !ended && current.place.slug !== openSlug;
-  const name = place.house_name || place.name;
+  const name = hoverName(place);
 
   return (
     <Box

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import LocationMarker from "./LocationMarker";
+import { markPositions } from "./position";
 import {
   CLOSE_UP_ZOOM,
   clusterRadius,
@@ -60,11 +61,11 @@ const LocationMarkers = (props) => {
 
   const isActive = (place) =>
     place.slug === activeSlug || place.slug === focusSlug;
+  const positionOf = markPositions(map, locations, zoom);
   const marker = (place) => (
     <LocationMarker
       key={place.id}
-      lat={place.lat}
-      lon={place.lon}
+      {...positionOf(place)}
       mark={markOf(place.kind)}
       filled={place.images > 0}
       label={labelAt(place, zoom, place.name)}
@@ -75,6 +76,8 @@ const LocationMarkers = (props) => {
     />
   );
 
+  const closeUpPlaces = locations.filter(isCloseUp);
+  const closeUp = zoom >= CLOSE_UP_ZOOM;
   const places = locations
     .filter((place) => !isCloseUp(place))
     .sort(
@@ -82,8 +85,6 @@ const LocationMarkers = (props) => {
         LAYER[markOf(a.kind)] - LAYER[markOf(b.kind)] ||
         Number(isActive(a)) - Number(isActive(b)),
     );
-  const closeUpPlaces = locations.filter(isCloseUp);
-  const closeUp = zoom >= CLOSE_UP_ZOOM;
   // Further out, only the open one, on its own
   const openOne = !closeUp && closeUpPlaces.find((place) => isActive(place));
 

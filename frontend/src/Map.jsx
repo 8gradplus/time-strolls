@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { MapContainer, TileLayer } from "react-leaflet";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import "leaflet/dist/leaflet.css";
 import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
@@ -296,8 +297,15 @@ const CoordinateMap = () => {
     });
   };
 
-  // The house nearest the centre, close up (no label while a panel is open)
-  const labelSlug = useWallLabel(map, locations, showMarkers && !showInfo);
+  // The house, church or chapel nearest the centre, close up (no label while
+  // a panel is open). Only on touch screens, in place of hover; with a mouse
+  // the marks name themselves on hover
+  const touch = useMediaQuery("(hover: none) and (pointer: coarse)");
+  const labelSlug = useWallLabel(
+    map,
+    locations,
+    touch && showMarkers && !showInfo,
+  );
   const labelPlace = locations?.find((loc) => loc.slug === labelSlug);
 
   const handleMarkerClick = (id) => (toggle) => {
