@@ -6,6 +6,7 @@ import { markPositions } from "./position";
 import {
   CLOSE_UP_ZOOM,
   clusterRadius,
+  hasMore,
   hoverName,
   isCloseUp,
   labelAt,
@@ -48,8 +49,10 @@ const useStaleClusterFix = (mounted) => {
 const CLOSE_UP_CLUSTER_RADIUS = 16;
 
 const LocationMarkers = (props) => {
-  // focusSlug: the house with the wall label (WallLabel.jsx) gets a ring
-  const { open, onClick, locations, activeSlug, focusSlug } = props;
+  // focusSlug: the place with the wall label (WallLabel.jsx) gets a ring.
+  // touch: no hover; houses, churches and chapels are named by the wall
+  // label instead (Leaflet would open the hover name on a tap too)
+  const { open, onClick, locations, activeSlug, focusSlug, touch } = props;
   const map = useMap();
   const [zoom, setZoom] = useState(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
@@ -69,7 +72,8 @@ const LocationMarkers = (props) => {
       mark={markOf(place.kind)}
       filled={place.images > 0}
       label={labelAt(place, zoom, place.name)}
-      hoverLabel={hoverName(place)}
+      hoverLabel={touch && isCloseUp(place) ? null : hoverName(place)}
+      more={hasMore(place)}
       active={isActive(place)}
       zoom={zoom}
       onClick={onClick(place.id)}

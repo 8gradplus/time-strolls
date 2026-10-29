@@ -297,21 +297,32 @@ const CoordinateMap = () => {
     });
   };
 
-  // The house, church or chapel nearest the centre, close up (no label while
-  // a panel is open). Only on touch screens, in place of hover; with a mouse
-  // the marks name themselves on hover
+  // On touch screens, in place of hover, a tap on a house, church or chapel
+  // names it in the wall label first; with a mouse the marks name
+  // themselves on hover and a click opens them
   const touch = useMediaQuery("(hover: none) and (pointer: coarse)");
-  const labelSlug = useWallLabel(
+  const [labelSlug, selectLabel, clearLabel] = useWallLabel(
     map,
     locations,
-    touch && showMarkers && !showInfo,
+    touch && showMarkers,
   );
   const labelPlace = locations?.find((loc) => loc.slug === labelSlug);
+  // An open panel takes over from the label
+  useEffect(() => {
+    if (locationSlug) clearLabel();
+  }, [locationSlug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMarkerClick = (id) => (toggle) => {
     // Find the location to get its slug
     const location = locations?.find((loc) => loc.id === id);
     if (!location) return;
+
+    // The first tap names it, a second (or a tap on the label) opens it;
+    // villages and mills open at once
+    if (touch && isCloseUp(location) && location.slug !== labelSlug) {
+      selectLabel(location);
+      return;
+    }
 
     setSearchParams((params) => {
       if (toggle) {
@@ -371,6 +382,7 @@ const CoordinateMap = () => {
               locations={locations}
               activeSlug={locationSlug}
               focusSlug={labelSlug}
+              touch={touch}
             />
           )}
 
@@ -416,7 +428,7 @@ const CoordinateMap = () => {
               onModeChange={handleTrackingModeChange}
             />
             <WallLabel
-              place={labelPlace}
+              place={showInfo ? null : labelPlace}
               openSlug={locationSlug}
               onOpen={(place) =>
                 setSearchParams((params) => {

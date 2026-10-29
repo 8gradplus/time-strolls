@@ -1,85 +1,63 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import { Icon } from "../icons";
 import { useLanguage } from "../LanguageContext";
 import { usePlayer } from "../podcast/PlayerContext";
 import { serif } from "../theme";
-import { CLOSE_UP_ZOOM, hoverName, isCloseUp, labelTarget } from "./hierarchy";
+import Pips from "../Components/Pips";
+import { CLOSE_UP_ZOOM, hasMore, hoverName } from "./hierarchy";
 import { markPositions } from "./position";
 
 // On touch screens, in place of hover (Map.jsx), like the one label a
-// gallery hangs beside a work: close up (CLOSE_UP_ZOOM), the house, church
-// or chapel nearest the centre of the map gets its name in a label above the
-// dock, and a ring on the map. Panning moves it from one
-// to the next; while the map follows the GPS position, it names the one you
-// pass. When you let go of the map, it glides the last bit so it sits in the
-// centre. Returns the place's slug, or null.
+// gallery hangs beside a work: tapping a house, church or chapel (close up,
+// CLOSE_UP_ZOOM) gives it a ring and its name in a label above the dock; a
+// tap on the label or on the same mark again opens it. The map doesn't
+// move, unless the mark would lie under the label or the dock. The label
+// stays while you drag or zoom, and goes when its place leaves the screen,
+// below CLOSE_UP_ZOOM, or on a tap on the empty map. Transient, not in the
+// URL. Returns [slug or null, select(place), clear()].
 export const useWallLabel = (map, locations, enabled) => {
   const [slug, setSlug] = useState(null);
-  const current = useRef(null);
+  const place = enabled ? locations?.find((p) => p.slug === slug) : null;
 
   useEffect(() => {
-    const places = enabled && locations ? locations.filter(isCloseUp) : [];
-    const show = (next) => {
-      if (next === current.current) return;
-      current.current = next;
-      setSlug(next);
-    };
-    if (!map || places.length === 0) {
-      show(null);
-      return;
-    }
-
-    const update = () => {
-      if (map.getZoom() < CLOSE_UP_ZOOM) return show(null);
-      const centre = map.latLngToContainerPoint(map.getCenter());
-      const positionOf = markPositions(map, locations, map.getZoom());
-      const distances = places.map((place) => {
-        const { lat, lon } = positionOf(place);
-        return {
-          slug: place.slug,
-          d: map.latLngToContainerPoint([lat, lon]).distanceTo(centre),
-        };
-      });
-      show(labelTarget(distances, current.current));
-    };
-    // After a drag, once Leaflet's glide (inertia) has come to rest
-    let dragged = false;
-    const drop = () => {
-      dragged = true;
-    };
-    const settle = () => {
-      update();
-      if (!dragged) return;
-      dragged = false;
-      const place = places.find((p) => p.slug === current.current);
-      if (!place) return;
+    if (!map || !place) return;
+    const clear = () => setSlug(null);
+    const check = () => {
+      if (map.getZoom() < CLOSE_UP_ZOOM) return clear();
       const { lat, lon } = markPositions(map, locations, map.getZoom())(place);
-      const still = window.matchMedia("(prefers-reduced-motion: reduce)");
-      map.panTo([lat, lon], {
-        animate: !still.matches,
-        duration: 0.28,
-      });
+      if (!map.getBounds().contains([lat, lon])) clear();
     };
-
-    // Live while you drag, otherwise once a move has ended: changing the
-    // ring (a marker's icon) during a zoom animation leaves stale clusters
-    update();
-    map.on("drag", update);
-    map.on("dragend", drop);
-    map.on("moveend", settle);
+    map.on("moveend", check);
+    map.on("click", clear);
     return () => {
-      map.off("drag", update);
-      map.off("dragend", drop);
-      map.off("moveend", settle);
+      map.off("moveend", check);
+      map.off("click", clear);
     };
-  }, [map, locations, enabled]);
+  }, [map, locations, place]);
 
-  return slug;
+  const select = (next) => {
+    setSlug(next.slug);
+    if (!map) return;
+    // Just enough to bring the mark above the label and the dock
+    const { lat, lon } = markPositions(map, locations, map.getZoom())(next);
+    const { y } = map.latLngToContainerPoint([lat, lon]);
+    const clearOf = map.getSize().y - LABEL_BAND;
+    if (y > clearOf) {
+      const still = window.matchMedia("(prefers-reduced-motion: reduce)");
+      map.panBy([0, y - clearOf], { animate: !still.matches, duration: 0.28 });
+    }
+  };
+
+  return [place ? slug : null, select, () => setSlug(null)];
 };
 
-// The label: only the name as on hover (the rest is in its panel), and › to open
-// it. Level with the location button like the mini player (MiniPlayer.jsx),
+// The strip at the bottom with the dock, the label and the mini player
+// (pixels); a tapped mark below it is moved up
+const LABEL_BAND = 190;
+
+// The label: only the name as on hover (the rest is in its panel), three
+// pips when there is more to see, and › to open it. Level with the location button like the mini player (MiniPlayer.jsx),
 // and above it while a story plays.
 const WallLabel = ({ place, openSlug, onOpen }) => {
   const { t } = useLanguage();
@@ -137,6 +115,7 @@ const WallLabel = ({ place, openSlug, onOpen }) => {
       >
         {name}
       </Box>
+      {hasMore(place) && <Pips sx={{ ml: 0.75 }} />}
       <Icon name="chevron_right" size={22} />
     </Box>
   );
