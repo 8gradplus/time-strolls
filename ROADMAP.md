@@ -95,7 +95,15 @@ sacral buildings; scraper v0.4.0 with the record key).
    (accepted for now); the droplet keeps old unused images
    (`docker image prune`).
 5. Then go on in the agreed order: 5 admin, 3 offline PWA, 6 Android.
-6. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
+6. **Backend, "has more" (2026-10-29):** the map marks a place worth
+   opening with three pips (hover name, wall label, the village panel's
+   lists) and a filled house dot, for now only when it has photos
+   (`hasMore` in `frontend/src/LocationMarkers/hierarchy.js`).
+   `/api/locations/` (and a place's `children`) should also say whether it
+   has podcasts or a description text in any language (names and archive
+   facts don't count), e.g. one field `more: bool`; `hasMore` and the
+   filled dot then use it.
+7. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
    wildcards after every upload (see `CLAUDE.md`, "CDN caching"); widening a
    region re-renders tiles under the same URLs.
 

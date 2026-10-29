@@ -3,8 +3,8 @@
 // close up. Pure functions, so the rules are tested (hierarchy.test.js).
 
 // Houses, churches and chapels appear from this zoom. They have no names
-// next to them: the one nearest the centre of the map gets the wall label
-// (WallLabel.jsx)
+// next to them: on hover, or on touch screens in the wall label of the one
+// tapped (WallLabel.jsx)
 export const CLOSE_UP_ZOOM = 17;
 // Names next to villages from this zoom on (also for touch screens, where
 // there is no hover), next to mills from LANDMARK_LABEL_ZOOM
@@ -62,6 +62,11 @@ export const displaced = (closeUps, places, project, radius = COVER_RADIUS) => {
   );
 };
 
+// "There's more to see" (three pips, Components/Pips.jsx; a filled house
+// dot): for now only photos. Later also podcasts and a description, once
+// /api/locations/ says so (ROADMAP.md)
+export const hasMore = (place) => place.images > 0;
+
 // Hover: a house by its house name ("Jogl"), "Reiterschlag 7" only where it
 // has none; other places by their name
 export const hoverName = (place) => place.house_name || place.name;
@@ -76,19 +81,4 @@ export const groupsOf = (children) => {
     { key: "houses", places: houses },
     { key: "placesHere", places: other },
   ].filter((group) => group.places.length > 0);
-};
-
-// The wall label's house: the nearest to the centre within `reach` pixels.
-// The current one stays until another is closer by `hysteresis` pixels, so
-// the label doesn't flicker between neighbours. `distances`: [{ slug, d }]
-export const WALL_LABEL = { reach: 70, hysteresis: 12 };
-
-export const labelTarget = (distances, current, options = WALL_LABEL) => {
-  const near = distances
-    .filter(({ d }) => d <= options.reach)
-    .sort((a, b) => a.d - b.d);
-  if (near.length === 0) return null;
-  const kept = near.find(({ slug }) => slug === current);
-  if (kept && near[0].d + options.hysteresis >= kept.d) return kept.slug;
-  return near[0].slug;
 };

@@ -11,7 +11,8 @@ import { useLanguage } from "../LanguageContext";
 import { formatCoordinates } from "./coordinates";
 import { serif } from "../theme";
 import { Icon } from "../icons";
-import { groupsOf, isHouse } from "../LocationMarkers/hierarchy";
+import { groupsOf, hasMore, isHouse } from "../LocationMarkers/hierarchy";
+import Pips from "../Components/Pips";
 
 // Small caps heading with a count, e.g. "HÖREN 1" or "BILDER 70"
 const SectionLabel = ({ title, count }) => (
@@ -55,7 +56,7 @@ const factsLine = (place, t) =>
 
 // One row of a village's list: the house number, the name, the number of
 // photos
-const PlaceRow = ({ place, onOpen, t }) => {
+const PlaceRow = ({ place, onOpen }) => {
   const state = place.state || place.address;
   const house = isHouse(place);
   return (
@@ -116,15 +117,8 @@ const PlaceRow = ({ place, onOpen, t }) => {
           </Box>
         )}
       </Box>
-      <Box
-        component="span"
-        sx={{
-          color: "primary.main",
-          fontSize: "0.85rem",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        {place.images > 0 && `${place.images} ${t.photos}`}
+      <Box component="span" sx={{ alignSelf: "center", display: "flex" }}>
+        {hasMore(place) && <Pips />}
       </Box>
     </ButtonBase>
   );
@@ -132,7 +126,7 @@ const PlaceRow = ({ place, onOpen, t }) => {
 
 // A village's churches, chapels or houses: a heading with the count that
 // unfolds the list
-const PlaceGroup = ({ title, places, onOpen, t }) => {
+const PlaceGroup = ({ title, places, onOpen }) => {
   const [open, setOpen] = useState(false);
   return (
     <Box>
@@ -174,7 +168,7 @@ const PlaceGroup = ({ title, places, onOpen, t }) => {
       <Collapse in={open}>
         <Box sx={{ px: 1, pb: 1 }}>
           {places.map((child) => (
-            <PlaceRow key={child.id} place={child} onOpen={onOpen} t={t} />
+            <PlaceRow key={child.id} place={child} onOpen={onOpen} />
           ))}
         </Box>
       </Collapse>
@@ -279,7 +273,6 @@ const LocationInfo = (props) => {
               title={t[group.key]}
               places={group.places}
               onOpen={onOpen}
-              t={t}
             />
           ))}
           {podcasts.length > 0 && (

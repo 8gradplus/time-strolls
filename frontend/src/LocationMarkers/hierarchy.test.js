@@ -3,10 +3,10 @@ import {
   clusterRadius,
   displaced,
   groupsOf,
+  hasMore,
   hoverName,
   isCloseUp,
   labelAt,
-  labelTarget,
   markOf,
 } from "./hierarchy";
 
@@ -93,28 +93,10 @@ describe("groupsOf", () => {
   });
 });
 
-describe("labelTarget", () => {
-  const options = { reach: 70, hysteresis: 12 };
-  test("takes the nearest house within reach", () => {
-    const d = [
-      { slug: "a", d: 40 },
-      { slug: "b", d: 20 },
-      { slug: "c", d: 90 },
-    ];
-    expect(labelTarget(d, null, options)).toBe("b");
-    expect(labelTarget([{ slug: "c", d: 90 }], "c", options)).toBeNull();
-  });
-
-  test("keeps the current house until another is clearly closer", () => {
-    const close = [
-      { slug: "a", d: 30 },
-      { slug: "b", d: 22 },
-    ];
-    expect(labelTarget(close, "a", options)).toBe("a");
-    const clear = [
-      { slug: "a", d: 40 },
-      { slug: "b", d: 20 },
-    ];
-    expect(labelTarget(clear, "a", options)).toBe("b");
+describe("hasMore", () => {
+  test("is true for places with photos only", () => {
+    expect(hasMore({ images: 2 })).toBe(true);
+    expect(hasMore({ images: 0 })).toBe(false);
+    expect(hasMore({})).toBe(false);
   });
 });
