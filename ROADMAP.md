@@ -30,35 +30,37 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   background GPS and audio. So offline lands as a PWA, and Capacitor wraps
   the same build later.
 
-## Next session (state on 2026-10-27)
+## Next session (state on 2026-10-29)
 Production runs v0.3.2 from the release workflow. Merged since, not
 released: the new content model (2a #17, 2b #18, 2c #19), the MCP server
 (#20) and its cheaper version for agents (#21 batch tools, `find_places`,
 duplicate guard, compact answers; #22 server-side imports of houses and
-sacral buildings; scraper v0.4.0 with the record key).
-0. **Start here: the frontend round for houses and chapels (B).** The
-   agent test of 2026-10-27 left the local database full of them, all
-   published: 148 places on the map (118 houses, 13 chapels, 13 villages,
-   2 churches, 2 mills; 2 houses and the podcast muted). Every place is a
-   red dot today, which will overwhelm visitors. Plan (from the approved
-   plan of 2026-10-27, part B):
-   - Clickable mockups first, as an artifact, comparing a hierarchy: the map
-     shows villages and landmarks (chapel, church, wayside shrine); houses
-     only from about zoom 17 on as smaller, quieter dots, or only in the
-     village's panel as a list ("Häuser": number, house name, photos);
-     kind-specific marks (a small cross for chapels and shrines); the logo
-     stays out of the markers.
-   - The village panel lists its `part_of` children by kind.
-   - Backend as needed: `kind` and `part_of` in `/api/locations/`, children
-     in `/api/locations/{slug}`; maybe `map_visible = false` for `house`.
-   - URL state stays in the query string; new strings in de, cs, en.
-   - **Local setup without SSH** (the API image needs the private scraper
-     over SSH; the local venv already has it): in `deployment/`
-     `docker compose up -d --no-deps --wait postgres` and
-     `docker compose run --rm --no-deps migrate-postgres` (the override
-     mounts `backend/migration`); in `backend/` `make run-api` (:8000); in
-     `frontend/` `API_PROXY=http://127.0.0.1:8000 npm start` (:3000). The
-     data is in the local volume `timestrolls_pg17` (never `down -v`).
+sacral buildings; scraper v0.4.0 with the record key), and houses and
+chapels on the map (#24 round B, #25 tap label and pips; tested on the
+Pixel 2026-10-29).
+0. **Start here: the release** of all this with the switch-over (item 2).
+   Round B (houses and chapels) is done: villages and mills at every zoom,
+   houses, churches and chapels from zoom 17 (kind marks, their own
+   clusters, a leader line where a mark covers its village), the village
+   panel's folded lists, on touch screens a tap names a mark in the wall
+   label and a second tap opens it, three pips for "more to see". Left
+   from round B, none blocking the release:
+   - Kind labels (Haus, Kapelle, Dorf) as UI strings in de, cs, en: not
+     decided.
+   - Spiderfied marks show no names; an open place inside a cluster isn't
+     highlighted.
+   - Data: two Reiterschlag chapels are both "kaple"; Oberuresch 14 has
+     coordinates in Reiterschlag (48.6083, 14.109).
+   - To reconsider: the village gives way close up instead of the leader
+     line (`CLAUDE.md`, frontend).
+
+   **Local setup without SSH** (the API image needs the private scraper
+   over SSH; the local venv already has it): in `deployment/`
+   `docker compose up -d --no-deps --wait postgres` and
+   `docker compose run --rm --no-deps migrate-postgres` (the override
+   mounts `backend/migration`); in `backend/` `make run-api` (:8000); in
+   `frontend/` `API_PROXY=http://127.0.0.1:8000 npm start` (:3000). The
+   data is in the local volume `timestrolls_pg17` (never `down -v`).
 1. **MCP, still to improve** (measured 2026-10-27 against 2026-10-24, the
    same prompts: 281 → 81 calls, 314 → 145 KB of answers, 1.41 M → 139 k
    output tokens, 77 M → 21 M cached input; script and numbers in the PRs
@@ -117,6 +119,7 @@ sacral buildings; scraper v0.4.0 with the record key).
 | 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
 | 2c | Calm map: only map and time line, the rest in the menu | Done (#9) |
 | 2d | Phone test and mobile polish, area start views | Done (#12, #13, #14) |
+| 2e | Houses and chapels on the map (round B), tap label and pips | Done (#24, #25) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Done (#10, #11) |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
@@ -134,6 +137,7 @@ via ground control points, step 7 enhancement layers.
 | 2 | Needed before PWA icons and the app |
 | 2b | The look has to hold on the real map and imagery before offline and the app |
 | 2c | Too many buttons confused people; usability before new features |
+| 2e | The agent's houses would have buried the map in red dots |
 | 3 | Core museum-guide value |
 | 4 | Before more people touch prod |
 | 5 | Replaces Swagger and notebooks |
