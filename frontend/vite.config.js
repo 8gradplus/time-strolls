@@ -9,6 +9,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    // IPv4: `make phone` (adb reverse) reaches the Mac at 127.0.0.1, while
+    // Vite's default "localhost" may listen on IPv6 (::1) only
+    host: "127.0.0.1",
     // Allow localtunnel hosts for testing on a phone
     allowedHosts: [".loca.lt"],
     proxy: {

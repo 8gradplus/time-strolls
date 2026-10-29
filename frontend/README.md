@@ -47,6 +47,12 @@ Screenshot from the Mac: `adb exec-out screencap -p > phone.png`.
   options and plug in again.
 - `adb kill-server && adb devices`. `unauthorized` means the prompt on the
   phone is still waiting.
+- On a MacBook, a new USB device needs "Allow accessory to connect?" on the
+  Mac (System Settings → Privacy & Security → Allow accessories to connect).
+
+The dev server listens on `127.0.0.1` (`vite.config.js`), because
+`adb reverse` connects to IPv4; one that listens on IPv6 only (`[::1]`)
+leaves the phone with "connection refused".
 
 Without USB (or on an iPhone), use a tunnel: `lt --port 3000` and open the
 printed address (the password is your public IP:
