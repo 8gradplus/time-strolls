@@ -138,18 +138,18 @@ READ = scope("read")
 
 @public_mcp.tool(auth=READ)
 async def find_places(text: str | None = None, lang: str | None = None) -> list[dict]:
-    """Places on the map (id, slug, name, kind, lat, lon), optionally only
-    those whose name contains `text`."""
+    """Places on the map (id, slug, name, kind, lat, lon, part_of and a
+    house's facts), optionally only those whose name contains `text`."""
     found = await call(public.locations, lang)
     if text:
         found = [p for p in found if text.lower() in p["name"].lower()]
-    return found
+    return compact(found)
 
 
 @public_mcp.tool(auth=READ)
 async def get_place(slug: str, lang: str | None = None) -> dict:
     """A place with its photos (title, year, owner, source link) and podcasts."""
-    return await call(public.location, slug, lang)
+    return compact(await call(public.location, slug, lang))
 
 
 @public_mcp.tool(auth=READ)

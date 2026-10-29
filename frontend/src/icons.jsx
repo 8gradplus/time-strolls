@@ -115,17 +115,64 @@ export const PlayPauseGlyph = ({ size = 22 }) => (
   </svg>
 );
 
-// A place: one plain dot in the map accent with a white ring (.place-dot in
-// index.css), inside a larger transparent area that is easy to tap. The open
-// place gets a halo.
+// A place: a mark by its kind (LocationMarkers/hierarchy.js; .place-* in
+// index.css), inside a larger transparent area that is easy to tap. A
+// village is a dot in the map accent with a white ring, a church or chapel
+// a dark disc with a white cross, a mill a ring, a house a small hollow dot
+// (filled where it has photos). The open place gets a halo.
 const PLACE_TAP_SIZE = 44;
 
-export const placeIcon = (active = false) => {
-  const className = active ? "place-dot active" : "place-dot";
+// Churches and chapels: a dark disc in a white ring with a white cross cut
+// into it (the red stays for villages and what is open); a church larger
+const SACRAL_SCALE = { church: 1.15, chapel: 0.85 };
+
+const sacralMark = (scale, classes) => {
+  const r = 8.6 * scale;
+  const h = r * 0.62;
+  const arm = r * 0.4;
+  const bar = -h * 0.32;
+  const f = (n) => n.toFixed(2);
+  return `<svg class="${classes}" width="24" height="24" viewBox="-12 -12 24 24" aria-hidden="true"><circle class="edge" r="${f(r + 1.2)}"/><circle class="ring" r="${f(r + 0.4)}"/><circle class="disc" r="${f(r - 1.8)}"/><path class="cross" d="M0 ${f(-h)}V${f(h)}M${f(-arm)} ${f(bar)}H${f(arm)}" stroke-width="${f(2 * scale)}"/></svg>`;
+};
+
+// One icon per look: react-leaflet replaces a marker's icon (its DOM element)
+// whenever it gets a new object, so every render would rebuild every marker
+const placeIcons = new Map();
+
+// leader: a mark moved aside from its true point by { dx, dy } pixels gets a
+// hairline back to it (LocationMarkers/hierarchy.js `displaced`)
+export const placeIcon = (
+  mark = "dot",
+  active = false,
+  filled = false,
+  leader,
+) => {
+  const key = `${mark}-${active}-${filled}-${leader ? `${leader.dx},${leader.dy}` : ""}`;
+  if (!placeIcons.has(key)) {
+    placeIcons.set(key, makePlaceIcon(mark, active, filled, leader));
+  }
+  return placeIcons.get(key);
+};
+
+const leaderLine = ({ dx, dy }) => {
+  const c = PLACE_TAP_SIZE / 2;
+  return `<svg class="place-leader" width="${PLACE_TAP_SIZE}" height="${PLACE_TAP_SIZE}" aria-hidden="true"><line x1="${c}" y1="${c}" x2="${c - dx}" y2="${c - dy}"/></svg>`;
+};
+
+const makePlaceIcon = (mark, active, filled, leader) => {
+  const classes = ["place-mark", `place-${mark}`];
+  if (active) classes.push("active");
+  if (filled) classes.push("filled");
+  const scale = SACRAL_SCALE[mark];
+  const html =
+    (leader ? leaderLine(leader) + `<span class="place-hit"></span>` : "") +
+    (scale
+      ? sacralMark(scale, classes.join(" "))
+      : `<span class="${classes.join(" ")}"></span>`);
 
   return L.divIcon({
-    html: `<span class="${className}"></span>`,
-    className: "place-marker",
+    html,
+    className: leader ? "place-marker leader" : "place-marker",
     iconSize: [PLACE_TAP_SIZE, PLACE_TAP_SIZE],
     iconAnchor: [PLACE_TAP_SIZE / 2, PLACE_TAP_SIZE / 2],
   });

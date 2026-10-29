@@ -101,7 +101,7 @@
   display: none;
 }
 
-/* Places, clusters and tours are the same in light and dark mode, because the
+/* Places and tours are the same in light and dark mode, because the
    base map is always light grey: the map accent with a white ring and a thin
    dark edge, so they read on the grey map, the grey 1949/1952 aerials and the
    colour orthophotos alike. */
@@ -110,30 +110,124 @@
   place-items: center;
 }
 
-.place-dot {
+.place-mark {
   display: block;
   box-sizing: border-box;
+  transition: transform 0.15s ease;
+}
+
+.place-dot {
   width: 20px;
   height: 20px;
   border-radius: 50%;
   background: var(--mui-palette-primary-main);
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-  transition: transform 0.15s ease;
 }
 
-.place-marker:hover .place-dot {
-  transform: scale(1.25);
+/* Churches and chapels: a dark disc in a white ring with a white cross
+   (icons.jsx draws the sizes) */
+svg.place-mark {
+  overflow: visible;
+}
+
+.place-mark .edge {
+  fill: rgba(0, 0, 0, 0.4);
+}
+
+.place-mark .ring {
+  fill: #fff;
+}
+
+.place-mark .disc {
+  fill: #2a2a28;
+}
+
+.place-mark .cross {
+  fill: none;
+  stroke: #fff;
+  stroke-linecap: square;
+}
+
+/* A mark moved aside from its village's dot: a hairline back to its true
+   point, under the mark */
+.place-leader {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.place-leader line {
+  stroke: rgba(23, 23, 22, 0.55);
+  stroke-width: 1;
+}
+
+/* Its tap area is a circle instead of the square, so it stays off the
+   village's dot (the square's corner would reach it) */
+.leaflet-marker-icon.leaflet-interactive.place-marker.leader {
+  pointer-events: none;
+}
+
+.place-marker.leader .place-hit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  border-radius: 50%;
+  pointer-events: auto;
+}
+
+/* Mills: a ring */
+.place-ring {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--mui-palette-primary-main);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+/* Houses: small and quiet, filled where there are photos */
+.place-house {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.75px solid var(--mui-palette-primary-main);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.place-house.filled {
+  background: var(--mui-palette-primary-main);
+  border-color: #fff;
+}
+
+@media (hover: hover) {
+  .place-marker:hover .place-mark {
+    transform: scale(1.25);
+  }
 }
 
 /* The place whose panel is open */
 .place-dot.active {
   width: 24px;
   height: 24px;
+}
+
+.place-mark.active:not(svg) {
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.35),
     0 0 0 6px
       color-mix(in srgb, var(--mui-palette-primary-main) 35%, transparent);
+}
+
+svg.place-mark.active {
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px
+    color-mix(in srgb, var(--mui-palette-primary-main) 35%, transparent);
 }
 
 .pulsating-icon {
@@ -173,7 +267,8 @@
   }
 }
 
-/* Clusters: a bigger place dot with the count */
+/* Clusters: places that overlap at this zoom, a bigger dot with the count;
+   they split as you zoom in */
 .marker-cluster-small,
 .marker-cluster-medium,
 .marker-cluster-large {

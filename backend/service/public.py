@@ -5,7 +5,7 @@ from uuid import UUID
 
 from geoalchemy2.shape import to_shape
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from api.model.tables import (
     Account,
@@ -40,6 +40,14 @@ class LocationPlace(BaseModel):
     kind: str
     lat: float
     lon: float
+    part_of: UUID | None = None  # the village a house or chapel belongs to
+    images: int = 0
+    # facts from the archives (houses, sacral buildings), where known
+    number: str | None = None
+    house_name: str | None = None
+    former_number: str | None = None
+    state: str | None = None  # as the archive says, e.g. "Zaniklé"
+    address: str | None = None  # e.g. "verfallen", or today's address
 
 
 class LocationImage(Translated):
@@ -63,6 +71,9 @@ class LocationPodcast(Translated):
 
 class Location(BaseModel):
     place: LocationPlace
+    parent: LocationPlace | None = None
+    # what is part of it (a village's houses and chapels), by kind and number
+    children: list[LocationPlace] = []
     # the first of podcasts, as before
     podcast: LocationPodcast | None = None
     podcasts: list[LocationPodcast]
@@ -104,16 +115,74 @@ def body(text) -> str | None:
     return text.body if text else None
 
 
-def locations(session: Session, lang: str | None = None) -> list[LocationPlace]:
-    places = list(session.exec(select(PublicPlace).where(PublicPlace.map_visible)))
-    names = texts_of(session, [p.id for p in places])
+def facts(attributes: dict | None) -> dict:
+    """A building's facts as the archive gives them, in its language (the
+    Südböhmen archive keeps the state in the address: "verfallen",
+    "Wüstung", or today's address)."""
+    a = attributes or {}
+    keys = ("number", "house_name", "former_number", "state", "address")
+    return {key: a.get(key) for key in keys}
+
+
+def parents_of(session: Session, ids) -> dict[UUID, UUID]:
+    if not ids:
+        return {}
+    rows = session.exec(
+        select(PublicRelation)
+        .where(
+            PublicRelation.predicate == "part_of",
+            PublicRelation.subject_id.in_(list(ids)),
+        )
+        .order_by(PublicRelation.id)
+    )
+    parents = {}
+    for r in rows:
+        parents.setdefault(r.subject_id, r.object_id)
+    return parents
+
+
+def image_counts(session: Session, ids) -> dict[UUID, int]:
+    if not ids:
+        return {}
+    rows = session.exec(
+        select(PublicRelation.object_id, func.count())
+        .join(PublicMedia, PublicMedia.id == PublicRelation.subject_id)
+        .where(
+            PublicRelation.predicate == "shows",
+            PublicRelation.object_id.in_(list(ids)),
+            PublicMedia.kind == "image",
+        )
+        .group_by(PublicRelation.object_id)
+    )
+    return dict(rows.all())
+
+
+def location_places(session: Session, places, lang) -> list[LocationPlace]:
+    ids = [p.id for p in places]
+    names = texts_of(session, ids)
+    parents = parents_of(session, ids)
+    images = image_counts(session, ids)
     return [
         LocationPlace(
             **p.model_dump(include={"id", "slug", "kind", "lat", "lon"}),
             name=body(resources.pick(names[p.id], "name", lang)) or p.name,
+            part_of=parents.get(p.id),
+            images=images.get(p.id, 0),
+            **facts(p.attributes),
         )
         for p in places
     ]
+
+
+def locations(session: Session, lang: str | None = None) -> list[LocationPlace]:
+    places = list(session.exec(select(PublicPlace).where(PublicPlace.map_visible)))
+    return location_places(session, places, lang)
+
+
+def by_kind_and_number(place: LocationPlace):
+    number = place.number or ""
+    digits = "".join(c for c in number if c.isdigit())
+    return (place.kind, not digits, int(digits or 0), number, place.name)
 
 
 def linked_media(session: Session, place_id: UUID, predicate: str, kinds):
@@ -145,7 +214,7 @@ def location(session: Session, key: str, lang: str | None = None) -> Location:
         raise NotFound(f"no place {key!r}")
     images = linked_media(session, place.id, "shows", ["image"])
     podcasts = linked_media(session, place.id, "about", ["audio"])
-    texts = texts_of(session, [place.id] + [m.id for m in images + podcasts])
+    texts = texts_of(session, [m.id for m in images + podcasts])
 
     def image(m: PublicMedia) -> LocationImage:
         title = resources.pick(texts[m.id], "title", lang)
@@ -173,10 +242,29 @@ def location(session: Session, key: str, lang: str | None = None) -> Location:
         )
 
     podcast_list = [podcast(m) for m in podcasts]
+    parent_id = parents_of(session, [place.id]).get(place.id)
+    child_ids = [
+        r.subject_id
+        for r in session.exec(
+            select(PublicRelation).where(
+                PublicRelation.object_id == place.id,
+                PublicRelation.predicate == "part_of",
+            )
+        )
+    ]
+    near = list(
+        session.exec(
+            select(PublicPlace).where(
+                PublicPlace.id.in_([place.id, parent_id, *child_ids])
+            )
+        )
+    )
+    rows = {p.id: p for p in location_places(session, near, lang)}
     return Location(
-        place=LocationPlace(
-            **place.model_dump(include={"id", "slug", "kind", "lat", "lon"}),
-            name=body(resources.pick(texts[place.id], "name", lang)) or place.name,
+        place=rows[place.id],
+        parent=rows.get(parent_id),
+        children=sorted(
+            (rows[id] for id in child_ids if id in rows), key=by_kind_and_number
         ),
         podcast=podcast_list[0] if podcast_list else None,
         podcasts=podcast_list,

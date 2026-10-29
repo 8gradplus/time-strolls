@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { MapContainer, TileLayer } from "react-leaflet";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import "leaflet/dist/leaflet.css";
 import Menu from "./Menu";
 import LocationInfo from "./LocationInfo/LocationInfo";
 import LocationMarkers from "./LocationMarkers/LocationMarkers";
+import WallLabel, { useWallLabel } from "./LocationMarkers/WallLabel";
+import {
+  CLOSE_UP_ZOOM,
+  LANDMARK_LABEL_ZOOM,
+  isCloseUp,
+} from "./LocationMarkers/hierarchy";
 import { api } from "./api";
 import Tour from "./Tours/Tour";
 import TrackControl from "./Track/TrackControl";
@@ -276,6 +283,31 @@ const CoordinateMap = () => {
     else map.once("moveend", welcome);
   }, [manifest, map]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // A place chosen in a panel (a village's house, a house's village): open
+  // it and bring it into view, close enough to see it
+  const handleOpenPlace = (place) => {
+    setSearchParams((params) => {
+      params.set("location", place.slug);
+      return params;
+    });
+    if (!map) return;
+    const zoom = isCloseUp(place) ? CLOSE_UP_ZOOM : LANDMARK_LABEL_ZOOM;
+    map.flyTo([place.lat, place.lon], Math.max(map.getZoom(), zoom), {
+      duration: 0.8,
+    });
+  };
+
+  // The house, church or chapel nearest the centre, close up (no label while
+  // a panel is open). Only on touch screens, in place of hover; with a mouse
+  // the marks name themselves on hover
+  const touch = useMediaQuery("(hover: none) and (pointer: coarse)");
+  const labelSlug = useWallLabel(
+    map,
+    locations,
+    touch && showMarkers && !showInfo,
+  );
+  const labelPlace = locations?.find((loc) => loc.slug === labelSlug);
+
   const handleMarkerClick = (id) => (toggle) => {
     // Find the location to get its slug
     const location = locations?.find((loc) => loc.id === id);
@@ -338,6 +370,7 @@ const CoordinateMap = () => {
               onClick={handleMarkerClick}
               locations={locations}
               activeSlug={locationSlug}
+              focusSlug={labelSlug}
             />
           )}
 
@@ -345,6 +378,7 @@ const CoordinateMap = () => {
             <LocationInfo
               open={showInfo}
               onClose={handleInfoClose}
+              onOpen={handleOpenPlace}
               slug={locationSlug}
             />
           )}
@@ -380,6 +414,16 @@ const CoordinateMap = () => {
               position={position}
               failed={positionFailed}
               onModeChange={handleTrackingModeChange}
+            />
+            <WallLabel
+              place={labelPlace}
+              openSlug={locationSlug}
+              onOpen={(place) =>
+                setSearchParams((params) => {
+                  params.set("location", place.slug);
+                  return params;
+                })
+              }
             />
             <MiniPlayer
               openSlug={locationSlug}
