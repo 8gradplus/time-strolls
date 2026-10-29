@@ -30,42 +30,72 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   background GPS and audio. So offline lands as a PWA, and Capacitor wraps
   the same build later.
 
-## Next session (state on 2026-10-24)
-Production runs v0.3.2 from the release workflow. Since the last hand-off:
-the phone test on a Pixel over USB (`make phone`) with the mobile polish and
-photo viewer (#12, v0.3.0), the area welcome and one default view (#13,
-v0.3.1), and the fix for the map flying back home on every GPS update (#14,
-v0.3.2, with a "Contribute" section on the About page).
-0. **Where we stopped (2026-10-27):** 2c (#19) and the first MCP server
-   (#20) are merged, not released. Now making the curation MCP cheaper
-   before the release: A0 scraper v0.4.0 (record key, optional compact
-   views; released), A1 batch tools, `find_places`, duplicate guard,
-   compact answers (#21), A2 server-side imports from the scrapers; then a
-   frontend round for houses and chapels (B). The local stack holds an agent test (Oberuresch, ~130 places from the
-   agent; a local, git-excluded `.mcp.json` uses `${API_KEY}`). Findings:
-   the agent was slow and token-heavy (114 single calls) -> bulk tools and
-   compact answers; it created "St. Thoma" beside the replay's "Sankt
-   Thoma" -> a tool to find existing places; houses crowd the map -> maybe
-   `map_visible = false` for houses.
-1. **Next:** the new content model of `SCHEMA_CONCEPT.md` ("Order of
-   work"). PR 1 (Topothek via `time-strolls-scraper`, #16) is merged. PR 2
-   comes in three parts, released together once it feels right: 2a backend
-   (schema on PostgreSQL 17, service layer, scoped tokens, admin routes under
-   `/api/admin`, #17), 2b the replay (sources, permissions, kinds, links,
-   #18), 2c the frontend (`?lang=`, `cs`, several podcasts, credits). Then
-   the release with the switch-over (`SCHEMA_CONCEPT.md`, "Migration"), then
-   MCP (PR 3). This overlaps step 5.
-2. **Still to test by hand:** audio with the screen locked, the lock-screen
+## Next session (state on 2026-10-27)
+Production runs v0.3.2 from the release workflow. Merged since, not
+released: the new content model (2a #17, 2b #18, 2c #19), the MCP server
+(#20) and its cheaper version for agents (#21 batch tools, `find_places`,
+duplicate guard, compact answers; #22 server-side imports of houses and
+sacral buildings; scraper v0.4.0 with the record key).
+0. **Start here: the frontend round for houses and chapels (B).** The
+   agent test of 2026-10-27 left the local database full of them, all
+   published: 148 places on the map (118 houses, 13 chapels, 13 villages,
+   2 churches, 2 mills; 2 houses and the podcast muted). Every place is a
+   red dot today, which will overwhelm visitors. Plan (from the approved
+   plan of 2026-10-27, part B):
+   - Clickable mockups first, as an artifact, comparing a hierarchy: the map
+     shows villages and landmarks (chapel, church, wayside shrine); houses
+     only from about zoom 17 on as smaller, quieter dots, or only in the
+     village's panel as a list ("Häuser": number, house name, photos);
+     kind-specific marks (a small cross for chapels and shrines); the logo
+     stays out of the markers.
+   - The village panel lists its `part_of` children by kind.
+   - Backend as needed: `kind` and `part_of` in `/api/locations/`, children
+     in `/api/locations/{slug}`; maybe `map_visible = false` for `house`.
+   - URL state stays in the query string; new strings in de, cs, en.
+   - **Local setup without SSH** (the API image needs the private scraper
+     over SSH; the local venv already has it): in `deployment/`
+     `docker compose up -d --no-deps --wait postgres` and
+     `docker compose run --rm --no-deps migrate-postgres` (the override
+     mounts `backend/migration`); in `backend/` `make run-api` (:8000); in
+     `frontend/` `API_PROXY=http://127.0.0.1:8000 npm start` (:3000). The
+     data is in the local volume `timestrolls_pg17` (never `down -v`).
+1. **MCP, still to improve** (measured 2026-10-27 against 2026-10-24, the
+   same prompts: 281 → 81 calls, 314 → 145 KB of answers, 1.41 M → 139 k
+   output tokens, 77 M → 21 M cached input; script and numbers in the PRs
+   #21/#22):
+   - **zanikleobce.cz is the largest remaining cost:** 18 calls, 86 of the
+     145 KB, and 10 s per request (the site's crawl delay). In the scraper,
+     an optional brief view for `scrape_zanikleobce_place` (name, German
+     name, type, coordinates; complete stays the default, as in v0.4.0).
+   - Translating the villages (25 calls, 74 KB) fetched the Czech names one
+     village at a time from zanikleobce: a server-side import of other
+     names, or a scraper tool for several names at once.
+   - Finding chapels and churches (22 calls, 34 KB) is search across
+     sources: the combined lookup from the scraper's `docs/limitations.md`
+     (#5).
+   - The admin tool list is 11 KB, read on every turn: shorten the
+     docstrings and item schemas.
+   - The other scrapers (zanikleobce, boehmerwald) become imports like
+     houses and sacral buildings once there's a need.
+   - Rights: names, numbers and kinds from the archives are stored as facts
+     (public without the archive's permission; #22). Confirm or change.
+2. **Then the release** of the content model with the switch-over
+   (`SCHEMA_CONCEPT.md`, "Migration"; by hand: create the volume
+   `timestrolls_pg17` on the droplet, publish the release, `make production`
+   in `replay/`), once the frontend round feels right. Afterwards the agent
+   curates on production with its own token (not `API_KEY`).
+3. **Still to test by hand:** audio with the screen locked, the lock-screen
    and headphone controls (Media Session), resuming an episode the next day,
    and an iPhone (Safari).
-3. **Open points:** the repo has no LICENSE although the About page says
+4. **Open points:** the repo has no LICENSE although the About page says
    "open source" (deferred); place names next to the dots from zoom 15 on
-   (keep or hide); the about text is a first draft; the Czech UI strings
-   (player, dock) should be checked by a native speaker; in a desktop window
-   narrower than ~360 px the zoom pill squeezes the years (accepted for now);
-   the droplet keeps old unused images (`docker image prune`).
-4. Then go on in the agreed order: 5 admin, 3 offline PWA, 6 Android.
-5. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
+   (keep or hide; part of round B); the about text is a first draft; the
+   Czech UI strings (player, dock) should be checked by a native speaker; in
+   a desktop window narrower than ~360 px the zoom pill squeezes the years
+   (accepted for now); the droplet keeps old unused images
+   (`docker image prune`).
+5. Then go on in the agreed order: 5 admin, 3 offline PWA, 6 Android.
+6. **For aerial-timeline (not this repo):** `publish` must flush the CDN with
    wildcards after every upload (see `CLAUDE.md`, "CDN caching"); widening a
    region re-renders tiles under the same URLs.
 
@@ -83,7 +113,7 @@ v0.3.2, with a "Contribute" section on the About page).
 | 4 | Release workflow (DOCR, deploy) | Done (#10, #11) |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
 | 6 | Capacitor Android: geofence notifications, background audio | Open |
-| 7 | MCP server on the same auth | Optional, once the admin API is stable |
+| 7 | MCP server on the same auth | First version for agents done (#20, #21, #22, scraper v0.4.0); bearer tokens for now, OAuth with step 5 |
 
 Work in the sister repo `../aerial-timeline` (its own roadmap in its `CLAUDE.md`)
 runs in parallel: step 5 `composite` (`tiles/best/{year}`), step 6 the 1945 print

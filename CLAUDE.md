@@ -43,7 +43,7 @@ Monorepo layout: `backend/` (FastAPI + SQLModel, Python ≥3.13, managed with `u
 - **The live data** is in the droplet's Docker volume `timestrolls_pg17` (PostgreSQL 17 since v0.4.0; the old `deployment_postgres`, PostgreSQL 13, stays for a rollback to v0.3.x), declared `external` in `docker-compose.yml`, so compose never creates or deletes it and won't start without it. Never run `docker compose down -v` on the droplet. There are no automatic backups until the managed database (roadmap).
 - The migrations ship inside the API image: the one-shot service `migration-files` copies them into a volume for Flyway (pinned to 11.9.1), so a release pins code and migrations together.
 - Inspect the compose config: `docker compose config` (local) or `docker compose -f docker-compose.yml config` (production, without the override).
-- To develop the API locally against a DB, start the compose stack, stop the `api`/`frontend` services, then run `make run-api` in `backend/`.
+- To develop the API locally against a DB, start the compose stack, stop the `api`/`frontend` services, then run `make run-api` in `backend/`. Without building any image (no SSH agent needed; the local venv already has the scraper): in `deployment/` `docker compose up -d --no-deps --wait postgres` and `docker compose run --rm --no-deps migrate-postgres` (the override mounts `backend/migration`), then `make run-api` in `backend/` and `API_PROXY=http://127.0.0.1:8000 npm start` in `frontend/`.
 
 ## Architecture
 
