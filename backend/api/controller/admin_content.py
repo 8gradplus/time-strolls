@@ -159,6 +159,40 @@ def put_status(id: UUID, data: StatusIn, session: SessionDep, actor: Reviewer):
     return resources.set_status(session, actor, id, data.status, data.reason)
 
 
+class StatusesIn(BaseModel):
+    ids: list[str]  # ids or slugs
+    status: str
+    reason: str | None = None
+
+
+class BatchOut(BaseModel):
+    done: int
+    errors: list[dict]  # {item: position, error}
+
+
+@router.post("/resources/status", response_model=BatchOut)
+def post_statuses(data: StatusesIn, session: SessionDep, actor: Reviewer):
+    """Several resources at once (the review list); one failure doesn't stop
+    the rest."""
+    return review.set_statuses(session, actor, data.ids, data.status, data.reason)
+
+
+@router.get("/review/", response_model=review.Queue)
+def get_review(
+    session: SessionDep,
+    _: Reader,
+    type: str = "place",
+    status: str = "new",
+    kind: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+):
+    """The review list of one type (place, media, tour): rows with what the
+    admin shows (kind, picture, source, places, who added it), newest first,
+    and the total for paging."""
+    return review.queue(session, type, status, kind, limit, offset)
+
+
 @router.put("/resources/{id}/texts/{field}/{lang}", response_model=Text)
 def put_text(
     id: UUID,

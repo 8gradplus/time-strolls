@@ -541,3 +541,83 @@ def test_credits_name_permitted_sources_and_translations(admin, harvested):
     assert credits["translations"] == [
         {"lang": "cs", "method": "machine", "model": "claude", "by": None}
     ]
+
+
+# The review list and several statuses at once (the admin UI) ----------------------
+
+
+def test_the_review_list_shows_what_a_row_needs(admin, harvested):
+    slug, _ = harvested
+    village = admin.get(f"/api/admin/places/{slug}").json()
+    house = place(
+        admin, "Oberuresch 3", status="new", kind="house", lat=48.6091, lon=14.0563
+    )
+    admin.post(
+        "/api/admin/relations/",
+        json={"subject": house["id"], "predicate": "part_of", "object": village["id"]},
+    )
+    places = admin.get("/api/admin/review/", params={"type": "place"}).json()
+    assert places["total"] == 1
+    (row,) = places["items"]
+    assert row["label"] == "Oberuresch 3" and row["kind"] == "house"
+    assert row["places"] == ["Oberuresch"] and row["created_by"] == "admin"
+    assert row["slug"] == house["slug"]
+    # the village is published, so it is in the published list, not the queue
+    published = admin.get(
+        "/api/admin/review/", params={"type": "place", "status": "published"}
+    ).json()
+    assert [r["label"] for r in published["items"]] == ["Oberuresch"]
+    # kinds filter
+    villages = admin.get(
+        "/api/admin/review/", params={"type": "place", "kind": "village"}
+    ).json()
+    assert villages["total"] == 0
+
+
+def test_the_review_list_shows_a_photo_with_its_title_and_source(admin, harvested):
+    _, harvest = harvested
+    media = admin.get(
+        "/api/admin/review/", params={"type": "media", "status": "published"}
+    ).json()
+    (row,) = media["items"]
+    assert row["label"].startswith("Hinterberger Karl")
+    assert row["url"] == DOCUMENT["image_url"]
+    assert row["source_url"] == DOCUMENT["source_url"]
+    assert row["places"] == ["Oberuresch"]
+    assert row["may_show"] is False  # no permission yet
+
+
+def test_the_review_list_pages(admin):
+    for i in range(3):
+        place(admin, f"Haus {i}", status="new", lat=48.6 + i / 100, lon=14.0)
+    page = admin.get(
+        "/api/admin/review/", params={"type": "place", "limit": 2, "offset": 2}
+    ).json()
+    assert page["total"] == 3
+    assert [r["label"] for r in page["items"]] == ["Haus 0"]  # newest first
+    assert admin.get("/api/admin/review/", params={"type": "x"}).status_code == 422
+    r = admin.get("/api/admin/review/", params={"status": "draft"})
+    assert r.status_code == 422
+
+
+def test_several_statuses_at_once(admin, client):
+    a = place(admin, "Haus A", status="new", lat=48.60, lon=14.0)
+    b = place(admin, "Haus B", status="new", lat=48.61, lon=14.0)
+    r = admin.post(
+        "/api/admin/resources/status",
+        json={"ids": [a["id"], b["slug"], "nothing"], "status": "published"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["done"] == 2
+    assert [e["item"] for e in r.json()["errors"]] == [2]
+    assert (
+        admin.get("/api/admin/review/", params={"type": "place"}).json()["total"] == 0
+    )
+    # muting needs the review scope
+    writer = {"Authorization": f"Bearer {token(admin, ['read:all', 'write'])}"}
+    r = client.post(
+        "/api/admin/resources/status",
+        json={"ids": [a["id"]], "status": "muted"},
+        headers=writer,
+    )
+    assert r.status_code == 403

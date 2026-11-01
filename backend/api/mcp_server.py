@@ -32,6 +32,7 @@ from importers import suedboehmen, topothek, znicenekostely
 from service import (
     Actor,
     ServiceError,
+    each,
     audit,
     harvest,
     media,
@@ -41,7 +42,6 @@ from service import (
     rights,
 )
 from service import places as place_service
-from service import resources as resource_service
 
 # Calling the service layer -----------------------------------------------------
 
@@ -199,20 +199,6 @@ def compact(value):
     if isinstance(value, list):
         return [compact(item) for item in value]
     return value
-
-
-def each(session, items, fn) -> dict:
-    """Runs fn(session, item) for every item. An item that fails is reported
-    with its position and doesn't stop the rest."""
-    done, errors = 0, []
-    for position, item in enumerate(items):
-        try:
-            fn(session, item)
-            done += 1
-        except ServiceError as e:
-            session.rollback()
-            errors.append({"item": position, "error": str(e)})
-    return {"done": done, "errors": errors}
 
 
 # Reading
@@ -642,13 +628,7 @@ async def set_status(
 ) -> dict:
     """Publishes, mutes (give a reason), withdraws or resets resources (ids
     or slugs) to new. Returns {done, errors: [{item, error}]}."""
-    me = actor()
-
-    def change(session, key: str):
-        id = resource_service.resolve(session, key)
-        resource_service.set_status(session, me, id, status, reason)
-
-    return compact(await call(each, resources, change))
+    return compact(await call(review.set_statuses, actor(), resources, status, reason))
 
 
 @admin_mcp.tool(auth=REVIEW)
