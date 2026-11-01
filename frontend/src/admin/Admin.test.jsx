@@ -60,11 +60,14 @@ afterEach(() => {
 test("locally the admin opens without signing in", async () => {
   vi.stubGlobal(
     "fetch",
-    api({ "/api/admin/me": () => reply(200, { ...ME, name: "admin" }) }),
+    api({
+      "/api/admin/me": () => reply(200, { ...ME, name: "admin" }),
+      "/api/admin/review/": () => reply(200, { total: 0, items: [] }),
+    }),
   );
   open("/admin");
   expect(await screen.findByText("Local, no sign-in")).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Review" })).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Places" })).toBeInTheDocument();
   expect(screen.queryByText("Sign in with Google")).not.toBeInTheDocument();
 });
 

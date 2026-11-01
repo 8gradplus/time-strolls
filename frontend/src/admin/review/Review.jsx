@@ -1,0 +1,469 @@
+// The review list (ROADMAP.md, step 5): one type's content in a status,
+// newest first. Select rows, publish or mute them (with an undo), open one
+// for its details. The view lives in the query string, like the map's:
+// /admin?type=media&status=new&kind=house&open=<id>.
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import LinearProgress from "@mui/material/LinearProgress";
+import Link from "@mui/material/Link";
+import MenuItem from "@mui/material/MenuItem";
+import Snackbar from "@mui/material/Snackbar";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import TextField from "@mui/material/TextField";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Typography from "@mui/material/Typography";
+import { Icon } from "../../icons";
+import { useLanguage } from "../../LanguageContext";
+import { useAuth } from "../AuthContext";
+import { fill, reviewList, setStatuses } from "../api";
+import Detail from "./Detail";
+
+const TYPES = ["place", "media", "tour"];
+const STATUSES = ["new", "published", "muted"];
+const PLACE_KINDS = [
+  "village",
+  "hamlet",
+  "house",
+  "farm",
+  "chapel",
+  "church",
+  "wayside_shrine",
+  "mill",
+  "ruin",
+  "landmark",
+];
+const PAGE = 50;
+
+// The actions from a status: what a row can become
+const actionsFrom = {
+  new: ["published", "muted"],
+  published: ["muted"],
+  muted: ["published", "new"],
+};
+
+const useView = () => {
+  const [params, setParams] = useSearchParams();
+  const view = {
+    type: TYPES.includes(params.get("type")) ? params.get("type") : "place",
+    status: STATUSES.includes(params.get("status"))
+      ? params.get("status")
+      : "new",
+    kind: params.get("kind") || "",
+    open: params.get("open"),
+  };
+  const set = (changes) =>
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      Object.entries(changes).forEach(([key, value]) =>
+        value ? next.set(key, value) : next.delete(key),
+      );
+      return next;
+    });
+  return [view, set];
+};
+
+const date = (iso, language) =>
+  new Date(iso).toLocaleDateString(language, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+const Row = ({ item, checked, onCheck, onOpen }) => {
+  const { t, language } = useLanguage();
+  const meta = [
+    item.kind && (t.kinds[item.kind] ?? item.kind),
+    item.places.join(", "),
+    item.created_by && fill(t.admin.addedBy, { name: item.created_by }),
+    date(item.created_at, language),
+  ].filter(Boolean);
+  return (
+    <Box
+      component="li"
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: { xs: 1, sm: 1.5 },
+        py: 1,
+        borderBottom: 1,
+        borderColor: "divider",
+      }}
+    >
+      <Checkbox
+        checked={checked}
+        onChange={(e) => onCheck(e.target.checked)}
+        slotProps={{ input: { "aria-label": item.label ?? item.id } }}
+      />
+      {item.type === "media" && (
+        <Box
+          component="img"
+          src={item.url}
+          alt=""
+          loading="lazy"
+          sx={{
+            width: 56,
+            height: 56,
+            objectFit: "cover",
+            flex: "none",
+            bgcolor: "action.hover",
+          }}
+        />
+      )}
+      <Box
+        component="button"
+        type="button"
+        onClick={onOpen}
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          minHeight: 44,
+          p: 0,
+          border: 0,
+          bgcolor: "transparent",
+          color: "inherit",
+          font: "inherit",
+          textAlign: "left",
+          cursor: "pointer",
+          "@media (hover: hover)": {
+            "&:hover .label": { textDecoration: "underline" },
+          },
+        }}
+      >
+        <Box
+          className="label"
+          sx={{ fontWeight: 500, overflowWrap: "anywhere" }}
+        >
+          {item.label ?? "—"}
+        </Box>
+        <Box sx={{ color: "text.secondary", fontSize: 13 }}>
+          {meta.join(" · ")}
+        </Box>
+        {item.status_reason && (
+          <Box
+            sx={{ color: "text.secondary", fontSize: 13, fontStyle: "italic" }}
+          >
+            {item.status_reason}
+          </Box>
+        )}
+      </Box>
+      {item.source_url && (
+        <Link
+          href={item.source_url}
+          target="_blank"
+          rel="noopener"
+          aria-label={t.admin.source}
+          sx={{ display: "flex", p: 1, color: "text.secondary" }}
+        >
+          <Icon name="arrow_outward" size={20} />
+        </Link>
+      )}
+    </Box>
+  );
+};
+
+const ReasonDialog = ({ open, onCancel, onConfirm }) => {
+  const { t } = useLanguage();
+  const [reason, setReason] = useState("");
+  useEffect(() => {
+    if (open) setReason("");
+  }, [open]);
+  return (
+    <Dialog open={open} onClose={onCancel} fullWidth maxWidth="xs">
+      <DialogContent>
+        <TextField
+          autoFocus
+          fullWidth
+          label={t.admin.reason}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && onConfirm(reason)}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onCancel}>{t.admin.cancel}</Button>
+        <Button
+          variant="contained"
+          disableElevation
+          onClick={() => onConfirm(reason)}
+        >
+          {t.admin.mute}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+const actionLabel = (t, status) =>
+  ({ published: t.admin.publish, muted: t.admin.mute, new: t.admin.backToNew })[
+    status
+  ];
+
+const Review = () => {
+  const { t } = useLanguage();
+  const { me } = useAuth();
+  const [view, setView] = useView();
+  const [list, setList] = useState({
+    total: 0,
+    items: [],
+    loading: true,
+    failed: false,
+  });
+  const [selected, setSelected] = useState(new Set());
+  const [asking, setAsking] = useState(null); // ids waiting for a mute reason
+  const [toast, setToast] = useState(null); // {text, undo?}
+  const mayReview =
+    me?.scopes?.includes("review") || me?.scopes?.includes("admin");
+
+  const load = useCallback(
+    async (offset = 0) => {
+      setList((l) => ({ ...l, loading: true, failed: false }));
+      try {
+        const { type, status, kind } = view;
+        const page = await reviewList({
+          type,
+          status,
+          kind,
+          offset,
+          limit: PAGE,
+        });
+        setList((l) => ({
+          total: page.total,
+          items: offset ? [...l.items, ...page.items] : page.items,
+          loading: false,
+          failed: false,
+        }));
+      } catch {
+        setList((l) => ({ ...l, loading: false, failed: true }));
+      }
+    },
+    // the list's filters only: opening an item doesn't reload the list
+    [view.type, view.status, view.kind],
+  );
+
+  useEffect(() => {
+    setSelected(new Set());
+    load(0);
+  }, [load]);
+
+  const change = async (ids, status, reason) => {
+    const from = view.status;
+    const result = await setStatuses(ids, status, reason).catch((e) => ({
+      done: 0,
+      errors: [{ item: 0, error: e.message }],
+    }));
+    const failed = new Set(result.errors.map((e) => ids[e.item]));
+    const changed = ids.filter((id) => !failed.has(id));
+    setList((l) => ({
+      ...l,
+      total: l.total - changed.length,
+      items: l.items.filter((item) => !changed.includes(item.id)),
+    }));
+    setSelected(new Set());
+    if (changed.includes(view.open)) setView({ open: null });
+    const text = [
+      changed.length && fill(t.admin.done[status], { n: changed.length }),
+      result.errors.length &&
+        fill(t.admin.partly, {
+          n: result.errors.length,
+          error: result.errors[0].error,
+        }),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    setToast({
+      text,
+      undo: changed.length
+        ? async () => {
+            setToast(null);
+            await setStatuses(changed, from);
+            load(0);
+          }
+        : null,
+    });
+  };
+
+  const act = (ids, status) =>
+    status === "muted" ? setAsking(ids) : change(ids, status);
+
+  const ids = list.items.map((i) => i.id);
+  const allChecked = ids.length > 0 && ids.every((id) => selected.has(id));
+
+  return (
+    <Box sx={{ maxWidth: 1100, mx: "auto", px: { xs: 1, sm: 3 }, pb: 8 }}>
+      <Tabs
+        value={view.type}
+        onChange={(_, type) => setView({ type, kind: null, open: null })}
+        variant="scrollable"
+        sx={{ borderBottom: 1, borderColor: "divider", px: { xs: 1, sm: 0 } }}
+      >
+        {TYPES.map((type) => (
+          <Tab key={type} value={type} label={t.admin.types[type]} />
+        ))}
+      </Tabs>
+
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 2,
+          py: 2,
+          px: { xs: 1, sm: 0 },
+        }}
+      >
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={view.status}
+          onChange={(_, status) => status && setView({ status, open: null })}
+        >
+          {STATUSES.map((status) => (
+            <ToggleButton
+              key={status}
+              value={status}
+              sx={{ px: 1.5, textTransform: "none" }}
+            >
+              {t.admin.statuses[status]}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+        {view.type === "place" && (
+          <TextField
+            select
+            size="small"
+            value={view.kind}
+            onChange={(e) => setView({ kind: e.target.value, open: null })}
+            sx={{ minWidth: 160 }}
+            slotProps={{ select: { displayEmpty: true } }}
+          >
+            <MenuItem value="">{t.admin.allKinds}</MenuItem>
+            {PLACE_KINDS.map((kind) => (
+              <MenuItem key={kind} value={kind}>
+                {t.kinds[kind] ?? kind}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
+        <Box sx={{ color: "text.secondary", fontSize: 14 }}>{list.total}</Box>
+      </Box>
+
+      {/* the selection's actions, sticky so they stay at hand while scrolling */}
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 1,
+          py: 1,
+          px: { xs: 0, sm: 0 },
+          bgcolor: "background.default",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Checkbox
+          checked={allChecked}
+          indeterminate={selected.size > 0 && !allChecked}
+          onChange={(e) => setSelected(new Set(e.target.checked ? ids : []))}
+          slotProps={{ input: { "aria-label": t.admin.selectAll } }}
+        />
+        <Box sx={{ fontSize: 14, color: "text.secondary", mr: 1 }}>
+          {fill(t.admin.selected, { n: selected.size })}
+        </Box>
+        {mayReview &&
+          actionsFrom[view.status].map((status) => (
+            <Button
+              key={status}
+              size="small"
+              variant={status === "published" ? "contained" : "outlined"}
+              disableElevation
+              disabled={selected.size === 0}
+              onClick={() => act([...selected], status)}
+            >
+              {actionLabel(t, status)}
+            </Button>
+          ))}
+      </Box>
+      <Box sx={{ height: 2 }}>{list.loading && <LinearProgress />}</Box>
+
+      {list.failed ? (
+        <Typography sx={{ py: 4, color: "text.secondary" }}>
+          {t.admin.loadFailed}
+        </Typography>
+      ) : !list.loading && list.items.length === 0 ? (
+        <Typography sx={{ py: 4, color: "text.secondary" }}>
+          {t.admin.empty}
+        </Typography>
+      ) : (
+        <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
+          {list.items.map((item) => (
+            <Row
+              key={item.id}
+              item={item}
+              checked={selected.has(item.id)}
+              onCheck={(on) =>
+                setSelected((s) => {
+                  const next = new Set(s);
+                  on ? next.add(item.id) : next.delete(item.id);
+                  return next;
+                })
+              }
+              onOpen={() => setView({ open: item.id })}
+            />
+          ))}
+        </Box>
+      )}
+      {list.items.length < list.total && !list.loading && (
+        <Box sx={{ py: 3, textAlign: "center" }}>
+          <Button onClick={() => load(list.items.length)}>
+            {t.admin.loadMore}
+          </Button>
+        </Box>
+      )}
+
+      <Detail
+        id={view.open}
+        row={list.items.find((i) => i.id === view.open)}
+        actions={mayReview ? actionsFrom[view.status] : []}
+        actionLabel={(status) => actionLabel(t, status)}
+        onAction={(status) => act([view.open], status)}
+        onClose={() => setView({ open: null })}
+      />
+      <ReasonDialog
+        open={Boolean(asking)}
+        onCancel={() => setAsking(null)}
+        onConfirm={(reason) => {
+          const ids = asking;
+          setAsking(null);
+          change(ids, "muted", reason.trim() || undefined);
+        }}
+      />
+      <Snackbar
+        open={Boolean(toast)}
+        onClose={(_, why) => why !== "clickaway" && setToast(null)}
+        autoHideDuration={8000}
+        message={toast?.text}
+        action={
+          toast?.undo && (
+            <Button color="inherit" size="small" onClick={toast.undo}>
+              {t.admin.undo}
+            </Button>
+          )
+        }
+      />
+    </Box>
+  );
+};
+
+export default Review;

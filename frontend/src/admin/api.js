@@ -38,3 +38,32 @@ export async function adminFetch(path, init = {}) {
 export const adminApi = {
   me: "/api/admin/me",
 };
+
+// The review list of one type in a status ({total, items}), a page at a time
+export const reviewList = ({ type, status, kind, offset = 0, limit = 50 }) =>
+  adminFetch(
+    `/api/admin/review/?${new URLSearchParams({
+      type,
+      status,
+      offset,
+      limit,
+      ...(kind ? { kind } : {}),
+    })}`,
+  );
+
+// One resource with its texts, links and sources
+export const resourceDetail = (id) => adminFetch(`/api/admin/resources/${id}`);
+
+export const resourceHistory = (id) =>
+  adminFetch(`/api/admin/resources/${id}/history`);
+
+// Several at once: {done, errors: [{item, error}]}
+export const setStatuses = (ids, status, reason) =>
+  adminFetch("/api/admin/resources/status", {
+    method: "POST",
+    body: JSON.stringify({ ids, status, ...(reason ? { reason } : {}) }),
+  });
+
+// "{n} selected" with n filled in
+export const fill = (text, values) =>
+  text.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? "");
