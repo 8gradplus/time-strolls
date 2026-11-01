@@ -31,15 +31,17 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   the same build later.
 
 ## Next session (state on 2026-11-01)
-Production runs v0.3.2 from the release workflow. Merged since, not
-released: the new content model (2a #17, 2b #18, 2c #19), the MCP server
-(#20) and its cheaper version for agents (#21 batch tools, `find_places`,
-duplicate guard, compact answers; #22 server-side imports of houses and
-sacral buildings; scraper v0.4.0 with the record key), and houses and
-chapels on the map (#24 round B, #25 tap label and pips; tested on the
-Pixel 2026-10-29), and the cleanup of scraped texts (#27: language codes
-normalised on write, `edit_texts` marks an edited original, `move_text_langs`,
-`verbatim` in the resource detail; migration `V001_006`, additive).
+**v0.4.0 is live (2026-11-01).** The release brought the new content model
+(2a #17, 2b #18, 2c #19), the MCP server (#20–#22), houses and chapels on
+the map (#24, #25), the text cleanup (#27), the release prep (#30) and #31
+(tours drawn again, linked by slug; menu toggles "Dörfer" and "Kirchen und
+Kapellen", URL `sacral=true`). Production got its content from the local
+database (`make push` in `../time-strolls-backup`, which runs from the Mac);
+both sides run migrations 001.001–001.006, so `make pull`/`make push` work.
+On the droplet the old volume `deployment_postgres` (PostgreSQL 13), unused
+images and the build cache were removed (about 6.8 GB): **a rollback to
+v0.3.x is no longer possible** with the release workflow alone; the old data
+is only in `backup/db/production/20261101_084202.dump`.
 
 **Release prep, 2026-11-01 (local DB is the content for production):**
 local was replayed in full (564 images; the replay no longer has podcasts
@@ -61,13 +63,13 @@ machine-translated into cs/en. Production gets this by `make push` in
   the name when the record keys differ.
 - Slugs collide for same-name places within ~100 m (3 decimals): one chapel
   in Deutsch Reichenau (znicenekostely 19688) couldn't be created.
-0. **Start here: the release** of all this with the switch-over (item 2).
-   Round B (houses and chapels) is done: villages and mills at every zoom,
+0. **Start here:** the open points of the release prep above, then the
+   agreed order (item 5). Round B (houses and chapels) is done: villages and mills at every zoom,
    houses, churches and chapels from zoom 17 (kind marks, their own
    clusters, a leader line where a mark covers its village), the village
    panel's folded lists, on touch screens a tap names a mark in the wall
    label and a second tap opens it, three pips for "more to see". Left
-   from round B, none blocking the release:
+   from round B:
    - Kind labels (Haus, Kapelle, Dorf) as UI strings in de, cs, en: not
      decided.
    - Spiderfied marks show no names; an open place inside a cluster isn't
@@ -109,27 +111,12 @@ machine-translated into cs/en. Production gets this by `make push` in
      `source_changed` report on a new harvest (§7 below). A discreet
      "gekürzt / zkráceno / abridged" on the photo label uses the public
      `edited` flag (frontend, not started).
-2. **Then the release** of the content model with the switch-over, once the
-   frontend round feels right. Afterwards the agent curates on production
-   with its own token (not `API_KEY`). The switch-over, by hand:
-   - Back up production first: `make backup-db-production` in
-     `../time-strolls-backup`.
-   - No data migration: the old migrations were replaced by a fresh set, and
-     production gets the local database (`make push`, below).
-   - On the droplet: `docker volume create timestrolls_pg17` (PostgreSQL 17;
-     13 is out of support). The old volume `deployment_postgres` stays
-     untouched, so running the release workflow with a v0.3.x tag rolls back
-     to the old data.
-   - Publish the release (`v0.4.0`); Flyway creates the empty schema. The
-     migration creates the app user only if it is missing.
-   - `make backup-db-local`, then `make push` in `../time-strolls-backup`
-     (replaces production's schema with local's; tokens travel along).
-     Afterwards `make check` in `replay/` should list nothing to add.
-   - Old numeric place links (`?location=5`) stop working; tours are linked
-     by slug or id.
-   - Afterwards both databases run the same migrations, so
-     `make pull`/`make push` in `../time-strolls-backup` work (local has
-     V001_006 since 2026-11-01).
+2. **The switch-over is done** (v0.4.0, 2026-11-01). The agent now curates
+   locally with the MCP and the skill `.claude/skills/scrape-places`
+   (git-excluded); production gets the content by `make push`, run by the
+   user. Push only when no one changed production since the last pull.
+   Later the agent curates on production with its own token (not `API_KEY`).
+   Old numeric place links (`?location=5`) no longer work.
 3. **Still to test by hand:** audio with the screen locked, the lock-screen
    and headphone controls (Media Session), resuming an episode the next day,
    and an iPhone (Safari).
@@ -138,8 +125,7 @@ machine-translated into cs/en. Production gets this by `make push` in
    (keep or hide; part of round B); the about text is a first draft; the
    Czech UI strings (player, dock) should be checked by a native speaker; in
    a desktop window narrower than ~360 px the zoom pill squeezes the years
-   (accepted for now); the droplet keeps old unused images
-   (`docker image prune`).
+   (accepted for now).
 5. Then go on in the agreed order: 5 admin, 3 offline PWA, 6 Android.
 6. **Backend, "has more" (2026-10-29):** the map marks a place worth
    opening with three pips (hover name, wall label, the village panel's
@@ -168,7 +154,7 @@ machine-translated into cs/en. Production gets this by `make push` in
 | 4 | Release workflow (DOCR, deploy) | Done (#10, #11) |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
 | 6 | Capacitor Android: geofence notifications, background audio | Open |
-| 7 | MCP server on the same auth | First version for agents done (#20, #21, #22, scraper v0.4.0); bearer tokens for now, OAuth with step 5 ; cleaning source texts (language codes, edits marked as such) on branch `text-cleanup` |
+| 7 | MCP server on the same auth | First version for agents done (#20, #21, #22, scraper v0.4.0); bearer tokens for now, OAuth with step 5; text cleanup (#27); live since v0.4.0 (2026-11-01) |
 
 Work in the sister repo `../aerial-timeline` (its own roadmap in its `CLAUDE.md`)
 runs in parallel: step 5 `composite` (`tiles/best/{year}`), step 6 the 1945 print
