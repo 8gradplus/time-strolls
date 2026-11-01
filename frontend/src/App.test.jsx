@@ -196,6 +196,34 @@ test("the menu lists the areas and marks the one in view", async () => {
   expect(within(menu).queryByText(/Weitere Gebiete/)).not.toBeInTheDocument();
 });
 
+test("a tour from the menu is linked by slug and its track loaded", async () => {
+  localStorage.setItem("language", "de");
+  const TOUR = {
+    id: "01a17dcd-3549-73cb-b89a-74d166f17b93",
+    slug: "schwemmkanalweg",
+    name: "Schwemmkanalweg",
+    length: 8.7,
+  };
+  fetch.mockImplementation((url) =>
+    url === "/api/tours/?lang=de"
+      ? json([TOUR])
+      : url === "/api/tours/schwemmkanalweg"
+        ? json({ ...TOUR, geom: [[14.03, 48.62, 665]] })
+        : respond(url),
+  );
+  render(<App />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Menü" }));
+  const menu = await screen.findByRole("dialog", { name: "Menü" });
+  fireEvent.click(
+    await within(menu).findByRole("button", { name: /Schwemmkanalweg/ }),
+  );
+  await waitFor(() =>
+    expect(fetch).toHaveBeenCalledWith("/api/tours/schwemmkanalweg"),
+  );
+  expect(window.location.search).toContain("tour=schwemmkanalweg");
+});
+
 test("the dock folds into the year and the logo, and remembers it", async () => {
   localStorage.setItem("language", "de");
   localStorage.removeItem("dockFolded");

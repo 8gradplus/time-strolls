@@ -70,8 +70,8 @@ const CoordinateMap = () => {
 
   // Derive state from URL - single source of truth
   const locationSlug = searchParams.get("location");
-  const tourIdParam = searchParams.get("tour");
-  const tourId = tourIdParam ? parseInt(tourIdParam, 10) : null;
+  // A tour's slug (or its id, the API takes both)
+  const tourId = searchParams.get("tour") || null;
   const showInfo = !!locationSlug;
 
   // Layer visibility from URL (default to true for markers, no historic year)
