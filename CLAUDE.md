@@ -16,7 +16,7 @@ Monorepo layout: `backend/` (FastAPI + SQLModel, Python ≥3.13, managed with `u
 - `make lint` / `uv run ruff check .` — lint (default rules). `make check` runs lint and tests, as in CI.
 - Single test: `uv run pytest tests/test_slug.py::TestSlugify::test_slugify_basic`
 - `make test-cov` — coverage for `helpers`, `api` and `service`.
-- `make run-etl` — runs `etl.py`: georeferences `resources/us-army-1945.jpeg` with hardcoded ground control points into a GeoTIFF, then cuts it into map tiles. Needs the geo dev extras (rasterio, titiler, etc.).
+- `make run-etl` — runs `etl.py`: georeferences `resources/us-army-1945.jpeg` with hardcoded ground control points into a GeoTIFF, then cuts it into map tiles. Needs the geo dev extras (rasterio, titiler, etc.). **Legacy, to be removed** (now in aerial-timeline, see "Historic imagery").
 - `make run-local-tile-server` — serves tiles locally for inspection.
 - API docs: `http://localhost:8000/api/docs`.
 
@@ -146,14 +146,37 @@ roadmap step 6). The frontend uses **only** tiles from the `timestrolls` bucket
 (the manifest). Drop the old 1945 URL (`debtray` bucket). Until 1945 is published,
 an old `historic=true` link opens the earliest manifest year in the region.
 
-**TODO: move the legacy 1945 pipeline to aerial-timeline.** These files stay here
-for now. Don't delete them, and don't build new features on them:
-- `backend/etl.py` (ground control points), `backend/transform/`, `backend/helpers/image.py`
-- `backend/local_tile_server.py` (`notebooks/transformations.ipynb` was removed on 2026-10-22)
-- `make run-etl` / `make run-local-tile-server`, and the geo packages in the `dev` extra
+**TODO: remove the legacy 1945 pipeline (ported to aerial-timeline).** aerial-timeline
+has the ground control points now: source kind `gcp`, layer `us-army-1945` in its
+`config/sumava.yml` with the same 3 GCPs (aerial-timeline PR #1, roadmap step 6). It
+is built there locally only and not published (licence unknown, accuracy still to
+improve). Don't build new features on the files below.
 
-The API doesn't import any of this. Once aerial-timeline has the ground control
-points (its roadmap step 6), remove these files in one commit.
+**When:** once aerial-timeline PR #1 is merged. That is the only condition: the
+frontend doesn't need the 1945 tiles, and nothing here serves them.
+Then remove in one commit (the API imports none of it):
+- `backend/etl.py` (the GCPs, now in aerial-timeline's config) and `backend/transform/`
+  (`__init__.py`, `ground_control.py`, `geotif.py`, `tiles.py`)
+- `backend/helpers/image.py` (`read_image`, the only use of OpenCV)
+- `write_s3` in `backend/helpers/cdn.py` and `write_local` in `backend/helpers/fs.py`:
+  only `transform/` uses them (`write_s3`'s default reads `config.tile`, which is
+  commented out in `config.yml`). Keep `put_object` / `delete_object` and the other
+  `fs.py` helpers: media uploads use them.
+- `backend/local_tile_server.py` (`notebooks/transformations.ipynb` was removed on 2026-10-22)
+- `make run-etl` and `make run-local-tile-server` in `backend/Makefile`, and the
+  `run-etl` / `run-local-tile-server` lines in "Commands" above
+- in `backend/config.yml`: `cdn.path.tile` and the commented-out `tile:` block
+- in the `dev` extra of `backend/pyproject.toml`: `titiler.core`, `morecantile`,
+  `rasterio`, `rio-tiler`, `pyproj` ("Geo Stuff") and `opencv-python`; then run `uv lock`.
+  Check with `grep -rn "rasterio\|rio_tiler\|morecantile\|titiler\|pyproj\|cv2"`
+  that nothing else imports them (on 2026-11-01 only the files above did).
+
+Not in git, local only and safe to delete afterwards: `resources/tifs/` (35 MB, the
+old `geo1945.tif`) and `resources/tiles/` (92 MB, old local tiles). Keep
+`resources/us-army-1945.jpeg` (aerial-timeline has an identical copy in
+`data/raw/sumava/`, same SHA256, but this is the original). The old 1945 tiles in
+the `debtray` bucket (`test/timestrolls/tiles/1945/...`) are a separate decision.
+Deleting them is outward-facing, so ask first.
 
 **What the frontend needs:**
 - Load the manifest once (from the CDN, not via `/api`) and keep it in state.
