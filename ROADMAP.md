@@ -40,6 +40,27 @@ chapels on the map (#24 round B, #25 tap label and pips; tested on the
 Pixel 2026-10-29), and the cleanup of scraped texts (#27: language codes
 normalised on write, `edit_texts` marks an edited original, `move_text_langs`,
 `verbatim` in the resource detail; migration `V001_006`, additive).
+
+**Release prep, 2026-11-01 (local DB is the content for production):**
+local was replayed in full (564 images; the replay no longer has podcasts
+or the podcast owner's permission, revoked locally), houses imported for
+Deutsch Reichenau, Obermarkschlag, Asang, Untermarkschlag, Rosenhügel and
+Muckenschlag (137 published), 6 chapels added, 39 image titles cleaned of
+requests for help ("Wer kennt …?"), image titles and sacral names
+machine-translated into cs/en. Production gets this by `make push` in
+`../time-strolls-backup` after the release, not by replaying. Left open:
+- Descriptions still contain requests for help (88+ of 548): needs a
+  server-side "remove sentences" edit; rewriting whole bodies through
+  `edit_texts` is too costly.
+- Sankt Oswald and Unterurasch (Austrian side) have no houses: the
+  Südböhmen-Archiv covers Bohemia only.
+- Obermarkschlag 26 (lon = lat in the archive) and Rosenhügel 6 (3 km off)
+  stay `new`.
+- The duplicate guard refuses chapels that are all named "kaple" within
+  1 km; they were created with `force` (no source record). Better: ignore
+  the name when the record keys differ.
+- Slugs collide for same-name places within ~100 m (3 decimals): one chapel
+  in Deutsch Reichenau (znicenekostely 19688) couldn't be created.
 0. **Start here: the release** of all this with the switch-over (item 2).
    Round B (houses and chapels) is done: villages and mills at every zoom,
    houses, churches and chapels from zoom 17 (kind marks, their own
@@ -94,18 +115,21 @@ normalised on write, `edit_texts` marks an edited original, `move_text_langs`,
    - Back up production first: `make backup-db-production` in
      `../time-strolls-backup`.
    - No data migration: the old migrations were replaced by a fresh set, and
-     production is refilled from the replay.
+     production gets the local database (`make push`, below).
    - On the droplet: `docker volume create timestrolls_pg17` (PostgreSQL 17;
      13 is out of support). The old volume `deployment_postgres` stays
      untouched, so running the release workflow with a v0.3.x tag rolls back
      to the old data.
-   - Publish the release, then `make production` in `replay/` (with the
-     admin token). The migration creates the app user only if it is missing.
+   - Publish the release (`v0.4.0`); Flyway creates the empty schema. The
+     migration creates the app user only if it is missing.
+   - `make backup-db-local`, then `make push` in `../time-strolls-backup`
+     (replaces production's schema with local's; tokens travel along).
+     Afterwards `make check` in `replay/` should list nothing to add.
    - Old numeric place links (`?location=5`) stop working; tours are linked
      by slug or id.
    - Afterwards both databases run the same migrations, so
-     `make pull`/`make push` in `../time-strolls-backup` work (migrate local
-     first: it lacks V001_006).
+     `make pull`/`make push` in `../time-strolls-backup` work (local has
+     V001_006 since 2026-11-01).
 3. **Still to test by hand:** audio with the screen locked, the lock-screen
    and headphone controls (Media Session), resuming an episode the next day,
    and an iPhone (Safari).

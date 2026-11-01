@@ -1,13 +1,14 @@
 # The curated content of Time Strolls: the sources and the permissions to
-# show their content, places with their Topothek images and podcasts, and the
-# tours. Replayed through the API with `make local` or `make production`
+# show their content, places with their Topothek images, and the tours.
+# Podcasts are left out for now (removed 2026-11-01, they come separately).
+# Replayed through the API with `make local` or `make production`
 # (replay.py): it only adds what is missing, never changes or deletes, and
 # publishes what it adds. Created on 2026-10-22 from
 # backend/notebooks/upload_data.ipynb.
 #
 # Places: kind (village by default; see place_kind in the migrations), other
 # original names (names: {cs: ...}), part_of (the name of another place).
-# An image or podcast may be listed at several places.
+# An image may be listed at several places.
 #
 # Sources:
 # - https://www.znicenekostely.cz/objekt/detail/13352
@@ -28,11 +29,6 @@ permissions:
     copy: false
     note: personal communication
   - source: topothek:lichtenau
-    show: true
-    copy: false
-    note: personal communication
-  - party: Geschichten aus der Geschichte
-    party_role: owner
     show: true
     copy: false
     note: personal communication
@@ -101,10 +97,6 @@ places:
   - name: Sankt Thoma
     lat: 48.6412870685
     lon: 14.105554802
-    podcasts:
-      - title: "GAG83: 100 Jahre vor der Reformation – Jan Hus und die Hussitenkriege"
-        owner: Geschichten aus der Geschichte
-        url: https://audio.podigee-cdn.net/543211-m-64d99e1b9312e44e27a75be845df3628.mp3
     images:
       - https://deutsch-reichenau.topothek.at/?doc=1771855
       - https://deutsch-reichenau.topothek.at/?doc=1547393
