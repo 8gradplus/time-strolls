@@ -44,7 +44,29 @@ class Account(SQLModel, table=True):
     name: str
     operated_by: UUID | None = None
     party_id: UUID | None = None
+    email: str | None = None  # invited address, lower case
     created_at: datetime = Field(default_factory=now)
+
+
+class AccountIdentity(SQLModel, table=True):
+    __tablename__ = "account_identity"
+    __table_args__ = SCHEMA
+    issuer: str = Field(primary_key=True)
+    subject: str = Field(primary_key=True)
+    account_id: UUID
+    created_at: datetime = Field(default_factory=now)
+
+
+class AccountRole(SQLModel, table=True):
+    __tablename__ = "account_role"
+    __table_args__ = SCHEMA
+    id: UUID = Field(default_factory=uuid7, primary_key=True)
+    account_id: UUID
+    role: str  # editor | admin
+    area: UUID | None = None  # a place; stored, not enforced yet
+    granted_by: UUID | None = None
+    created_at: datetime = Field(default_factory=now)
+    revoked_at: datetime | None = None
 
 
 class ApiToken(SQLModel, table=True):

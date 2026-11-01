@@ -1,4 +1,5 @@
-"""Admin routes for parties, sources, permissions, accounts and tokens."""
+"""Admin routes for parties, sources, permissions, accounts, invitations,
+roles and tokens."""
 
 from typing import Annotated
 from uuid import UUID
@@ -8,7 +9,14 @@ from pydantic import BaseModel, Field
 
 from api.auth.bearer import scope
 from api.db import SessionDep
-from api.model.tables import Account, ApiToken, Party, Permission, Source
+from api.model.tables import (
+    Account,
+    AccountRole,
+    ApiToken,
+    Party,
+    Permission,
+    Source,
+)
 from service import Actor, accounts, rights
 
 router = APIRouter(tags=["Admin: rights and accounts"], prefix="/api/admin")
@@ -88,6 +96,30 @@ def get_accounts(session: SessionDep, _: Admin):
 @router.post("/accounts/", response_model=Account, status_code=201)
 def post_account(data: accounts.AccountIn, session: SessionDep, actor: Admin):
     return accounts.create_account(session, actor, data)
+
+
+@router.post("/invites/", response_model=Account, status_code=201)
+def post_invite(data: accounts.InviteIn, session: SessionDep, actor: Admin):
+    """Invite a person by email with a role (editor, admin): their first
+    Google sign-in with this address links them to the account."""
+    return accounts.invite(session, actor, data)
+
+
+@router.get("/accounts/{name}/roles", response_model=list[AccountRole])
+def get_roles(name: str, session: SessionDep, _: Admin):
+    """All roles of the account, also revoked ones."""
+    return accounts.roles(session, accounts.find_account(session, name).id)
+
+
+@router.post("/accounts/{name}/roles", response_model=AccountRole, status_code=201)
+def post_role(name: str, data: accounts.RoleIn, session: SessionDep, actor: Admin):
+    account = accounts.find_account(session, name)
+    return accounts.grant_role(session, actor, account.id, data)
+
+
+@router.post("/roles/{id}/revoke", response_model=AccountRole)
+def revoke_role(id: UUID, session: SessionDep, actor: Admin):
+    return accounts.revoke_role(session, actor, id)
 
 
 class TokenOut(BaseModel):
