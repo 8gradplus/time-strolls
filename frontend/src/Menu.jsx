@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import Link from "@mui/material/Link";
-import { useColorScheme } from "@mui/material/styles";
 import Dock from "./Components/Dock";
 import Wordmark from "./Components/Wordmark";
-import { DownGlyph, Icon, ModeGlyph } from "./icons";
+import { DownGlyph, Icon } from "./icons";
+import { LanguageSwitch, ModeButton, Plain } from "./Components/Preferences";
 import { api } from "./api";
 import { sources } from "./historic/manifest";
 import { localized, previewUrl, yearRange } from "./historic/regions";
@@ -35,24 +35,6 @@ const hover = {
 };
 
 // A plain button that is laid out by its sx
-const Plain = ({ sx, ...props }) => (
-  <Box
-    component="button"
-    type="button"
-    sx={{
-      font: "inherit",
-      color: "inherit",
-      border: 0,
-      bgcolor: "transparent",
-      p: 0,
-      textAlign: "left",
-      cursor: "pointer",
-      ...sx,
-    }}
-    {...props}
-  />
-);
-
 const Label = ({ children }) => (
   <Box
     component="p"
@@ -131,76 +113,6 @@ const ToggleRow = ({ icon, primary, secondary, on, onClick }) => (
     />
   </Plain>
 );
-
-// The code is ISO "cs"; the button keeps the familiar "Cz"
-const langLabels = { de: "De", cs: "Cz", en: "En" };
-
-const LanguageSwitch = () => {
-  const { language, setLanguage } = useLanguage();
-
-  return (
-    // Language names stay as they are, also under a page translator
-    <Box
-      translate="no"
-      className="notranslate"
-      sx={{ display: "flex", gap: 1.5 }}
-    >
-      {Object.entries(langLabels).map(([lang, label]) => (
-        <Plain
-          key={lang}
-          aria-pressed={language === lang}
-          onClick={() => setLanguage(lang)}
-          sx={{
-            minHeight: 28,
-            color: language === lang ? "text.primary" : "text.secondary",
-            fontWeight: language === lang ? 600 : 400,
-            "&:hover": { color: "text.primary" },
-          }}
-        >
-          {label}
-        </Plain>
-      ))}
-    </Box>
-  );
-};
-
-// Light, dark, or the device setting ("system"); MUI stores the choice. One
-// quiet button next to the languages: its icon and name show the current
-// mode, a tap steps to the next one.
-const modes = [
-  ["system", "modeSystem"],
-  ["light", "modeLight"],
-  ["dark", "modeDark"],
-];
-
-const ModeButton = () => {
-  const { mode, setMode } = useColorScheme();
-  const { t } = useLanguage();
-  if (!mode) return null;
-
-  const index = Math.max(
-    0,
-    modes.findIndex(([value]) => value === mode),
-  );
-  const [value, name] = modes[index];
-  return (
-    <Plain
-      onClick={() => setMode(modes[(index + 1) % modes.length][0])}
-      aria-label={`${t.appearance}: ${t[name]}`}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 0.75,
-        minHeight: 28,
-        color: "text.secondary",
-        "&:hover": { color: "text.primary" },
-      }}
-    >
-      <ModeGlyph mode={value} />
-      {t[name]}
-    </Plain>
-  );
-};
 
 // One area: a tile as thumbnail, the name, countries and years; the area
 // around the centre of the view is marked "Hier".
