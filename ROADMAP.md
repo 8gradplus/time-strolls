@@ -88,11 +88,24 @@ normalised on write, `edit_texts` marks an edited original, `move_text_langs`,
      `source_changed` report on a new harvest (§7 below). A discreet
      "gekürzt / zkráceno / abridged" on the photo label uses the public
      `edited` flag (frontend, not started).
-2. **Then the release** of the content model with the switch-over
-   (`SCHEMA_CONCEPT.md`, "Migration"; by hand: create the volume
-   `timestrolls_pg17` on the droplet, publish the release, `make production`
-   in `replay/`), once the frontend round feels right. Afterwards the agent
-   curates on production with its own token (not `API_KEY`).
+2. **Then the release** of the content model with the switch-over, once the
+   frontend round feels right. Afterwards the agent curates on production
+   with its own token (not `API_KEY`). The switch-over, by hand:
+   - Back up production first: `make backup-db-production` in
+     `../time-strolls-backup`.
+   - No data migration: the old migrations were replaced by a fresh set, and
+     production is refilled from the replay.
+   - On the droplet: `docker volume create timestrolls_pg17` (PostgreSQL 17;
+     13 is out of support). The old volume `deployment_postgres` stays
+     untouched, so running the release workflow with a v0.3.x tag rolls back
+     to the old data.
+   - Publish the release, then `make production` in `replay/` (with the
+     admin token). The migration creates the app user only if it is missing.
+   - Old numeric place links (`?location=5`) stop working; tours are linked
+     by slug or id.
+   - Afterwards both databases run the same migrations, so
+     `make pull`/`make push` in `../time-strolls-backup` work (migrate local
+     first: it lacks V001_006).
 3. **Still to test by hand:** audio with the screen locked, the lock-screen
    and headphone controls (Media Session), resuming an episode the next day,
    and an iPhone (Safari).
@@ -321,7 +334,9 @@ map are plain red dots; the logo is only the favicon.
 
 ## 3. Own base map and offline PWA
 Offline is **essential**, not optional: there are dead zones on the border, and
-people use the app outdoors. Two corrections to `OFFLINE_CACHING_STRATEGY.md`:
+people use the app outdoors. Two corrections to the first offline design (a
+viewport download with the Cache API and a service worker; the document was
+removed on 2026-11-01, it's in git history):
 - **The base map is the blocker.** The OSM tile servers (`tile.openstreetmap.de`)
   forbid bulk prefetching and offline downloads under their usage policy.
   - **Solution:** host our own base map, a **Protomaps PMTiles** extract of the

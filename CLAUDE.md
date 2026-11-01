@@ -185,9 +185,9 @@ points (its roadmap step 6), remove these files in one commit.
   - Mark `enhanced` / `ai_generated` layers visibly (none so far).
   - Licences require attribution (CC BY 4.0), so always list it in the menu.
   - Add every new UI string to all three languages in `LanguageContext.jsx`.
-- **Offline caching** (`OFFLINE_CACHING_STRATEGY.md`): tile URLs are immutable, so
+- **Offline caching** (`ROADMAP.md` §3): tile URLs are immutable, so
   they cache well. Re-fetch the manifest; don't cache it long.
 
 **Roadmap:** `ROADMAP.md` holds the agreed plan and the status of each step. Read it when asked what's next, and update its status table when a step lands.
 
-**Planned work:** `OFFLINE_CACHING_STRATEGY.md` is a design doc (not yet implemented) for user-initiated, viewport-based offline downloads using the Cache API and a service worker. Read it before working on offline or PWA features.
+**Planned work:** offline use and the PWA are planned in `ROADMAP.md` §3 (an own base map, one download package for the region); not started. Read it before working on offline or PWA features.
