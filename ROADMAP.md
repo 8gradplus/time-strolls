@@ -50,7 +50,8 @@ Deutsch Reichenau, Obermarkschlag, Asang, Untermarkschlag, Rosenhügel and
 Muckenschlag (137 published), 6 chapels added, 39 image titles cleaned of
 requests for help ("Wer kennt …?"), image titles and sacral names
 machine-translated into cs/en. Production gets this by `make push` in
-`../time-strolls-backup` after the release, not by replaying. Left open:
+`../time-strolls-backup` after the release, not by replaying. Left open
+(after step 5, see item 0):
 - Descriptions still contain requests for help (88+ of 548): needs a
   server-side "remove sentences" edit; rewriting whole bodies through
   `edit_texts` is too costly.
@@ -63,8 +64,15 @@ machine-translated into cs/en. Production gets this by `make push` in
   the name when the record keys differ.
 - Slugs collide for same-name places within ~100 m (3 decimals): one chapel
   in Deutsch Reichenau (znicenekostely 19688) couldn't be created.
-0. **Start here:** the open points of the release prep above, then the
-   agreed order (item 5). Round B (houses and chapels) is done: villages and mills at every zoom,
+0. **Start here: step 5, auth and admin UI** (decided 2026-11-01: more
+   impact on the product than the small points). Plan it first: section
+   "5. Authentication and admin section" was written before v0.4.0 and has
+   to be brought up to date with the backend as it is now (accounts with
+   hashed bearer tokens and scopes `read`…`admin`, the service layer with
+   `Actor`, content never deleted, only muted; MCP on the same tokens), then
+   split it into small PRs. After step 5: the open points of the release
+   prep above and items 1, 4, 6 and the leftovers of round B below, then
+   the agreed order (item 5). Round B (houses and chapels) is done: villages and mills at every zoom,
    houses, churches and chapels from zoom 17 (kind marks, their own
    clusters, a leader line where a mark covers its village), the village
    panel's folded lists, on touch screens a tap names a mark in the wall
@@ -126,7 +134,9 @@ machine-translated into cs/en. Production gets this by `make push` in
    Czech UI strings (player, dock) should be checked by a native speaker; in
    a desktop window narrower than ~360 px the zoom pill squeezes the years
    (accepted for now).
-5. Then go on in the agreed order: 5 admin, 3 offline PWA, 6 Android.
+5. The agreed order (changed 2026-11-01): 5 auth and admin (now, item 0),
+   then the small points (release prep, items 1, 4, 6, round B leftovers),
+   then 3 offline PWA, 6 Android.
 6. **Backend, "has more" (2026-10-29):** the map marks a place worth
    opening with three pips (hover name, wall label, the village panel's
    lists) and a filled house dot, for now only when it has photos
@@ -143,7 +153,7 @@ machine-translated into cs/en. Production gets this by `make push` in
 
 | # | Step | Status |
 |---|---|---|
-| 0 | CI basics, Vite migration, repo cleanup (ETL out) | CI and Vite done (#7). Removing the ETL waits for aerial-timeline step 6. |
+| 0 | CI basics, Vite migration, repo cleanup (ETL out) | Done: CI and Vite (#7), the legacy 1945 ETL removed (#33, now in aerial-timeline) |
 | 1 | CDN years and time selection | Done (#7) |
 | 2 | Theme, logo, mobile layout | Done (#8) |
 | 2b | Styling polish: base map, colours on map and imagery, fonts, usability, time slider | Done (#8) |
@@ -152,7 +162,7 @@ machine-translated into cs/en. Production gets this by `make push` in
 | 2e | Houses and chapels on the map (round B), tap label and pips | Done (#24, #25) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Done (#10, #11) |
-| 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
+| 5 | Auth (OIDC JWT) and admin (react-admin) | Next (decided 2026-11-01); plan first |
 | 6 | Capacitor Android: geofence notifications, background audio | Open |
 | 7 | MCP server on the same auth | First version for agents done (#20, #21, #22, scraper v0.4.0); bearer tokens for now, OAuth with step 5; text cleanup (#27); live since v0.4.0 (2026-11-01) |
 

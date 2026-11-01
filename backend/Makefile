@@ -22,9 +22,16 @@ check: lint test
 test:
 	uv run pytest
 
+# It returns once the server accepts TCP connections: the image first
+# initialises with a temporary server that listens only on the socket, then
+# restarts, so a plain pg_isready answers too early and the tests are skipped.
 test-db:
 	docker run -d --rm --name timestrolls-test-db -p 5433:5432 \
 		-e POSTGRES_PASSWORD=postgres postgis/postgis:17-3.5
+	@for i in $$(seq 1 60); do \
+		docker exec timestrolls-test-db pg_isready -q -h 127.0.0.1 -U postgres && exit 0; \
+		sleep 1; \
+	done; echo "test database not ready after 60 s" >&2; exit 1
 
 test-db-stop:
 	docker rm -f timestrolls-test-db
