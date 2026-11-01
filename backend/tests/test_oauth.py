@@ -169,3 +169,13 @@ def test_google_needs_its_keys():
     with pytest.raises(ValidationError):
         Auth(mode="oauth", google_client_id="x")
     assert Auth(google_client_id="x", google_client_secret="y", jwt_key="z").google
+
+
+def test_the_oauth_routes_hide_no_other_route(client):
+    """v0.5.0 mounted the OAuth server at /api, which answered /api/ready
+    (the health check) with 404 and took production down."""
+    assert client.get("/api/ready").status_code == 200
+    assert client.get("/api/locations/").status_code == 200
+    r = client.get("/api/no-such-route")
+    assert r.status_code == 404 and r.json() == {"detail": "Not Found"}
+    assert client.get("/api/authorize").status_code == 400  # ours, no params

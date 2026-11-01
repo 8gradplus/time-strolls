@@ -163,22 +163,20 @@ def build():
 auth = build()
 
 
-def routes() -> tuple[list[Route], list[Route]]:
+def routes() -> list[Route]:
     """The OAuth server's routes, for api/main.py: the metadata under
-    /.well-known at the root, and the authorization server's own routes
-    (/authorize, /token, /register, /auth/callback, /consent), served under
-    /api. Without Google, none."""
+    /.well-known at the root, and the authorization server's own routes as
+    /api/authorize, /api/token, /api/register, /api/auth/callback and
+    /api/consent (single routes, no mount of /api). Without Google, none."""
     if not isinstance(auth, Logins):
-        return [], []
-    well_known = auth.get_well_known_routes(mcp_path="/")
+        return []
+    found = auth.get_well_known_routes(mcp_path="/")
     # The resource is /api/mcp/admin/; clients configured without the
     # trailing slash look its metadata up without it
-    for r in list(well_known):
+    for r in list(found):
         if r.path.startswith("/.well-known/oauth-protected-resource/"):
-            well_known.append(Route(r.path.rstrip("/"), r.endpoint, methods=r.methods))
-    server = [
-        r
-        for r in auth.get_routes(mcp_path="/")
-        if not r.path.startswith("/.well-known")
-    ]
-    return well_known, server
+            found.append(Route(r.path.rstrip("/"), r.endpoint, methods=r.methods))
+    for r in auth.get_routes(mcp_path="/"):
+        if not r.path.startswith("/.well-known"):
+            found.append(Route(f"/api{r.path}", r.endpoint, methods=r.methods))
+    return found
