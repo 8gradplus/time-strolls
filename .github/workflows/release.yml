@@ -129,6 +129,12 @@ jobs:
             && rm -rf .docker \
             && docker compose up -d --remove-orphans \
             && docker image prune -f"
+          # Caddy reads the Caddyfile it was created with (a bind mount of the
+          # old file), and up doesn't recreate it for a new one: recreate it
+          # when the copied Caddyfile.prod differs (a second or two offline)
+          doctl compute ssh "$DROPLET" --ssh-command "cd timestrolls \
+            && (docker compose exec -T caddy cat /etc/caddy/Caddyfile | cmp -s - Caddyfile.prod \
+              || docker compose up -d --no-deps --force-recreate caddy)"
 
       - name: Check that the site answers
         run: |
