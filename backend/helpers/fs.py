@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 from urllib.parse import unquote
 import requests
 from io import BytesIO
-from pathlib import Path
 from PIL import Image
 
 
@@ -27,14 +26,6 @@ def image_id(url):
     filename = os.path.basename(path)  # file840955.jpg
     id = os.path.splitext(filename)[0]
     return id
-
-
-def write_local(stuff: bytes, path: str):
-    # Create dir if not exists
-    file_path = Path(path)
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "wb") as f:
-        f.write(stuff)
 
 
 # Todo: reconcile and cleanup

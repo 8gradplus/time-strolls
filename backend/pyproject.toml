@@ -41,17 +41,9 @@ dev = [
     "psycopg2",
     # zed
     "cst-lsp",
-    # Geo Stuff
-    "titiler.core",
-    "morecantile",
-    "rasterio",
-    "rio-tiler",
-    "pyproj",
     # Crawling
     "webdriver-manager",
     "tenacity",
-    # Image
-    "opencv-python",
 ]
 
 [tool.ruff]

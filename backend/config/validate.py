@@ -19,7 +19,6 @@ class DataBase(BaseModel):
 class CdnPath(BaseModel):
     image: str
     podcast: str
-    tile: str
 
 
 class CdnCredentials(BaseModel):
@@ -35,19 +34,7 @@ class Cdn(BaseModel):
     bucket: Optional[str] = None
 
 
-class TileZoom(BaseModel):
-    min: Optional[int] = 10
-    max: Optional[int] = 18
-
-
-class Tile(BaseModel):
-    zoom: Optional[TileZoom] = TileZoom()
-    size: Optional[int] = 256
-    format: Optional[str] = "png"
-
-
 class Validator(BaseModel):
     api: Api
     cdn: Cdn
-    tile: Optional[Tile] = Tile()
     database: DataBase

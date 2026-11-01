@@ -16,16 +16,9 @@ cdn:
   path:
     image: images
     podcast: podcasts
-    tile: tiles
   credentials:
     key: ${SPACES_KEY}
     secret: ${SPACES_SECRET}
   bucket: timestrolls
   endpoint: https://fra1.digitaloceanspaces.com
   #endpoint: /Users/viktor/Work/8gradplus/time-strolls/resources/
-#tile:
-#  zoom:
-#    min: 10
-#    max: 11
-#size: 256
-#format: png

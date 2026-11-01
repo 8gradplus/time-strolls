@@ -473,8 +473,11 @@ Proposal:
   content they uploaded is now `replay/places.yml`, replayed through the API
   with `make local` / `make production` in `replay/` (the safety net until
   the admin, step 5).
-- The tile and georeferencing pipeline in `backend/` (`etl.py`, `transform/`, …)
-  moves to aerial-timeline (its step 6) and is then deleted here in one commit.
+- ~~The tile and georeferencing pipeline in `backend/` (`etl.py`, `transform/`, …)
+  moves to aerial-timeline (its step 6) and is then deleted here in one commit.~~
+  Done 2026-11-01 (aerial-timeline source kind `gcp`). Still unused afterwards:
+  `backend/helpers/fs.py` and `backend/helpers/cdn.py` (nothing imports them); to be
+  decided when the admin uploads media (step 5).
 - `resources/` (raw GPX, TIFs, tiles, crawl output): once the admin exists, the
   database and Spaces are the source of truth. Archive it to Spaces or a data repo
   and keep only small test fixtures.

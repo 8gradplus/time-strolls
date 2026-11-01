@@ -1,6 +1,4 @@
 # syntax=docker/dockerfile:1
-# Titiler does not run on this image! see
-# Ref: https://github.com/developmentseed/titiler/blob/main/dockerfiles/Dockerfile
 
 FROM python:3.13-slim
 ENV PYTHONDONTWRITEBYTECODE=1
