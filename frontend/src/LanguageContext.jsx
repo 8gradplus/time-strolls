@@ -79,6 +79,25 @@ const translations = {
     modeSystem: "Automatisch",
     modeLight: "Hell",
     modeDark: "Dunkel",
+    admin: {
+      title: "Admin",
+      signInTitle: "Inhalte bearbeiten",
+      signInText:
+        "Inhalte ändern können nur eingeladene Personen. Die Anmeldung läuft über das Google-Konto, an das die Einladung ging.",
+      signIn: "Mit Google anmelden",
+      signingIn: "Anmeldung …",
+      notInvitedTitle: "Keine Einladung",
+      notInvitedText:
+        "Für dieses Google-Konto gibt es keine Einladung. Eine Person mit Admin-Rechten kann die Adresse einladen, mit der die Anmeldung erfolgte.",
+      otherAccount: "Anderes Konto verwenden",
+      signOut: "Abmelden",
+      local: "Lokal, ohne Anmeldung",
+      failed: "Die Anmeldung hat nicht geklappt.",
+      review: "Prüfen",
+      reviewSoon: "Hier folgt die Liste der Inhalte, die auf Prüfung warten.",
+      roles: { editor: "Redaktion", admin: "Admin" },
+      toMap: "Zur Karte",
+    },
   },
   cs: {
     areas: "Oblasti",
@@ -156,6 +175,25 @@ const translations = {
     modeSystem: "Automaticky",
     modeLight: "Světlý",
     modeDark: "Tmavý",
+    admin: {
+      title: "Administrace",
+      signInTitle: "Úpravy obsahu",
+      signInText:
+        "Obsah mohou měnit jen pozvané osoby. Přihlášení probíhá přes účet Google, na který přišla pozvánka.",
+      signIn: "Přihlásit se přes Google",
+      signingIn: "Přihlašování …",
+      notInvitedTitle: "Bez pozvánky",
+      notInvitedText:
+        "Pro tento účet Google neexistuje pozvánka. Osoba se správcovskými právy může pozvat adresu, se kterou proběhlo přihlášení.",
+      otherAccount: "Použít jiný účet",
+      signOut: "Odhlásit se",
+      local: "Lokálně, bez přihlášení",
+      failed: "Přihlášení se nezdařilo.",
+      review: "Kontrola",
+      reviewSoon: "Zde bude seznam obsahu, který čeká na kontrolu.",
+      roles: { editor: "Redakce", admin: "Správa" },
+      toMap: "Na mapu",
+    },
   },
   en: {
     areas: "Areas",
@@ -232,6 +270,25 @@ const translations = {
     modeSystem: "Automatic",
     modeLight: "Light",
     modeDark: "Dark",
+    admin: {
+      title: "Admin",
+      signInTitle: "Edit content",
+      signInText:
+        "Only invited people can change content. Sign in with the Google account the invitation was sent to.",
+      signIn: "Sign in with Google",
+      signingIn: "Signing in …",
+      notInvitedTitle: "Not invited",
+      notInvitedText:
+        "There is no invitation for this Google account. Someone with admin rights can invite the address you signed in with.",
+      otherAccount: "Use another account",
+      signOut: "Sign out",
+      local: "Local, no sign-in",
+      failed: "Signing in didn't work.",
+      review: "Review",
+      reviewSoon: "The list of content waiting for review comes here.",
+      roles: { editor: "Editor", admin: "Admin" },
+      toMap: "To the map",
+    },
   },
 };
 

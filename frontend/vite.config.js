@@ -16,6 +16,11 @@ export default defineConfig({
     allowedHosts: [".loca.lt"],
     proxy: {
       "/api": { target: apiTarget, changeOrigin: true },
+      // the API's sign-in metadata (the admin)
+      "/.well-known/oauth-authorization-server": {
+        target: apiTarget,
+        changeOrigin: true,
+      },
     },
   },
   build: {
