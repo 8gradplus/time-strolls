@@ -69,7 +69,7 @@ machine-translated into cs/en. Production gets this by `make push` in
    OAuth through FastMCP with Google login, roles in our database; see
    section 5 and its PR table. **Live since v0.5.1 (2026-11-01):** invited
    editors sign in with Google; claude.ai lists the admin tools. Next:
-   PR 5, the admin UI (own MUI pages; 5a done, 5b shell and sign-in in review, then 5c review queue).
+   PR 5, the admin UI (own MUI pages; 5a and 5b done, 5c review queue in review; then PR 6, planned separately).
    After step 5: the open points of the release
    prep above and items 1, 4, 6 and the leftovers of round B below, then
    the agreed order (item 5). Round B (houses and chapels) is done: villages and mills at every zoom,
@@ -516,8 +516,8 @@ days). The first admin is invited through the admin API with `API_KEY`.
 | 3 | OAuth on the admin MCP and REST (`api/auth/oauth.py`), the public MCP open, `GET /api/admin/me`, config `auth`, Caddy, release secrets. Google sign-in is on only once `GOOGLE_CLIENT_ID` is set, so releasing it changes nothing until then | done (#37) |
 | 4 | Google app and secrets (by hand), release, connect claude.ai; docs | done (v0.5.1, #38, #39, this) |
 | 5a | Admin API for the UI: `GET /api/admin/review/` (one type's rows with kind, picture, source, places, author; `total` for paging) and `POST /api/admin/resources/status` (several at once; `each()` moved into the service, shared with MCP) | done (#41) |
-| 5b | Admin shell and sign-in: `/admin` as a lazy chunk, OAuth 2.1 public client (`oauth4webapi`, dynamic registration, PKCE; tokens in memory and `sessionStorage`), local mode when `/api/admin/me` answers without a token, the not-invited screen, de/cs/en | in review |
-| 5c | Review queue: type tabs, filters, batch publish/mute with undo, detail panel (photo, texts per language, sources, permission, history), phone layout | |
+| 5b | Admin shell and sign-in: `/admin` as a lazy chunk, OAuth 2.1 public client (`oauth4webapi`, dynamic registration, PKCE; tokens in memory and `sessionStorage`), local mode when `/api/admin/me` answers without a token, the not-invited screen, de/cs/en | done (#42) |
+| 5c | Review queue: type tabs, filters, batch publish/mute with undo, detail panel (photo, texts per language, sources, permission, history), phone layout | in review |
 | 6 | Admin UI 2: places (map picker, texts), Topothek import, accounts and roles, personal tokens (planned separately) | |
 
 **Admin UI decisions (2026-11-01):** our own MUI pages in the app's look (not

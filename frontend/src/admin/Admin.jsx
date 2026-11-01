@@ -14,6 +14,7 @@ import { Icon } from "../icons";
 import { useLanguage } from "../LanguageContext";
 import { serif } from "../theme";
 import { AuthProvider, useAuth } from "./AuthContext";
+import Review from "./review/Review";
 
 const Brand = () => {
   const { t } = useLanguage();
@@ -160,21 +161,6 @@ const Gate = () => {
           {t.admin.toMap}
         </Link>
       </Box>
-    </Box>
-  );
-};
-
-// Until the review list (PR 5c)
-const Review = () => {
-  const { t } = useLanguage();
-  return (
-    <Box sx={{ maxWidth: 1100, mx: "auto", px: { xs: 2, sm: 3 }, py: 4 }}>
-      <Typography variant="h1" sx={{ fontSize: 40, mb: 2 }}>
-        {t.admin.review}
-      </Typography>
-      <Typography sx={{ color: "text.secondary" }}>
-        {t.admin.reviewSoon}
-      </Typography>
     </Box>
   );
 };
