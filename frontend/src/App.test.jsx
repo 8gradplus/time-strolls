@@ -224,6 +224,25 @@ test("a tour from the menu is linked by slug and its track loaded", async () => 
   expect(window.location.search).toContain("tour=schwemmkanalweg");
 });
 
+test("the menu toggles villages and churches and chapels in the URL", async () => {
+  localStorage.setItem("language", "de");
+  render(<App />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Menü" }));
+  const menu = await screen.findByRole("dialog", { name: "Menü" });
+  const sacral = within(menu).getByRole("button", {
+    name: /Kirchen und Kapellen/,
+  });
+  fireEvent.click(sacral);
+  await waitFor(() => expect(window.location.search).toContain("sacral=true"));
+  fireEvent.click(within(menu).getByRole("button", { name: /Dörfer/ }));
+  await waitFor(() =>
+    expect(window.location.search).toContain("markers=false"),
+  );
+  fireEvent.click(sacral);
+  await waitFor(() => expect(window.location.search).not.toContain("sacral"));
+});
+
 test("the dock folds into the year and the logo, and remembers it", async () => {
   localStorage.setItem("language", "de");
   localStorage.removeItem("dockFolded");

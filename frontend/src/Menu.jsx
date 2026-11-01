@@ -657,6 +657,12 @@ const Menu = (props) => {
             on={itemState.showMarkers}
             onClick={onItemClick("showMarkers")}
           />
+          <ToggleRow
+            icon="church"
+            primary={t.churchesAndChapels}
+            on={itemState.showSacral}
+            onClick={onItemClick("showSacral")}
+          />
           {tours.map((tour) => {
             // The URL names a tour by slug; a link with its id still counts
             const on = [tour.slug, tour.id].includes(itemState.tourId);

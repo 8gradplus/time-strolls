@@ -29,10 +29,29 @@ export const markOf = (kind) => {
 };
 
 export const isHouse = (place) => HOUSES.includes(place.kind);
+export const isSacral = (place) => SACRAL.includes(place.kind);
 
 // Shown only close up, with the wall label instead of names
-export const isCloseUp = (place) =>
-  isHouse(place) || SACRAL.includes(place.kind);
+export const isCloseUp = (place) => isHouse(place) || isSacral(place);
+
+// What the two menu toggles show (Menu.jsx; URL `markers`, `sacral`):
+// `villages` (on by default) the villages and mills, and close up the
+// houses, churches and chapels; `sacral` (off by default) the churches and
+// chapels at every zoom. `places` cluster together, `closeUps` from
+// CLOSE_UP_ZOOM on in their own group (LocationMarkers.jsx)
+export const visibleMarks = (locations, zoom, { villages, sacral }) => {
+  const closeUp = zoom >= CLOSE_UP_ZOOM;
+  return {
+    places: locations.filter((place) =>
+      isCloseUp(place) ? sacral && !closeUp && isSacral(place) : villages,
+    ),
+    closeUps: closeUp
+      ? locations.filter((place) =>
+          isSacral(place) ? villages || sacral : villages && isHouse(place),
+        )
+      : [],
+  };
+};
 
 // The text next to the mark at this zoom, or null (then only on hover)
 export const labelAt = (place, zoom, name) => {
