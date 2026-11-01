@@ -67,7 +67,7 @@ machine-translated into cs/en. Production gets this by `make push` in
 0. **Start here: step 5, auth and admin UI** (decided 2026-11-01: more
    impact on the product than the small points). Planned on 2026-11-01:
    OAuth through FastMCP with Google login, roles in our database; see
-   section 5 and its PR table (PR 2, schema and roles, in review; next: PR 3, OAuth on MCP and REST). After step 5: the open points of the release
+   section 5 and its PR table (PR 2 done #36; PR 3, OAuth on MCP and REST, in review; next: PR 4, the Google app and the release). After step 5: the open points of the release
    prep above and items 1, 4, 6 and the leftovers of round B below, then
    the agreed order (item 5). Round B (houses and chapels) is done: villages and mills at every zoom,
    houses, churches and chapels from zoom 17 (kind marks, their own
@@ -509,11 +509,16 @@ days). The first admin is invited through the admin API with `API_KEY`.
 | # | Step | Status |
 |---|---|---|
 | 1 | This plan + spike (wiring under the FastAPI mounts, shared provider, Postgres store) | done |
-| 2 | Schema and roles (`V001_007`): `account.email`, `account_role` (`grant` is a reserved word), `oauth_store`; `invite`, `login`, `grant_role`, `revoke_role`; `/api/admin/invites/`, `/accounts/{name}/roles`, `/roles/{id}/revoke` | in review |
-| 3 | OAuth on MCP and REST, `GET /api/me`, config, Caddy, release secrets | |
+| 2 | Schema and roles (`V001_007`): `account.email`, `account_role` (`grant` is a reserved word), `oauth_store`; `invite`, `login`, `grant_role`, `revoke_role`; `/api/admin/invites/`, `/accounts/{name}/roles`, `/roles/{id}/revoke` | done (#36) |
+| 3 | OAuth on the admin MCP and REST (`api/auth/oauth.py`), the public MCP open, `GET /api/admin/me`, config `auth`, Caddy, release secrets. Google sign-in is on only once `GOOGLE_CLIENT_ID` is set, so releasing it changes nothing until then | in review |
 | 4 | Docs, Google app and secrets (by hand), release, connect claude.ai/ChatGPT/Gemini | |
 | 5 | Admin UI 1: `/admin` (lazy, PKCE via `oauth4webapi`), review queue; react-admin vs own MUI pages decided then | |
 | 6 | Admin UI 2: places (map picker, texts), Topothek import, accounts and roles, personal tokens | |
+
+Left from PR 3: a person without an invitation still completes the Google
+step and gets a token from our server that every request then refuses (401);
+refusing already at the token exchange (`_extract_upstream_claims`) would be
+clearer for them. Check with the real clients in PR 4.
 
 Later: GitHub/Microsoft login (`OAuthProxy` has one upstream: a chooser or
 a broker); enforcing areas. Apple login needs a paid developer account, so

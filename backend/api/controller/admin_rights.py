@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
-from api.auth.bearer import scope
+from api.auth.bearer import current_actor, scope
 from api.db import SessionDep
 from api.model.tables import (
     Account,
@@ -86,6 +86,27 @@ def post_permission(data: rights.PermissionIn, session: SessionDep, actor: Revie
 @router.post("/permissions/{id}/revoke", response_model=PermissionOut)
 def revoke_permission(id: UUID, session: SessionDep, actor: Reviewer):
     return PermissionOut.of(rights.revoke(session, actor, id))
+
+
+class Me(BaseModel):
+    account_id: UUID
+    name: str
+    scopes: list[str]
+    roles: list[str]
+
+
+@router.get("/me", response_model=Me)
+def get_me(session: SessionDep, actor: Annotated[Actor, Depends(current_actor)]):
+    """Who the token belongs to: the account, its scopes and roles (for the
+    admin section)."""
+    return Me(
+        account_id=actor.account_id,
+        name=actor.name,
+        scopes=sorted(actor.scopes),
+        roles=sorted(
+            {r.role for r in accounts.active_roles(session, actor.account_id)}
+        ),
+    )
 
 
 @router.get("/accounts/", response_model=list[Account])

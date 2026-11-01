@@ -100,6 +100,10 @@ jobs:
           API_KEY: ${{ secrets.API_KEY }}
           SPACES_KEY: ${{ secrets.SPACES_KEY }}
           SPACES_SECRET: ${{ secrets.SPACES_SECRET }}
+          # Google sign-in; empty until the secrets exist (then it stays off)
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          OAUTH_JWT_KEY: ${{ secrets.OAUTH_JWT_KEY }}
         run: |
           printf '%s\n' \
             "IMAGE_TAG=${TAG#v}" \
@@ -108,6 +112,9 @@ jobs:
             "API_KEY=$API_KEY" \
             "SPACES_KEY=$SPACES_KEY" \
             "SPACES_SECRET=$SPACES_SECRET" \
+            "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" \
+            "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" \
+            "OAUTH_JWT_KEY=$OAUTH_JWT_KEY" \
             | doctl compute ssh "$DROPLET" --ssh-command "umask 077 && cat > timestrolls/.env"
 
       - name: Start the new version

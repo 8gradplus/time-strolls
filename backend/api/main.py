@@ -2,7 +2,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from starlette.applications import Starlette
 
+from api.auth.oauth import routes as oauth_routes
 from api.controller import admin_content, admin_rights, public
 from api.mcp_server import admin_app, public_app
 from service import Conflict, Forbidden, Invalid, NotFound, ServiceError
@@ -19,10 +21,12 @@ app = FastAPI(
     title="Timestrolls API",
     description=(
         "Public routes (/api/locations, /api/tours) return published and "
-        "permitted content. Admin routes (/api/admin/...) need "
-        "`Authorization: Bearer <token>` with the scope named on the route. "
-        "MCP: /api/mcp/ (published content) and /api/mcp/admin/ (curation), "
-        "with the same tokens."
+        "permitted content, without login. Admin routes (/api/admin/...) need "
+        "`Authorization: Bearer <token>` with the scope named on the route: "
+        "a bearer token or, for invited people, a token from signing in with "
+        "Google (OAuth 2.1, metadata under /.well-known). MCP: /api/mcp/ "
+        "(published content, open) and /api/mcp/admin/ (curation, the same "
+        "auth as the admin routes)."
     ),
     docs_url="/api/docs",
     redoc_url="/api/redoc",
@@ -35,6 +39,12 @@ app.include_router(admin_rights.router)
 # the more specific path first
 app.mount("/api/mcp/admin", admin_app)
 app.mount("/api/mcp", public_app)
+# With Google sign-in, the OAuth server (api/auth/oauth.py): its metadata
+# under /.well-known at the root, its own routes under /api, after all others
+well_known, oauth_server = oauth_routes()
+app.router.routes.extend(well_known)
+if oauth_server:
+    app.mount("/api", Starlette(routes=oauth_server))
 
 MCP_PATHS = ("/api/mcp", "/api/mcp/admin")
 

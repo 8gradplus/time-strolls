@@ -1,6 +1,6 @@
 run-api:
-	# source and export (set) env variables from file
-	set -a && source ../deployment/.env && set +a &&  uv run uvicorn api.main:app --host 0.0.0.0  --reload
+	# source and export (set) env variables from file; no login locally
+	set -a && source ../deployment/.env && set +a && AUTH_MODE=local uv run uvicorn api.main:app --host 0.0.0.0  --reload
 
 docker-build:
 	docker build -t time-strolls-api .
@@ -12,7 +12,7 @@ docker-stop:
 	docker rm -f $$(docker ps -q --filter label=time-strolls-api)
 
 lint:
-	uv run ruff check .
+	uv run ruff check . && uv run ruff format --check .
 
 # Same checks as CI
 check: lint test

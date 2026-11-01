@@ -68,6 +68,11 @@ services:
       - SPACES_KEY=${SPACES_KEY:?}
       - SPACES_SECRET=${SPACES_SECRET:?}
       - API_KEY=${API_KEY:?}
+      # Google sign-in for invited editors (ROADMAP.md, step 5); off while
+      # GOOGLE_CLIENT_ID is empty, bearer tokens work either way
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - OAUTH_JWT_KEY=${OAUTH_JWT_KEY:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/ready"]
     depends_on:

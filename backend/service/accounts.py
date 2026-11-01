@@ -208,11 +208,19 @@ def grant_role(
         if row.role == data.role and row.area == data.area:
             raise Conflict(f"the account has the role {data.role!r}")
     row = AccountRole(
-        account_id=account_id, role=data.role, area=data.area, granted_by=actor.account_id
+        account_id=account_id,
+        role=data.role,
+        area=data.area,
+        granted_by=actor.account_id,
     )
     session.add(row)
     audit.log(
-        session, actor, "account_role", "grant", row.id, diff=data.model_dump(mode="json")
+        session,
+        actor,
+        "account_role",
+        "grant",
+        row.id,
+        diff=data.model_dump(mode="json"),
     )
     session.commit()
     session.refresh(row)
@@ -246,7 +254,11 @@ def invite(session: Session, actor: Actor, data: InviteIn) -> Account:
         account = Account(kind="human", name=name, email=email)
         session.add(account)
         audit.log(
-            session, actor, "account", "invite", account.id,
+            session,
+            actor,
+            "account",
+            "invite",
+            account.id,
             diff={"name": name, "email": email},
         )
         session.flush()
@@ -281,7 +293,9 @@ def login(
             ).first()
         if account is None:
             raise NotInvited(f"{email or subject} is not invited")
-        identity = AccountIdentity(issuer=issuer, subject=subject, account_id=account.id)
+        identity = AccountIdentity(
+            issuer=issuer, subject=subject, account_id=account.id
+        )
         session.add(identity)
         audit.log(
             session,

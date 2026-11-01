@@ -3,5 +3,7 @@
     route /api/*  {
         reverse_proxy api:8000
     }
+    @oauth path /.well-known/oauth-* /.well-known/openid-configuration*
+    reverse_proxy @oauth api:8000
     reverse_proxy frontend:3000
 }
