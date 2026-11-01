@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from starlette.applications import Starlette
 
 from api.auth.oauth import routes as oauth_routes
 from api.controller import admin_content, admin_rights, public
@@ -40,11 +39,10 @@ app.include_router(admin_rights.router)
 app.mount("/api/mcp/admin", admin_app)
 app.mount("/api/mcp", public_app)
 # With Google sign-in, the OAuth server (api/auth/oauth.py): its metadata
-# under /.well-known at the root, its own routes under /api, after all others
-well_known, oauth_server = oauth_routes()
-app.router.routes.extend(well_known)
-if oauth_server:
-    app.mount("/api", Starlette(routes=oauth_server))
+# under /.well-known at the root, its own routes as /api/authorize etc.
+# Single routes, never a mount of /api: that would answer every /api path
+# registered after it (v0.5.0 lost /api/ready, the health check, that way)
+app.router.routes.extend(oauth_routes())
 
 MCP_PATHS = ("/api/mcp", "/api/mcp/admin")
 
