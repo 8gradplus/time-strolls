@@ -16,8 +16,6 @@ Monorepo layout: `backend/` (FastAPI + SQLModel, Python ≥3.13, managed with `u
 - `make lint` / `uv run ruff check .` — lint (default rules). `make check` runs lint and tests, as in CI.
 - Single test: `uv run pytest tests/test_slug.py::TestSlugify::test_slugify_basic`
 - `make test-cov` — coverage for `helpers`, `api` and `service`.
-- `make run-etl` — runs `etl.py`: georeferences `resources/us-army-1945.jpeg` with hardcoded ground control points into a GeoTIFF, then cuts it into map tiles. Needs the geo dev extras (rasterio, titiler, etc.).
-- `make run-local-tile-server` — serves tiles locally for inspection.
 - API docs: `http://localhost:8000/api/docs`.
 
 ### Content replay (run from `replay/`)
@@ -141,19 +139,20 @@ for old `historic=true` links; nothing in the frontend clips the imagery.
   compare with the origin `https://timestrolls.fra1.digitaloceanspaces.com/tiles/manifest.json`.
 - Browsers keep tiles for a day; locally use DevTools "Empty Cache and Hard Reload".
 - The lasting fix belongs in aerial-timeline: flush after every `publish`. The 1945 US Army print is not
-in the manifest yet; it will come from another service later (aerial-timeline
-roadmap step 6). The frontend uses **only** tiles from the `timestrolls` bucket
+in the manifest yet; aerial-timeline georeferences it now (source kind `gcp`, layer
+`us-army-1945`), but doesn't publish it: its licence is unknown and its accuracy is
+not good enough yet. The frontend uses **only** tiles from the `timestrolls` bucket
 (the manifest). Drop the old 1945 URL (`debtray` bucket). Until 1945 is published,
 an old `historic=true` link opens the earliest manifest year in the region.
 
-**TODO: move the legacy 1945 pipeline to aerial-timeline.** These files stay here
-for now. Don't delete them, and don't build new features on them:
-- `backend/etl.py` (ground control points), `backend/transform/`, `backend/helpers/image.py`
-- `backend/local_tile_server.py` (`notebooks/transformations.ipynb` was removed on 2026-10-22)
-- `make run-etl` / `make run-local-tile-server`, and the geo packages in the `dev` extra
-
-The API doesn't import any of this. Once aerial-timeline has the ground control
-points (its roadmap step 6), remove these files in one commit.
+**The legacy 1945 pipeline is gone** (removed 2026-11-01): `etl.py`, `transform/`,
+`helpers/image.py`, `local_tile_server.py`, their make targets, the tile config and the
+geo/OpenCV packages. Georeferencing and tiling live in aerial-timeline (source kind
+`gcp`, its `config/sumava.yml` holds the ground control points). `resources/tifs/` and
+`resources/tiles/` (local only, not in git) are leftovers of it and can be deleted;
+keep `resources/us-army-1945.jpeg`, the original print photo. The old 1945 tiles in
+the `debtray` bucket (`test/timestrolls/tiles/1945/...`) are still there. Deleting
+them is outward-facing, so ask first.
 
 **What the frontend needs:**
 - Load the manifest once (from the CDN, not via `/api`) and keep it in state.

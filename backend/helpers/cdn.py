@@ -39,23 +39,3 @@ async def write(content: bytes, path: str, content_type):
 
 async def delete(path):
     await asyncio.to_thread(delete_object, path)
-
-
-# Todo replace in file upload: write_s3 -> write / put_object
-def write_s3(
-    stuff: bytes, path: str, content_type: str = f"image/{config.tile.format}"
-):
-    if stuff is None:
-        raise ValueError("Cannot upload None content. Expected bytes object.")
-
-    if not isinstance(stuff, bytes):
-        raise TypeError(f"Expected bytes object, got {type(stuff)}")
-
-    s3 = get_client()
-    s3.put_object(
-        Body=stuff,
-        Bucket=cdn.bucket,
-        Key=path,
-        ContentType=content_type,
-        ACL="public-read",
-    )
