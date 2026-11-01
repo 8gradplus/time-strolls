@@ -176,5 +176,9 @@ def routes() -> tuple[list[Route], list[Route]]:
     for r in list(well_known):
         if r.path.startswith("/.well-known/oauth-protected-resource/"):
             well_known.append(Route(r.path.rstrip("/"), r.endpoint, methods=r.methods))
-    server = [r for r in auth.get_routes(mcp_path="/") if not r.path.startswith("/.well-known")]
+    server = [
+        r
+        for r in auth.get_routes(mcp_path="/")
+        if not r.path.startswith("/.well-known")
+    ]
     return well_known, server

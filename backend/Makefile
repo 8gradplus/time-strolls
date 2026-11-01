@@ -12,7 +12,7 @@ docker-stop:
 	docker rm -f $$(docker ps -q --filter label=time-strolls-api)
 
 lint:
-	uv run ruff check .
+	uv run ruff check . && uv run ruff format --check .
 
 # Same checks as CI
 check: lint test

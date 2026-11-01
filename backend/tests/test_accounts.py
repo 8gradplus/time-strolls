@@ -68,7 +68,9 @@ def test_a_revoked_role_stops_the_login(admin, session):
     with pytest.raises(NotInvited):
         login(session)
     # granted again, it works again
-    r = admin.post("/api/admin/accounts/anna@example.org/roles", json={"role": "editor"})
+    r = admin.post(
+        "/api/admin/accounts/anna@example.org/roles", json={"role": "editor"}
+    )
     assert r.status_code == 201, r.text
     assert login(session).can("write")
     assert len(admin.get("/api/admin/accounts/anna@example.org/roles").json()) == 2

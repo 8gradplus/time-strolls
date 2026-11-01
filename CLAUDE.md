@@ -13,7 +13,7 @@ Monorepo layout: `backend/` (FastAPI + SQLModel, Python ≥3.13, managed with `u
 ### Backend (run from `backend/`)
 - `make run-api` — dev server on :8000 with reload. It sources `../deployment/.env` (the local passwords and keys), and that file must exist. It sets `AUTH_MODE=local`: no login, a request without a token is the admin.
 - `make test` / `uv run pytest` — tests. The database tests need a PostGIS server: `make test-db` starts one on :5433 (as the CI service; `make test-db-stop`), otherwise they are skipped (`tests/conftest.py`: a fresh database `timestrolls_test`, the migrations applied, connected as the restricted app user). pytest and ruff are in the `test` extra (`uv sync --extra test`, as in CI). The `dev` extra includes `test` plus notebook and crawling tools (jupyter, matplotlib, folium, psycopg2, webdriver-manager, tenacity).
-- `make lint` / `uv run ruff check .` — lint (default rules). `make check` runs lint and tests, as in CI.
+- `make lint` — `ruff check` (default rules) and `ruff format --check`, as in CI; `uv run ruff format .` fixes the format. `make check` runs lint and tests, as in CI.
 - Single test: `uv run pytest tests/test_slug.py::TestSlugify::test_slugify_basic`
 - `make test-cov` — coverage for `helpers`, `api` and `service`.
 - API docs: `http://localhost:8000/api/docs`.

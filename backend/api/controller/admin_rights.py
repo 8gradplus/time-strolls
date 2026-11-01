@@ -103,7 +103,9 @@ def get_me(session: SessionDep, actor: Annotated[Actor, Depends(current_actor)])
         account_id=actor.account_id,
         name=actor.name,
         scopes=sorted(actor.scopes),
-        roles=sorted({r.role for r in accounts.active_roles(session, actor.account_id)}),
+        roles=sorted(
+            {r.role for r in accounts.active_roles(session, actor.account_id)}
+        ),
     )
 
 
