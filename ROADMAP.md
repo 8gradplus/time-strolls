@@ -65,12 +65,9 @@ machine-translated into cs/en. Production gets this by `make push` in
 - Slugs collide for same-name places within ~100 m (3 decimals): one chapel
   in Deutsch Reichenau (znicenekostely 19688) couldn't be created.
 0. **Start here: step 5, auth and admin UI** (decided 2026-11-01: more
-   impact on the product than the small points). Plan it first: section
-   "5. Authentication and admin section" was written before v0.4.0 and has
-   to be brought up to date with the backend as it is now (accounts with
-   hashed bearer tokens and scopes `read`…`admin`, the service layer with
-   `Actor`, content never deleted, only muted; MCP on the same tokens), then
-   split it into small PRs. After step 5: the open points of the release
+   impact on the product than the small points). Planned on 2026-11-01:
+   OAuth through FastMCP with Google login, roles in our database; see
+   section 5 and its PR table (spike done; next: PR 2, schema and roles). After step 5: the open points of the release
    prep above and items 1, 4, 6 and the leftovers of round B below, then
    the agreed order (item 5). Round B (houses and chapels) is done: villages and mills at every zoom,
    houses, churches and chapels from zoom 17 (kind marks, their own
@@ -412,29 +409,115 @@ Adapted from the pricing-prediction-linear workflows:
 - **Rollback:** redeploy an earlier tag.
 
 ## 5. Authentication and admin section
-**Principle:** the API is an **OAuth 2.1 resource server**. It checks JWT access
-tokens against the issuer's JWKS and checks a role or allowlist claim. It never
-stores passwords. The React admin and a future MCP server or AI agent use the same
-mechanism (the MCP authorization spec builds on protected resource metadata,
-`/.well-known/oauth-protected-resource`, plus an external authorization server).
+**Decided 2026-11-01** (replaces the plan written before v0.4.0): the API is
+its own **OAuth 2.1 authorization server** for the MCP clients (claude.ai,
+ChatGPT, Gemini), through FastMCP's `OAuthProxy` (`GoogleProvider`, already a
+dependency), with **Google** as the login. No vendor, no extra service, no
+cost. A hosted IdP (WorkOS, Auth0) and Keycloak were weighed and rejected
+(vendor and pricing risk; RAM and admin effort on the droplet). Bearer
+tokens alone don't work: claude.ai and ChatGPT connectors only speak the MCP
+authorization spec (OAuth 2.1 + PKCE, RFC 9728/8414 metadata, DCR or CIMD).
 
-- **Identity provider:** a hosted free tier with Google, Microsoft and Apple login,
-  e.g. **Auth0 free** (RBAC, dynamic client registration for MCP clients).
-  Self-hosted alternative: Keycloak or Zitadel (heavy for the small droplet).
-- **Abstraction:** the backend only knows `ISSUER`, `AUDIENCE` and the JWKS URL, in
-  `config.yml` and `deployment/api-config.yml`. Switching providers is config only.
-- **Backend:** `api/auth/` gets `get_current_admin` (PyJWT with a JWKS client),
-  replacing `get_api_key` on the write routers. Keep the API key for a while as a
-  machine credential for scripts and notebooks, then remove it.
-- **Frontend:** OIDC PKCE login (`oidc-client-ts` or the provider's SDK), only
-  inside `/admin`.
-- **Admin:** `/admin` route in the same app, lazy-loaded behind login, built with
-  **react-admin** (MIT, on MUI) and our own data provider.
-  - Places: map picker for the coordinates; the slug is shown, never edited.
-  - Images: sorting, year, Topothek import by URL.
-  - Podcasts: upload. Tours: GPX upload with a preview.
-- **API gaps:** list endpoints with pagination and `X-Total-Count`; image upload
-  (Topothek import only today); consistent CDN deletion on delete.
+**The app itself needs no login (decided 2026-11-01).** The map, the place
+panels, the tours and the public REST routes (`/api/locations`, `/api/tours`,
+`/api/credits`) stay open, with no login button and no auth code in the main
+bundle. Only people who change content sign in: the `/admin` section (its
+own lazy chunk, which alone loads the OAuth client), the admin routes and
+the admin MCP.
+
+**Who may do what (decided 2026-11-01):**
+- **Public, no login:** the app, the public REST routes and the public MCP
+  (`/api/mcp`).
+- **Editors:** every admin tool and route: scraping, imports, changing
+  content, publishing and muting.
+- **Admins:** in addition, accounts, invites and roles.
+- Only these two roles for now; finer roles and areas come later.
+
+**Invite only.** Nobody can create an account. Google proves the email; our
+database decides. An admin invites an email address with a role. At the
+first Google login with that verified email, the identity is linked to the
+invited account. Anyone else is refused right after the Google step ("not
+invited"), and no token is issued. Revoking a role or blocking an account
+works at once, since every request checks the database. Google's own "test
+users" list is not used for this (100 users at most, logins expire after 7
+days). The first admin is invited through the admin API with `API_KEY`.
+
+**Identity from Google, permissions in our database.**
+- `MultiAuth(server=GoogleProvider, verifiers=[Tokens])`. One instance serves
+  both MCP servers and REST. `API_KEY` and the personal tokens (`api_token`)
+  keep working for the replay, scripts and CI.
+- Two fixes to FastMCP's defaults:
+  - The OAuth store goes into our Postgres (key-value store, `asyncpg`),
+    not the per-container file store, which is lost on every release.
+  - Google's token check is cached for 10 min per worker; uncached, every
+    MCP call makes 2 HTTPS calls to Google (+100–250 ms). Compute otherwise:
+    under 5 % of a core for 100 users.
+- The login (`sub`, verified email) maps to an account through
+  `account_identity (issuer, subject)`, made at the first login from an
+  invite with the same verified email; without an invite the login is refused.
+- Roles in `grant` (never deleted, only revoked) map to today's scopes, so
+  routes, tools and `Actor.can()` stay as they are:
+  - `editor` → `scrape`, `read:all`, `write`, `review`
+  - `admin` → everything (`admin` covers every scope)
+  - `read` is no longer needed for the public MCP, which becomes open.
+  - Later: finer roles (e.g. a reviewer apart from editors) only add
+    rows to the role → scopes map.
+- Each grant has an optional `area` (a place: a village or region). It is
+  stored but not enforced yet; later the service layer checks it via `part_of`.
+- **Locally no login:** `auth.mode` = `${AUTH_MODE|oauth}`. The override and
+  `make run-api` set `local`: a request without a token is `admin`, and no
+  Google credentials are needed. Production never sets it.
+- URLs: `/api/authorize`, `/api/token`, `/api/register`, `/api/auth/callback`;
+  metadata under `/.well-known/oauth-*` (Caddy routes it to the API).
+- New secrets: the Google client id and secret, and a JWT signing key. The
+  Google app: consent screen "External", scopes `openid email profile`,
+  published "In production" ("Testing" caps it at 100 users and expires
+  refresh tokens after 7 days).
+
+**Spike (2026-11-01, fastmcp 3.4.0, offline with dummy Google credentials):**
+- Mounting `http_app(path="/")` with the provider inside the mount puts the
+  OAuth endpoints at `/api/mcp/authorize` while the metadata advertises
+  `/api/authorize`. Wiring that works (tested: metadata, DCR 201, 401 with
+  `resource_metadata`, PAT 200):
+  - **One provider per MCP server**, because the resource URL is state on
+    the provider (`set_mcp_path`). Both use
+    `base_url=https://…/api` (the shared issuer),
+    `resource_base_url=https://…/api/mcp[/admin]`, the same store and the same
+    JWT key.
+  - Each server is still mounted at `/api/mcp[/admin]`, as today.
+  - The provider's `get_well_known_routes()` (both servers, deduplicated) are
+    added to the root app.
+  - The authorization-server routes (`/authorize`, `/token`, `/register`,
+    `/auth/callback`, `/consent`) are a Starlette app mounted at `/api`
+    *after* the FastAPI routers.
+- `MultiAuth(..., required_scopes=[])`: otherwise Google's `openid` is
+  required of every token and a PAT gets 403.
+- The resource URLs end in `/` (`/api/mcp/`). PR 3 adds well-known aliases
+  without the slash and checks the token audience for a client configured
+  as `/api/mcp`.
+- OAuth tokens carry Google scopes. A `MultiAuth` subclass maps their claims
+  through `login` to our scopes (and the DB), so the tools' `scope()` checks
+  stay as they are.
+- Postgres store (`key_value.aio.stores.postgresql`): `url` or an `asyncpg`
+  pool, `table_name`, `auto_create=False`. The table (`collection`, `key`,
+  `value jsonb`, `ttl`, `created_at`, `expires_at`, PK `collection, key`)
+  comes from our migration, with an explicit `DELETE` grant for the app user.
+  The search path is `timestrolls`. New dependency: `asyncpg`.
+
+**PRs:**
+
+| # | Step | Status |
+|---|---|---|
+| 1 | This plan + spike (wiring under the FastAPI mounts, shared provider, Postgres store) | done |
+| 2 | Schema and roles: `account_identity`, `grant`, `account.email`, OAuth store table; `login`, `grant_role`, `invite` | |
+| 3 | OAuth on MCP and REST, `GET /api/me`, config, Caddy, release secrets | |
+| 4 | Docs, Google app and secrets (by hand), release, connect claude.ai/ChatGPT/Gemini | |
+| 5 | Admin UI 1: `/admin` (lazy, PKCE via `oauth4webapi`), review queue; react-admin vs own MUI pages decided then | |
+| 6 | Admin UI 2: places (map picker, texts), Topothek import, accounts and roles, personal tokens | |
+
+Later: GitHub/Microsoft login (`OAuthProxy` has one upstream: a chooser or
+a broker); enforcing areas. Apple login needs a paid developer account, so
+it is not planned.
 
 ## 6. App (Android first)
 1. **PWA first** (step 3): installable, offline, Android and iOS, no store.
