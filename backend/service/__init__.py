@@ -48,6 +48,20 @@ class Forbidden(ServiceError):
     pass
 
 
+def each(session, items, fn) -> dict:
+    """Runs fn(session, item) for every item. An item that fails is reported
+    with its position and doesn't stop the rest (the batch tools and routes)."""
+    done, errors = 0, []
+    for position, item in enumerate(items):
+        try:
+            fn(session, item)
+            done += 1
+        except ServiceError as e:
+            session.rollback()
+            errors.append({"item": position, "error": str(e)})
+    return {"done": done, "errors": errors}
+
+
 def require(actor: Actor, scope: str):
     if not actor.can(scope):
         raise Forbidden(f"needs the scope {scope!r}")
