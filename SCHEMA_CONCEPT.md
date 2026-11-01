@@ -160,6 +160,30 @@ our CDN copies are removed and the media becomes `withdrawn`.
 - Texts from a source (e.g. a zanikleobce history article) keep their
   `source_record`, so they need the source's permission, and so do their
   translations.
+- **Cleaning up source texts (2026-11-01).** Scrapers send language codes
+  with typos and sentences that make no sense in the app ("Wer kennt diese
+  Person?").
+  - Codes are normalised on every write (`helpers/lang.py`: `DE`, `deu`,
+    `ger`, `cz` → `de`, `cs`; anything unreadable is refused). The scraper's
+    value stays in `source_record`.
+  - A valid but wrong code (a Czech caption as `de`) is moved explicitly
+    (`move_text_langs`); translations follow, and the move refuses to
+    overwrite.
+  - Sentences are removed from the **original**, never inside a
+    translation: `edit_texts` marks it (`edited_by`, `edited_at`,
+    `edit_note`). A translation renders the whole text, so its credit stays
+    true.
+  - The verbatim text is in the source record and in the change log;
+    `get_resource(full=True)` and `GET /api/admin/resources/{key}` show it
+    as `verbatim` (by `field/lang`).
+    Harvesting again doesn't touch texts.
+  - A sourced original can't be replaced with `set_texts`, and a
+    translation never replaces an original (409).
+  - Texts have no status of their own, so editing or moving the texts of a
+    resource that isn't `new` needs `review`.
+  - Translations made before an edit are named (`retranslate`) and must be
+    redone. The public API marks an image `edited` (also when it is
+    translated from an edited original), for a later "abridged" label.
 
 ## Files and permissions in practice
 - **Harvest:** a media with one `external` file (the archive's URL). Nothing is

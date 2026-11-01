@@ -153,7 +153,7 @@ def topothek(
             url=document["image_url"],
             title=document.get("title") or f"Topothek {external_id}",
             description=document.get("comment"),
-            lang=document.get("language", "de"),
+            lang=document.get("language") or "de",
             date_text=document.get("date"),
             year=document.get("year"),
             creator=document.get("author"),
@@ -249,7 +249,7 @@ def suedboehmen_houses(
         }
         data = place_service.PlaceIn(
             name=f"{village['name']} {number}" if number else house["name"],
-            lang=village.get("language", "de"),
+            lang=village.get("language") or "de",
             kind="house",
             lat=house["lat"],
             lon=house["lon"],
@@ -292,7 +292,7 @@ def sacral_buildings(
         }
         data = place_service.PlaceIn(
             name=item.get("name") or item.get("category") or f"Objekt {item['id']}",
-            lang=result.get("language", "cs"),
+            lang=result.get("language") or "cs",
             kind=SACRAL_KINDS.get(item.get("category"), "landmark"),
             lat=item["lat"],
             lon=item["lon"],

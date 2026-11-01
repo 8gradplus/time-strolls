@@ -52,6 +52,9 @@ class LocationPlace(BaseModel):
 
 class LocationImage(Translated):
     id: UUID
+    # the title or description shown was edited from the source's text
+    # (shortened, corrected), or translated from an edited original
+    edited: bool = False
     title: str | None = None
     description: str | None = None
     url: str
@@ -109,6 +112,20 @@ def translated(text) -> dict:
         "lang": text.lang,
         "method": None if text.method == "original" else text.method,
     }
+
+
+def edited(rows, *shown) -> bool:
+    """Whether a text shown is an edited original or a translation of one."""
+    for text in filter(None, shown):
+        if text.edited_by:
+            return True
+        if any(
+            t.edited_by
+            for t in rows
+            if t.field == text.field and t.lang == text.translated_from
+        ):
+            return True
+    return False
 
 
 def body(text) -> str | None:
@@ -218,10 +235,12 @@ def location(session: Session, key: str, lang: str | None = None) -> Location:
 
     def image(m: PublicMedia) -> LocationImage:
         title = resources.pick(texts[m.id], "title", lang)
+        description = resources.pick(texts[m.id], "description", lang)
         return LocationImage(
             id=m.id,
             title=body(title),
-            description=body(resources.pick(texts[m.id], "description", lang)),
+            description=body(description),
+            edited=edited(texts[m.id], title, description),
             url=m.url,
             source_url=m.source_url,
             owner=m.rights_holder,

@@ -100,6 +100,7 @@ class PublicText(SQLModel, table=True):
     is_primary: bool
     source_record_id: UUID | None = None
     created_by: UUID
+    edited_by: UUID | None = None
 
 
 class PublicRelation(SQLModel, table=True):

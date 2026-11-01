@@ -350,6 +350,103 @@ def test_translations_need_their_original(admin):
     assert r.status_code == 422
 
 
+def test_language_codes_are_normalised(admin):
+    p = place(admin)
+    r = admin.put(
+        f"/api/admin/resources/{p['id']}/texts/description/DEU", json={"body": "Hof"}
+    )
+    assert r.json()["lang"] == "de"
+    r = admin.put(
+        f"/api/admin/resources/{p['id']}/texts/description/EN",
+        json={"body": "Farm", "method": "machine", "translated_from": "german"},
+    )
+    assert r.status_code == 200, r.text
+    assert (r.json()["lang"], r.json()["translated_from"]) == ("en", "de")
+    r = admin.put(
+        f"/api/admin/resources/{p['id']}/texts/description/x y", json={"body": "?"}
+    )
+    assert r.status_code == 422
+
+
+def test_a_source_text_is_edited_not_replaced(admin, client, harvested):
+    """Cleaning up a caption: an edit marked as such, never inside a
+    translation, and only by a reviewer once the photo is published."""
+    slug, result = harvested
+    id = result["media"]["id"]
+    admin.post("/api/admin/permissions/", json={"source": "topothek:deutsch-reichenau"})
+    url = f"/api/admin/resources/{id}/texts/description"
+    # neither a replacement nor a translation over the original
+    assert admin.put(f"{url}/de", json={"body": "Karl."}).status_code == 409
+    r = admin.put(
+        f"{url}/de",
+        json={"body": "Karl.", "method": "machine", "translated_from": "de"},
+    )
+    assert r.status_code == 409
+    admin.put(
+        f"{url}/en",
+        json={
+            "body": "Karl and Anna. See also",
+            "method": "machine",
+            "translated_from": "de",
+        },
+    )
+    edit = {"body": "Karl Hinterberger und Anna.", "note": "removed a reference"}
+    writer = {"Authorization": f"Bearer {token(admin, ['write'])}"}
+    assert client.patch(f"{url}/de", json=edit, headers=writer).status_code == 403
+    assert admin.patch(f"{url}/de", json=edit | {"note": ""}).status_code == 422
+    r = admin.patch(f"{url}/de", json=edit)
+    assert r.status_code == 200, r.text
+    assert r.json()["edited_by"] and r.json()["method"] == "original"
+
+    (image,) = admin.get(f"/api/locations/{slug}").json()["images"]
+    assert image["description"] == edit["body"] and image["edited"] is True
+    (image,) = admin.get(f"/api/locations/{slug}", params={"lang": "en"}).json()[
+        "images"
+    ]
+    assert image["edited"] is True  # translated from an edited original
+
+    # harvesting again keeps the edit; the verbatim text is in the history
+    admin.post("/api/admin/media/topothek/", json={"url": DOCUMENT["source_url"]})
+    (image,) = admin.get(f"/api/locations/{slug}").json()["images"]
+    assert image["description"] == edit["body"]
+    (change,) = [
+        c
+        for c in admin.get(f"/api/admin/resources/{id}/history").json()
+        if c["action"] == "edit"
+    ]
+    assert change["diff"]["from"] == DOCUMENT["comment"]
+    # a second edit and a move: the verbatim stays the source's wording
+    admin.patch(f"{url}/de", json=edit | {"body": "Karl und Anna.", "note": "short"})
+    admin.post(
+        f"/api/admin/resources/{id}/texts/lang",
+        json={"from_lang": "de", "to_lang": "de-AT", "field": "description"},
+    )
+    detail = admin.get(f"/api/admin/resources/{id}").json()
+    assert detail["verbatim"] == {"description/de-AT": DOCUMENT["comment"]}
+
+
+def test_a_wrong_language_is_moved(admin, harvested):
+    slug, result = harvested
+    id = result["media"]["id"]
+    admin.put(
+        f"/api/admin/resources/{id}/texts/title/en",
+        json={"body": "Karl", "method": "machine", "translated_from": "de"},
+    )
+    url = f"/api/admin/resources/{id}/texts/lang"
+    r = admin.post(url, json={"from_lang": "de", "to_lang": "en"})
+    assert r.status_code == 409  # the title has an English text already
+    r = admin.post(url, json={"from_lang": "deu", "to_lang": "cz"})
+    assert r.status_code == 200, r.text
+    assert sorted(r.json()) == ["description", "title"]
+    texts = admin.get(f"/api/admin/resources/{id}").json()["texts"]
+    langs = {(t["field"], t["lang"], t["translated_from"]) for t in texts}
+    assert langs == {
+        ("title", "cs", None),
+        ("description", "cs", None),
+        ("title", "en", "cs"),
+    }
+
+
 # Links, tours, history, the database rules ----------------------------------------------
 
 

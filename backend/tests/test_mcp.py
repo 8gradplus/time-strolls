@@ -74,6 +74,7 @@ def test_tools_follow_the_scopes(app, admin):
     agent = token(admin, ["read:all", "write"])
     tools = run(app, "/api/mcp/admin/", agent, names)
     assert {"harvest_topothek", "create_places", "set_texts", "find_places"} <= tools
+    assert {"edit_texts", "move_text_langs"} <= tools
     assert "set_status" not in tools  # no review scope
     assert not any(t.startswith("scraping_") for t in tools)  # no scrape scope
     tools = run(app, "/api/mcp/admin/", API_KEY, names)
@@ -200,6 +201,50 @@ def test_an_agent_drafts_a_village_and_a_reviewer_publishes_it(app, admin):
     assert len(found) == 11
     (image,) = detail["images"]
     assert image["title"] == "Karl and Anna" and image["method"] == "machine"
+
+
+def test_an_agent_cleans_a_caption_then_translates(app, admin):
+    async def steps(client):
+        call = Meter(client)
+        (media,) = await call(
+            "harvest_topothek", {"documents": [{"url": DOCUMENT["source_url"]}]}
+        )
+        text = {"resource": media["id"], "field": "description"}
+        await call(
+            "set_texts",
+            {
+                "texts": [
+                    text
+                    | {
+                        "lang": "en",
+                        "body": "Karl and Anna. See also",
+                        "method": "machine",
+                        "translated_from": "de",
+                    }
+                ]
+            },
+        )
+        edited = await call(
+            "edit_texts",
+            {
+                "texts": [
+                    text
+                    | {"lang": "de", "body": "Karl und Anna.", "note": "reference"},
+                    text | {"lang": "cs", "body": "x", "note": "none"},
+                ]
+            },
+        )
+        brief = await call("get_resource", {"key": media["id"]})
+        return edited, brief
+
+    edited, brief = run(app, "/api/mcp/admin/", API_KEY, steps)
+    assert edited["done"] == 1 and edited["errors"][0]["item"] == 1
+    (stale,) = edited["retranslate"]
+    assert (stale["field"], stale["langs"]) == ("description", ["en"])
+    assert brief["texts"]["description"]["de"] == {
+        "body": "Karl und Anna.",
+        "edited": "reference",
+    }
 
 
 def test_find_places_by_other_spelling_and_position(app, admin):
