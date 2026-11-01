@@ -32,6 +32,11 @@ os.environ.update(
     POSTGRES_USER_PASSWORD=PASSWORD,
     SPACES_KEY="test",
     SPACES_SECRET="test",
+    # Google sign-in on, as in production (no call to Google in the tests)
+    AUTH_MODE="oauth",
+    GOOGLE_CLIENT_ID="test.apps.googleusercontent.com",
+    GOOGLE_CLIENT_SECRET="test",
+    OAUTH_JWT_KEY="test-jwt-key-test-jwt-key-test-jwt",
 )
 
 
@@ -82,8 +87,8 @@ def clean(database):
             timestrolls.permission, timestrolls.source_record,
             timestrolls.source, timestrolls.slug_alias, timestrolls.place,
             timestrolls.media, timestrolls.tour, timestrolls.resource,
-            timestrolls.api_token, timestrolls.party, timestrolls.account
-            CASCADE"""
+            timestrolls.api_token, timestrolls.party, timestrolls.account,
+            timestrolls.oauth_store CASCADE"""
         )
         cursor.execute(
             "INSERT INTO timestrolls.account (kind, name) VALUES ('system', 'admin')"

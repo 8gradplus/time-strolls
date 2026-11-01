@@ -30,10 +30,8 @@ def run(app, path, bearer, steps):
         async with app.router.lifespan_context(app):
             transport = StreamableHttpTransport(
                 f"http://test{path}",
-                headers={
-                    "Authorization": f"Bearer {bearer}",
-                    "X-Run": '{"model": "test"}',
-                },
+                headers={"X-Run": '{"model": "test"}'}
+                | ({"Authorization": f"Bearer {bearer}"} if bearer else {}),
                 httpx_client_factory=factory,
             )
             async with Client(transport) as client:
@@ -334,9 +332,10 @@ def test_paths_without_the_trailing_slash(app):
     assert "get_place" in run(app, "/api/mcp", API_KEY, names)
 
 
-def test_the_public_server_needs_the_read_scope(app, admin):
-    agent = token(admin, ["write"])
-    assert run(app, "/api/mcp/", agent, names) == set()
+def test_the_public_server_is_open(app):
+    """No login, like the public REST routes."""
+    expected = {"find_places", "get_place", "list_tours", "credits"}
+    assert run(app, "/api/mcp/", None, names) == expected
 
 
 def test_the_tool_list_stays_small(app):

@@ -1,13 +1,14 @@
 """The MCP servers, mounted in the API (api/main.py) and calling the same
 service layer as the REST routes:
 
-- /api/mcp: published, permitted content (scope read), for any LLM later.
+- /api/mcp: published, permitted content, open to anyone (no login, like
+  the public REST routes).
 - /api/mcp/admin: the scraper tools (scope scrape), harvesting and creating
-  drafts (write), review and permissions (review). External LLMs never see it.
+  drafts (write), review and permissions (review), for invited editors.
 
-Both take `Authorization: Bearer <token>` as the REST API: API_KEY or a token
-from api_token. A tool the token's scopes don't allow is not listed. OAuth
-2.1 later is another TokenVerifier; the tools only ask for scopes.
+The admin server takes the same auth as the admin REST routes
+(api/auth/oauth.py): a bearer token, or a sign-in with Google by invitation.
+A tool the scopes don't allow is not listed; the tools only ask for scopes.
 """
 
 import json
@@ -18,7 +19,6 @@ import anyio
 import httpx
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
-from fastmcp.server.auth import AccessToken, TokenVerifier
 from fastmcp.server.dependencies import get_access_token, get_http_headers
 from fastmcp.server.middleware.authorization import AuthMiddleware
 from pydantic import BaseModel
@@ -26,13 +26,12 @@ from pydantic_core import to_jsonable_python
 from scrape_time_strolls.mcp.server import mcp as scraping
 from sqlmodel import Session
 
+from api.auth.oauth import auth
 from api.db import engine
-from config import config
 from importers import suedboehmen, topothek, znicenekostely
 from service import (
     Actor,
     ServiceError,
-    accounts,
     audit,
     harvest,
     media,
@@ -83,25 +82,6 @@ def actor() -> Actor:
 # Tokens and scopes -------------------------------------------------------------
 
 
-class Tokens(TokenVerifier):
-    """API_KEY or a token from api_token, as for the REST routes."""
-
-    async def verify_token(self, token: str) -> AccessToken | None:
-        def check():
-            with Session(engine) as session:
-                return accounts.authenticate(session, token, config.api.key)
-
-        found = await anyio.to_thread.run_sync(check)
-        if found is None:
-            return None
-        return AccessToken(
-            token=token,
-            client_id=found.name,
-            scopes=sorted(found.scopes),
-            claims={"account_id": str(found.account_id), "name": found.name},
-        )
-
-
 def scope(name: str):
     """An auth check: the token has this scope (or admin)."""
 
@@ -130,13 +110,11 @@ public_mcp = FastMCP(
         "language asked for (lang: de, cs, en, ...) where they exist, else in "
         "their original language; 'method: machine' marks machine translations."
     ),
-    auth=Tokens(),
+    # open: no auth
 )
 
-READ = scope("read")
 
-
-@public_mcp.tool(auth=READ)
+@public_mcp.tool
 async def find_places(text: str | None = None, lang: str | None = None) -> list[dict]:
     """Places on the map (id, slug, name, kind, lat, lon, part_of and a
     house's facts), optionally only those whose name contains `text`."""
@@ -146,19 +124,19 @@ async def find_places(text: str | None = None, lang: str | None = None) -> list[
     return compact(found)
 
 
-@public_mcp.tool(auth=READ)
+@public_mcp.tool
 async def get_place(slug: str, lang: str | None = None) -> dict:
     """A place with its photos (title, year, owner, source link) and podcasts."""
     return compact(await call(public.location, slug, lang))
 
 
-@public_mcp.tool(auth=READ)
+@public_mcp.tool
 async def list_tours(lang: str | None = None) -> list[dict]:
     """The walking tours (slug, name, description, length in km)."""
     return await call(public.tours, lang)
 
 
-@public_mcp.tool(auth=READ)
+@public_mcp.tool
 async def credits() -> dict:
     """Where the content comes from (by permission) and how it was translated."""
     return await call(public.credits)
@@ -205,7 +183,7 @@ admin_mcp = FastMCP(
   url_template to answer with less.
 - The public map shows only published content whose source or owner gave a
   permission.""",
-    auth=Tokens(),
+    auth=auth,
     middleware=[AuthMiddleware(auth=scraper_scope)],
 )
 admin_mcp.mount(scraping, namespace="scraping")

@@ -28,6 +28,9 @@ services:
       ssh: [default]
     ports:
       - "8000:8000"
+    environment:
+      # no login locally: a request without a token is the admin
+      - AUTH_MODE=local
 
   frontend:
     build:

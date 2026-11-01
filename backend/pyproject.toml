@@ -24,6 +24,7 @@ dependencies = [
     "time-strolls-scraping",
     "httpx>=0.28.1",
     "fastmcp>=2.12",
+    "asyncpg>=0.32.0",
 ]
 
 [project.optional-dependencies]
