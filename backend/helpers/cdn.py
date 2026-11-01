@@ -39,4 +39,3 @@ async def write(content: bytes, path: str, content_type):
 
 async def delete(path):
     await asyncio.to_thread(delete_object, path)
-
