@@ -11,10 +11,12 @@ import {
   isCloseUp,
   labelAt,
   markOf,
+  visibleMarks,
 } from "./hierarchy";
 
-// Mills first, so villages and the open place lie on top
-const LAYER = { ring: 1, dot: 2 };
+// Churches and chapels (far out, with the menu toggle) and mills first, so
+// villages and the open place lie on top
+const LAYER = { church: 0, chapel: 0, ring: 1, dot: 2 };
 
 // Leaflet.markercluster sometimes leaves a cluster of an earlier zoom on the
 // map when one zoom follows another (a stale "3" beside the places it holds).
@@ -51,8 +53,11 @@ const CLOSE_UP_CLUSTER_RADIUS = 16;
 const LocationMarkers = (props) => {
   // focusSlug: the place with the wall label (WallLabel.jsx) gets a ring.
   // touch: no hover; houses, churches and chapels are named by the wall
-  // label instead (Leaflet would open the hover name on a tap too)
-  const { open, onClick, locations, activeSlug, focusSlug, touch } = props;
+  // label instead (Leaflet would open the hover name on a tap too).
+  // villages, sacral: the menu toggles (visibleMarks in hierarchy.js)
+  const { villages, sacral, onClick, locations, activeSlug, focusSlug, touch } =
+    props;
+  const open = villages || sacral;
   const map = useMap();
   const [zoom, setZoom] = useState(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
@@ -80,17 +85,24 @@ const LocationMarkers = (props) => {
     />
   );
 
-  const closeUpPlaces = locations.filter(isCloseUp);
+  const visible = visibleMarks(locations, zoom, { villages, sacral });
+  const closeUpPlaces = visible.closeUps;
   const closeUp = zoom >= CLOSE_UP_ZOOM;
-  const places = locations
-    .filter((place) => !isCloseUp(place))
+  const places = visible.places
+    .slice()
     .sort(
       (a, b) =>
         LAYER[markOf(a.kind)] - LAYER[markOf(b.kind)] ||
         Number(isActive(a)) - Number(isActive(b)),
     );
-  // Further out, only the open one, on its own
-  const openOne = !closeUp && closeUpPlaces.find((place) => isActive(place));
+  // Further out, an open house (or church or chapel without the toggle) on
+  // its own
+  const openOne =
+    !closeUp &&
+    locations.find(
+      (place) =>
+        isCloseUp(place) && isActive(place) && !visible.places.includes(place),
+    );
 
   // Places that overlap join in a cluster, which splits as you zoom in;
   // those on the same point spread out around it at the closest zoom. The

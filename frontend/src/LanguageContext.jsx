@@ -7,7 +7,7 @@ const translations = {
     areas: "Gebiete",
     here: "Hier",
     onTheMap: "Auf der Karte",
-    places: "Orte",
+    places: "Dörfer",
     about: "Über das Projekt",
     aboutText:
       "Time Strolls führt durch die Gegend um Deutsch Reichenau an der österreichisch-tschechischen Grenze: Orte auf der Karte mit historischen Bildern, dazu Luftbilder von 1947 bis heute auf der Zeitleiste.",
@@ -84,7 +84,7 @@ const translations = {
     areas: "Oblasti",
     here: "Zde",
     onTheMap: "Na mapě",
-    places: "Místa",
+    places: "Vesnice",
     about: "O projektu",
     aboutText:
       "Time Strolls provází okolím Rychnůvku (Deutsch Reichenau) na rakousko-české hranici: místa na mapě s historickými snímky a k tomu letecké snímky od roku 1947 až po současnost na časové ose.",
@@ -161,7 +161,7 @@ const translations = {
     areas: "Areas",
     here: "Here",
     onTheMap: "On the map",
-    places: "Places",
+    places: "Villages",
     about: "About the project",
     aboutText:
       "Time Strolls guides you around Deutsch Reichenau on the Austrian–Czech border: places on the map with historic photos, and aerial imagery from 1947 to today on the time line.",

@@ -657,20 +657,26 @@ const Menu = (props) => {
             on={itemState.showMarkers}
             onClick={onItemClick("showMarkers")}
           />
-          {tours.map((tour) => (
-            <ToggleRow
-              key={tour.id}
-              icon="directions_walk"
-              primary={tour.name}
-              secondary={`${tour.length.toFixed(1)} km`}
-              on={itemState.tourId === tour.id}
-              onClick={() =>
-                onItemClick("tour")(
-                  itemState.tourId === tour.id ? null : tour.id,
-                )
-              }
-            />
-          ))}
+          <ToggleRow
+            icon="church"
+            primary={t.churchesAndChapels}
+            on={itemState.showSacral}
+            onClick={onItemClick("showSacral")}
+          />
+          {tours.map((tour) => {
+            // The URL names a tour by slug; a link with its id still counts
+            const on = [tour.slug, tour.id].includes(itemState.tourId);
+            return (
+              <ToggleRow
+                key={tour.id}
+                icon="directions_walk"
+                primary={tour.name}
+                secondary={`${tour.length.toFixed(1)} km`}
+                on={on}
+                onClick={() => onItemClick("tour")(on ? null : tour.slug)}
+              />
+            );
+          })}
         </Group>
       </Box>
 

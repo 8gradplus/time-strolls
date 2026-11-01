@@ -8,11 +8,65 @@ import {
   isCloseUp,
   labelAt,
   markOf,
+  visibleMarks,
 } from "./hierarchy";
 
 const village = { kind: "village", name: "Oberuresch" };
 const house = { kind: "house", name: "Oberuresch 3", number: "3" };
 const chapel = { kind: "chapel", name: "kaple" };
+
+describe("visibleMarks", () => {
+  const mill = { kind: "mill", name: "Luagmühle" };
+  const church = { kind: "church", name: "kostel" };
+  const all = [village, mill, house, chapel, church];
+  const show = (zoom, villages, sacral) => {
+    const { places, closeUps } = visibleMarks(all, zoom, { villages, sacral });
+    return {
+      places: places.map((p) => p.kind),
+      closeUps: closeUps.map((p) => p.kind),
+    };
+  };
+
+  test("villages only: as before, churches and chapels only close up", () => {
+    expect(show(14, true, false)).toEqual({
+      places: ["village", "mill"],
+      closeUps: [],
+    });
+    expect(show(17, true, false)).toEqual({
+      places: ["village", "mill"],
+      closeUps: ["house", "chapel", "church"],
+    });
+  });
+
+  test("both: churches and chapels at every zoom too", () => {
+    expect(show(14, true, true).places).toEqual([
+      "village",
+      "mill",
+      "chapel",
+      "church",
+    ]);
+    expect(show(17, true, true)).toEqual({
+      places: ["village", "mill"],
+      closeUps: ["house", "chapel", "church"],
+    });
+  });
+
+  test("churches and chapels only: nothing else, at any zoom", () => {
+    expect(show(14, false, true)).toEqual({
+      places: ["chapel", "church"],
+      closeUps: [],
+    });
+    expect(show(17, false, true)).toEqual({
+      places: [],
+      closeUps: ["chapel", "church"],
+    });
+  });
+
+  test("both off: nothing", () => {
+    expect(show(14, false, false)).toEqual({ places: [], closeUps: [] });
+    expect(show(18, false, false)).toEqual({ places: [], closeUps: [] });
+  });
+});
 
 describe("isCloseUp", () => {
   test("shows houses, churches and chapels only close up", () => {

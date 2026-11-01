@@ -70,12 +70,15 @@ const CoordinateMap = () => {
 
   // Derive state from URL - single source of truth
   const locationSlug = searchParams.get("location");
-  const tourIdParam = searchParams.get("tour");
-  const tourId = tourIdParam ? parseInt(tourIdParam, 10) : null;
+  // A tour's slug (or its id, the API takes both)
+  const tourId = searchParams.get("tour") || null;
   const showInfo = !!locationSlug;
 
   // Layer visibility from URL (default to true for markers, no historic year)
   const showMarkers = searchParams.get("markers") !== "false";
+  // Churches and chapels at every zoom (off by default; close up they come
+  // with the villages)
+  const showSacral = searchParams.get("sacral") === "true";
   const year = searchParams.get("year");
   const legacyHistoric = searchParams.get("historic") === "true";
 
@@ -158,6 +161,17 @@ const CoordinateMap = () => {
             params.set("markers", "false");
           } else {
             params.delete("markers");
+          }
+          return params;
+        });
+      };
+    } else if (item === "showSacral") {
+      return () => {
+        setSearchParams((params) => {
+          if (showSacral) {
+            params.delete("sacral");
+          } else {
+            params.set("sacral", "true");
           }
           return params;
         });
@@ -304,7 +318,7 @@ const CoordinateMap = () => {
   const [labelSlug, selectLabel, clearLabel] = useWallLabel(
     map,
     locations,
-    touch && showMarkers,
+    touch && (showMarkers || showSacral),
   );
   const labelPlace = locations?.find((loc) => loc.slug === labelSlug);
   // An open panel takes over from the label
@@ -318,8 +332,14 @@ const CoordinateMap = () => {
     if (!location) return;
 
     // The first tap names it, a second (or a tap on the label) opens it;
-    // villages and mills open at once
-    if (touch && isCloseUp(location) && location.slug !== labelSlug) {
+    // villages and mills open at once, and so does a church or chapel
+    // further out (the wall label lives only close up)
+    if (
+      touch &&
+      isCloseUp(location) &&
+      map?.getZoom() >= CLOSE_UP_ZOOM &&
+      location.slug !== labelSlug
+    ) {
       selectLabel(location);
       return;
     }
@@ -377,7 +397,8 @@ const CoordinateMap = () => {
 
           {locations && (
             <LocationMarkers
-              open={showMarkers}
+              villages={showMarkers}
+              sacral={showSacral}
               onClick={handleMarkerClick}
               locations={locations}
               activeSlug={locationSlug}
@@ -411,6 +432,7 @@ const CoordinateMap = () => {
         itemState={{
           year: year,
           showMarkers: showMarkers,
+          showSacral: showSacral,
           tourId: tourId,
         }}
         regions={regions}
