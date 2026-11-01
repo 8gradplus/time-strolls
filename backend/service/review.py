@@ -64,6 +64,8 @@ class Detail(BaseModel):
     texts: list[Text]
     relations: list[Relation]
     sources: list[dict]
+    # the source's wording of edited texts, by "field/lang"
+    verbatim: dict[str, str] = {}
 
 
 def detail(session: Session, key: str) -> Detail:
@@ -82,6 +84,7 @@ def detail(session: Session, key: str) -> Detail:
         resource=resource,
         item=item,
         texts=resources.texts(session, id),
+        verbatim=resources.verbatim(session, id),
         relations=resources.relations(session, id),
         sources=[
             r.model_dump(include={"id", "external_id", "url", "lang", "retrieved_at"})

@@ -191,7 +191,11 @@ admin_mcp = FastMCP(
 - What you add stays 'new' until a reviewer publishes it.
 - Texts are per language (ISO codes); a translation names its method
   (machine or human), translated_from and, for machines, the model.
-  Translate only when asked, titles before descriptions.
+  Translate only when asked, titles before descriptions. A translation
+  renders the whole text: to drop a sentence that doesn't belong in the
+  app ("Wer kennt diese Person?") or fix a typo, edit the original
+  (edit_texts, with a note), then translate. A wrong language code:
+  move_text_langs.
 - Houses and sacral buildings: import_suedboehmen_houses and
   import_sacral_buildings store them directly (with their source record),
   so don't copy scraper results into create_places.
@@ -276,11 +280,13 @@ def resource_brief(session, key: str) -> dict:
     id = detail.resource.id
     texts: dict = {}
     for t in detail.texts:
-        texts.setdefault(t.field, {})[t.lang] = (
-            t.body
-            if t.method == "original"
-            else {"body": t.body, "method": t.method, "from": t.translated_from}
-        )
+        if t.edited_by:  # the source's wording: get_resource(full=True)
+            value = {"body": t.body, "edited": t.edit_note}
+        elif t.method == "original":
+            value = t.body
+        else:
+            value = {"body": t.body, "method": t.method, "from": t.translated_from}
+        texts.setdefault(t.field, {})[t.lang] = value
     links = []
     for r in detail.relations:
         out = r.subject_id == id
@@ -313,7 +319,8 @@ def resource_brief(session, key: str) -> dict:
 async def get_resource(key: str, full: bool = False) -> dict:
     """One resource (id or slug): its fields, texts {field: {lang: body}}
     (translations with method), links (with the relation id for unlink) and
-    source URLs. full=True: every row as stored, with timestamps."""
+    source URLs. full=True: every row as stored, with timestamps, and the
+    source's wording of edited texts (verbatim)."""
     if full:
         return await call(review.detail, key)
     return await call(resource_brief, key)
@@ -593,6 +600,59 @@ async def set_texts(texts: list[TextItem]) -> dict:
         resources.set_text(session, me, id, item.field, item.lang, text)
 
     return compact(await call(each, texts, put))
+
+
+class TextEditItem(BaseModel):
+    resource: str  # id or slug
+    field: str
+    lang: str
+    body: str
+    note: str  # why, e.g. "removed a call for information"
+
+
+@admin_mcp.tool(auth=WRITE)
+async def edit_texts(texts: list[TextEditItem]) -> dict:
+    """Edits originals from a source: only remove what doesn't belong in the
+    app or fix typos, never add. Marked as edited; the verbatim text stays
+    in the source record. A resource that isn't new needs the review scope.
+    Returns {done, errors, retranslate: [{resource, field, langs}]}: the
+    translations made from the earlier text."""
+    me = actor()
+    stale = []
+
+    def edit(session, item: TextEditItem):
+        id = resources.resolve(session, item.resource)
+        row = resources.edit_text(
+            session, me, id, item.field, item.lang, item.body, item.note
+        )
+        if langs := resources.translations_of(session, id, item.field, row.lang):
+            stale.append(
+                {"resource": item.resource, "field": item.field, "langs": langs}
+            )
+
+    result = await call(each, texts, edit)
+    return compact(result | {"retranslate": stale})
+
+
+class LangMoveItem(BaseModel):
+    resource: str  # id or slug
+    from_lang: str
+    to_lang: str
+    field: str | None = None  # all original fields in from_lang
+
+
+@admin_mcp.tool(auth=WRITE)
+async def move_text_langs(moves: list[LangMoveItem]) -> dict:
+    """Corrects the language of originals stored under a wrong code (a Czech
+    caption as 'de'); translations follow. Refuses where the target language
+    has a text. Returns {done, errors}."""
+    me = actor()
+
+    def move(session, item: LangMoveItem):
+        id = resources.resolve(session, item.resource)
+        resources.move_lang(session, me, id, item.from_lang, item.to_lang, item.field)
+
+    return compact(await call(each, moves, move))
 
 
 # Reviewing

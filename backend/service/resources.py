@@ -15,6 +15,7 @@ from api.model.tables import (
     Tour,
     now,
 )
+from helpers.lang import normalize_lang
 from service import (
     STATUSES,
     Actor,
@@ -120,11 +121,18 @@ def set_text(
     commit: bool = True,
 ) -> Text:
     """Adds or replaces the text of a field in one language. A translation
-    keeps the source of its original, so it needs the same permission."""
+    keeps the source of its original, so it needs the same permission. An
+    original from a source is changed only by edit_text (marked as edited);
+    a translation never replaces an original."""
     require(actor, "write")
     get(session, resource_id)
+    lang = language(lang)
     if (text.method == "original") != (text.translated_from is None):
         raise Invalid("a translation needs translated_from, an original none")
+    if text.translated_from:
+        text = text.model_copy(
+            update={"translated_from": language(text.translated_from)}
+        )
     if text.method != "original" and source_record_id is None:
         original = session.exec(
             select(Text).where(
@@ -142,6 +150,14 @@ def set_text(
         )
     ).first()
     action = "update" if row else "create"
+    if row and row.method == "original":
+        if text.method != "original":
+            raise Conflict(f"the {field} in {lang} is the original, not a translation")
+        if row.source_record_id and row.body != text.body:
+            raise Conflict(
+                f"the {field} in {lang} is from a source: edit it (edit_texts) "
+                "so that it is marked as edited"
+            )
     if not row:
         row = Text(
             resource_id=resource_id,
@@ -188,6 +204,167 @@ def texts(session: Session, resource_id: UUID) -> list[Text]:
             .order_by(Text.field, Text.lang)
         )
     )
+
+
+def language(value: str | None) -> str:
+    try:
+        return normalize_lang(value)
+    except ValueError as e:
+        raise Invalid(str(e)) from None
+
+
+def text_row(session: Session, resource_id: UUID, field: str, lang: str):
+    return session.exec(
+        select(Text).where(
+            Text.resource_id == resource_id, Text.field == field, Text.lang == lang
+        )
+    ).first()
+
+
+def translations_of(session: Session, resource_id: UUID, field: str, lang: str):
+    """The languages translated from a field's text in `lang`."""
+    return list(
+        session.exec(
+            select(Text.lang).where(
+                Text.resource_id == resource_id,
+                Text.field == field,
+                Text.translated_from == lang,
+            )
+        )
+    )
+
+
+def require_unpublished_or_review(actor: Actor, resource: Resource):
+    """Texts have no status of their own: a change to a resource that is no
+    longer new shows at once, so it needs a reviewer."""
+    if resource.status != "new":
+        require(actor, "review")
+
+
+def edit_text(
+    session: Session,
+    actor: Actor,
+    resource_id: UUID,
+    field: str,
+    lang: str,
+    body: str,
+    note: str,
+) -> Text:
+    """Edits an original (removes a call for information, fixes a typo) and
+    marks it as edited, with a note why. The verbatim text stays in the
+    source record and the change log. Translations made before are not
+    changed: translations_of names them."""
+    require(actor, "write")
+    require_unpublished_or_review(actor, get(session, resource_id))
+    lang = language(lang)
+    if not body.strip():
+        raise Invalid("an edited text can't be empty")
+    if not (note or "").strip():
+        raise Invalid("say why the text was edited (note)")
+    row = text_row(session, resource_id, field, lang)
+    if not row:
+        raise NotFound(f"no {field} in {lang}")
+    if row.method != "original":
+        raise Invalid("only an original is edited; replace a translation instead")
+    if row.body == body:
+        return row
+    audit.log(
+        session,
+        actor,
+        "text",
+        "edit",
+        f"{field}/{lang}",
+        resource_id,
+        {"from": row.body, "to": body, "note": note},
+    )
+    row.body = body
+    row.edited_by = actor.account_id
+    row.edited_at = row.updated_at = now()
+    row.edit_note = note
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+def verbatim(session: Session, resource_id: UUID) -> dict[str, str]:
+    """The source's wording of every edited text, by "field/lang": what the
+    first edit replaced (the change log keeps it)."""
+    edited = [
+        t
+        for t in session.exec(select(Text).where(Text.resource_id == resource_id))
+        if t.edited_by
+    ]
+    if not edited:
+        return {}
+    first: dict[str, str] = {}
+    for change in audit.history(session, resource_id):
+        if change.table_name == "text" and change.action == "edit":
+            first.setdefault(change.row_id, change.diff["from"])
+    by_field = {}  # an edit before its language was moved
+    for key, body in first.items():
+        by_field.setdefault(key.split("/")[0], body)
+    out = {}
+    for t in edited:
+        key = f"{t.field}/{t.lang}"
+        if body := first.get(key, by_field.get(t.field)):
+            out[key] = body
+    return out
+
+
+def move_lang(
+    session: Session,
+    actor: Actor,
+    resource_id: UUID,
+    from_lang: str,
+    to_lang: str,
+    field: str | None = None,
+) -> list[str]:
+    """Corrects the language of originals stored under a wrong code (a Czech
+    caption as 'de'): every original field in from_lang, or only `field`.
+    Their translations follow. Refuses where to_lang already has a text.
+    Returns the fields moved."""
+    require(actor, "write")
+    require_unpublished_or_review(actor, get(session, resource_id))
+    from_lang, to_lang = language(from_lang), language(to_lang)
+    query = select(Text).where(
+        Text.resource_id == resource_id,
+        Text.lang == from_lang,
+        Text.method == "original",
+    )
+    if field:
+        query = query.where(Text.field == field)
+    rows = list(session.exec(query))
+    if not rows:
+        raise NotFound(f"no original {field or 'text'} in {from_lang}")
+    for row in rows:
+        if text_row(session, resource_id, row.field, to_lang):
+            raise Conflict(f"there is a {row.field} in {to_lang} already")
+    for row in rows:
+        row.lang = to_lang
+        row.updated_at = now()
+        session.add(row)
+        for t in session.exec(
+            select(Text).where(
+                Text.resource_id == resource_id,
+                Text.field == row.field,
+                Text.translated_from == from_lang,
+            )
+        ):
+            t.translated_from = to_lang
+            session.add(t)
+    moved = [row.field for row in rows]
+    audit.log(
+        session,
+        actor,
+        "text",
+        "move",
+        f"{from_lang}->{to_lang}",
+        resource_id,
+        {"from": from_lang, "to": to_lang, "fields": moved},
+    )
+    session.commit()
+    return moved
 
 
 def pick(rows, field: str, lang: str | None):

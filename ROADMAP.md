@@ -124,7 +124,7 @@ Pixel 2026-10-29).
 | 4 | Release workflow (DOCR, deploy) | Done (#10, #11) |
 | 5 | Auth (OIDC JWT) and admin (react-admin) | Open |
 | 6 | Capacitor Android: geofence notifications, background audio | Open |
-| 7 | MCP server on the same auth | First version for agents done (#20, #21, #22, scraper v0.4.0); bearer tokens for now, OAuth with step 5 |
+| 7 | MCP server on the same auth | First version for agents done (#20, #21, #22, scraper v0.4.0); bearer tokens for now, OAuth with step 5 ; cleaning source texts (language codes, edits marked as such) on branch `text-cleanup` |
 
 Work in the sister repo `../aerial-timeline` (its own roadmap in its `CLAUDE.md`)
 runs in parallel: step 5 `composite` (`tiles/best/{year}`), step 6 the 1945 print
@@ -407,6 +407,20 @@ mechanism (the MCP authorization spec builds on protected resource metadata,
 ## 7. MCP server
 A FastMCP mount at `/mcp` calls the same service layer as the admin API and is
 protected by the same tokens.
+
+**Open: notice when a source changes a text (noted 2026-11-01).** Harvesting
+again refreshes the source record but never our texts, so a caption the
+archive updates later (someone answers "Wer kennt diese Person?") goes
+unnoticed, and an edit that removed the question hides it twice over.
+Proposal:
+- When a harvest finds that the record's caption differs from the wording we
+  stored, report it (`source_changed: [field]` per document in
+  `harvest_topothek`, also in the replay's `check`) and change no text.
+- Store that wording: the text itself, or `verbatim` for an edited text
+  (`resources.verbatim`).
+- A person or agent then decides: take the new wording, or edit it again.
+- Map the record's keys to fields per source (Topothek: `title`, `comment`
+  → description).
 
 ## Repo structure
 - The notebooks in `backend/notebooks/` were removed (2026-10-22). The

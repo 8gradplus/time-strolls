@@ -173,6 +173,40 @@ def put_text(
     return resources.set_text(session, actor, id, field, lang, data)
 
 
+class TextEdit(BaseModel):
+    body: str
+    note: str  # why: "removed a call for information", "typo"
+
+
+@router.patch("/resources/{id}/texts/{field}/{lang}", response_model=Text)
+def patch_text(
+    id: UUID,
+    field: str,
+    lang: str,
+    data: TextEdit,
+    session: SessionDep,
+    actor: Writer,
+):
+    """Edits an original from a source and marks it as edited (on a resource
+    that isn't new any more, only a reviewer). Translate again afterwards."""
+    return resources.edit_text(session, actor, id, field, lang, data.body, data.note)
+
+
+class LangMove(BaseModel):
+    from_lang: str
+    to_lang: str
+    field: str | None = None  # all original fields in from_lang
+
+
+@router.post("/resources/{id}/texts/lang", response_model=list[str])
+def move_text_lang(id: UUID, data: LangMove, session: SessionDep, actor: Writer):
+    """Corrects a wrong language code of originals; translations follow.
+    Returns the fields moved."""
+    return resources.move_lang(
+        session, actor, id, data.from_lang, data.to_lang, data.field
+    )
+
+
 class RelationIn(BaseModel):
     subject: str  # id or slug
     predicate: str  # part_of, shows, about, stop, same_as

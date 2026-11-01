@@ -193,6 +193,10 @@ class Text(SQLModel, table=True):
     created_by: UUID
     created_at: datetime = Field(default_factory=now)
     updated_at: datetime | None = None
+    # an original we edited (the verbatim text stays in the source record)
+    edited_by: UUID | None = None
+    edited_at: datetime | None = None
+    edit_note: str | None = None
 
 
 class Source(SQLModel, table=True):
