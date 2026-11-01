@@ -30,14 +30,16 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   background GPS and audio. So offline lands as a PWA, and Capacitor wraps
   the same build later.
 
-## Next session (state on 2026-10-29)
+## Next session (state on 2026-11-01)
 Production runs v0.3.2 from the release workflow. Merged since, not
 released: the new content model (2a #17, 2b #18, 2c #19), the MCP server
 (#20) and its cheaper version for agents (#21 batch tools, `find_places`,
 duplicate guard, compact answers; #22 server-side imports of houses and
 sacral buildings; scraper v0.4.0 with the record key), and houses and
 chapels on the map (#24 round B, #25 tap label and pips; tested on the
-Pixel 2026-10-29).
+Pixel 2026-10-29), and the cleanup of scraped texts (#27: language codes
+normalised on write, `edit_texts` marks an edited original, `move_text_langs`,
+`verbatim` in the resource detail; migration `V001_006`, additive).
 0. **Start here: the release** of all this with the switch-over (item 2).
    Round B (houses and chapels) is done: villages and mills at every zoom,
    houses, churches and chapels from zoom 17 (kind marks, their own
@@ -81,6 +83,11 @@ Pixel 2026-10-29).
      houses and sacral buildings once there's a need.
    - Rights: names, numbers and kinds from the archives are stored as facts
      (public without the archive's permission; #22). Confirm or change.
+   - **Texts (after #27):** try `edit_texts` and `move_text_langs` with the
+     agent on a few Topothek captions (gentle scraping). Next is the
+     `source_changed` report on a new harvest (§7 below). A discreet
+     "gekürzt / zkráceno / abridged" on the photo label uses the public
+     `edited` flag (frontend, not started).
 2. **Then the release** of the content model with the switch-over
    (`SCHEMA_CONCEPT.md`, "Migration"; by hand: create the volume
    `timestrolls_pg17` on the droplet, publish the release, `make production`
