@@ -67,7 +67,10 @@ machine-translated into cs/en. Production gets this by `make push` in
 0. **Start here: step 5, auth and admin UI** (decided 2026-11-01: more
    impact on the product than the small points). Planned on 2026-11-01:
    OAuth through FastMCP with Google login, roles in our database; see
-   section 5 and its PR table (PR 2 done #36; PR 3, OAuth on MCP and REST, in review; next: PR 4, the Google app and the release). After step 5: the open points of the release
+   section 5 and its PR table. **Live since v0.5.1 (2026-11-01):** invited
+   editors sign in with Google; claude.ai lists the admin tools. Next:
+   PR 5, the admin UI (choose react-admin or our own MUI pages first).
+   After step 5: the open points of the release
    prep above and items 1, 4, 6 and the leftovers of round B below, then
    the agreed order (item 5). Round B (houses and chapels) is done: villages and mills at every zoom,
    houses, churches and chapels from zoom 17 (kind marks, their own
@@ -510,15 +513,49 @@ days). The first admin is invited through the admin API with `API_KEY`.
 |---|---|---|
 | 1 | This plan + spike (wiring under the FastAPI mounts, shared provider, Postgres store) | done |
 | 2 | Schema and roles (`V001_007`): `account.email`, `account_role` (`grant` is a reserved word), `oauth_store`; `invite`, `login`, `grant_role`, `revoke_role`; `/api/admin/invites/`, `/accounts/{name}/roles`, `/roles/{id}/revoke` | done (#36) |
-| 3 | OAuth on the admin MCP and REST (`api/auth/oauth.py`), the public MCP open, `GET /api/admin/me`, config `auth`, Caddy, release secrets. Google sign-in is on only once `GOOGLE_CLIENT_ID` is set, so releasing it changes nothing until then | in review |
-| 4 | Docs, Google app and secrets (by hand), release, connect claude.ai/ChatGPT/Gemini | |
+| 3 | OAuth on the admin MCP and REST (`api/auth/oauth.py`), the public MCP open, `GET /api/admin/me`, config `auth`, Caddy, release secrets. Google sign-in is on only once `GOOGLE_CLIENT_ID` is set, so releasing it changes nothing until then | done (#37) |
+| 4 | Google app and secrets (by hand), release, connect claude.ai; docs | done (v0.5.1, #38, #39, this) |
 | 5 | Admin UI 1: `/admin` (lazy, PKCE via `oauth4webapi`), review queue; react-admin vs own MUI pages decided then | |
 | 6 | Admin UI 2: places (map picker, texts), Topothek import, accounts and roles, personal tokens | |
+
+**Rollout (2026-11-01):**
+- v0.5.0 took the site down for about 10 minutes. The OAuth server was
+  mounted at `/api` and answered `/api/ready`, the health check, with 404
+  (fixed in #38, single routes; a test now calls `/api/ready` with Google on).
+  CI runs without the Google secrets, so only production had sign-in on.
+- The release never recreated Caddy, so Caddyfile changes never took effect
+  (`/.well-known/oauth-*` served the app). Since #39 the deploy recreates
+  Caddy when the Caddyfile differs.
+- The Google client is in **"Testing"**: every editor must also be a test user
+  (100 at most), and sign-ins expire after 7 days. Switch it to "In
+  production" before inviting others (no Google review for `openid email`).
+- Checked: claude.ai (custom connector, OAuth) lists the admin tools for the
+  invited admin `viktor.atalla@gmail.com`. Not tried yet: ChatGPT, Gemini CLI.
+
+**Connecting** (the URL is always `https://timestrolls.debtray.com/api/mcp/admin`;
+the public `/api/mcp` needs nothing):
+- First, invite the person: `POST /api/admin/invites/` with `{"email", "role"}`
+  (`editor` or `admin`), bearer `API_KEY`. In "Testing", also add the address
+  as a Google test user.
+- claude.ai: Settings → Connectors → Add custom connector, the URL, no client
+  id. Then our consent page, then Google.
+- ChatGPT: developer mode (paid plans), create a connector with the URL and
+  OAuth.
+- Gemini CLI: `~/.gemini/settings.json`
+  `{"mcpServers": {"timestrolls": {"httpUrl": "<URL>"}}}`, then
+  `/mcp auth timestrolls`.
+- Postman (debugging): register a client at `POST /api/register` with the
+  redirect URI `https://oauth.pstmn.io/v1/callback` and
+  `token_endpoint_auth_method: none`. Then OAuth 2.0 "Authorization Code
+  (With PKCE)", `/api/authorize`, `/api/token`, scope
+  `openid https://www.googleapis.com/auth/userinfo.email`.
+- Scripts and the replay keep using bearer tokens.
 
 Left from PR 3: a person without an invitation still completes the Google
 step and gets a token from our server that every request then refuses (401);
 refusing already at the token exchange (`_extract_upstream_claims`) would be
-clearer for them. Check with the real clients in PR 4.
+clearer for them. Not checked with a real client yet (needs a second Google
+test user who isn't invited).
 
 Later: GitHub/Microsoft login (`OAuthProxy` has one upstream: a chooser or
 a broker); enforcing areas. Apple login needs a paid developer account, so
