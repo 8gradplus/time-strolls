@@ -100,3 +100,21 @@ export const roleScopes = {
   editor: ["read:all", "write", "review", "scrape"],
   admin: TOKEN_SCOPES,
 };
+
+// Places and the Topothek import (ROADMAP.md, PR 6b) -------------------------
+
+// Places of any status by name (a part of it) and/or near a point, with the
+// name of their village (part_of_name)
+export const searchPlaces = ({ q, lat, lon, kind, limit = 20 }) =>
+  adminFetch(
+    `/api/admin/places/search?${new URLSearchParams(
+      Object.entries({ q, lat, lon, kind, limit }).filter(
+        ([, v]) => v !== undefined && v !== null && v !== "",
+      ),
+    )}`,
+  );
+
+// One Topothek document as new media showing these places (ids or slugs):
+// {media, created, title}; a document harvested before is not added again
+export const harvestTopothek = (url, places) =>
+  post("/api/admin/media/topothek/", { url, places });
