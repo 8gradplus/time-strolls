@@ -21,6 +21,7 @@ import { useLanguage } from "../LanguageContext";
 import { serif } from "../theme";
 import { AuthProvider, useAuth } from "./AuthContext";
 import Accounts from "./accounts/Accounts";
+import Import from "./import/Import";
 import Mine from "./accounts/Mine";
 import Review from "./review/Review";
 
@@ -83,12 +84,16 @@ const Account = () => {
   );
 };
 
+const mayWrite = (me) =>
+  ["write", "admin"].some((s) => me?.scopes?.includes(s));
+
 // The admin's pages; the current one in bold
 const Nav = () => {
   const { t } = useLanguage();
   const { me } = useAuth();
   const pages = [
     ["/admin", t.admin.review, true],
+    mayWrite(me) && ["/admin/import", t.admin.import],
     me?.scopes?.includes("admin") && ["/admin/accounts", t.admin.accounts],
     ["/admin/me", t.admin.mine],
   ].filter(Boolean);
@@ -213,6 +218,7 @@ const Screens = () => {
         <Routes>
           <Route index element={<Review />} />
           <Route path="me" element={<Mine />} />
+          {mayWrite(me) && <Route path="import" element={<Import />} />}
           {me?.scopes?.includes("admin") && (
             <Route path="accounts" element={<Accounts />} />
           )}

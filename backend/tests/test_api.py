@@ -288,6 +288,7 @@ def test_own_media_need_no_permission(admin):
 def test_harvested_topothek_documents_need_the_source_permission(admin, harvested):
     slug, result = harvested
     assert result["created"] and result["media"]["source_url"] == DOCUMENT["source_url"]
+    assert result["title"] == DOCUMENT["title"]
     assert admin.get(f"/api/locations/{slug}").json()["images"] == []
     admin.post(
         "/api/admin/permissions/",
@@ -621,3 +622,18 @@ def test_several_statuses_at_once(admin, client):
         headers=writer,
     )
     assert r.status_code == 403
+
+
+def test_places_are_searched_by_name_and_position_with_their_village(admin):
+    village = place(admin)
+    house = place(admin, "Oberuresch 3", kind="house", lat=48.6095, force=True)
+    admin.post(
+        "/api/admin/relations/",
+        json={"subject": house["id"], "predicate": "part_of", "object": village["id"]},
+    )
+    found = admin.get("/api/admin/places/search?q=uresch 3").json()
+    assert [(p["name"], p["part_of_name"]) for p in found] == [
+        ("Oberuresch 3", "Oberuresch")
+    ]
+    near = admin.get("/api/admin/places/search?lat=48.6095&lon=14.056219").json()
+    assert near[0]["name"] == "Oberuresch 3" and near[0]["distance_m"] < 1

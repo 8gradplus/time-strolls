@@ -8,6 +8,7 @@ import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
+from sqlmodel import select
 
 from api.auth.bearer import scope
 from api.db import SessionDep
@@ -31,6 +32,35 @@ def get_places(
     session: SessionDep, _: Reader, status: str | None = None, kind: str | None = None
 ):
     return places.list_(session, status, kind)
+
+
+class FoundOut(places.Found):
+    part_of_name: str | None = None  # the village's name
+
+
+@router.get("/places/search", response_model=list[FoundOut])
+def search_places(
+    session: SessionDep,
+    _: Reader,
+    q: str | None = None,
+    lat: float | None = None,
+    lon: float | None = None,
+    radius_m: float | None = None,
+    kind: str | None = None,
+    limit: int = 20,
+):
+    """Places of any status by name (any language, a part of it is enough)
+    and/or near a point (nearest first), with the name of their village."""
+    found = places.search(session, q, lat, lon, radius_m, kind, None, min(limit, 100))
+    parents = {f.part_of for f in found if f.part_of}
+    names = dict(
+        session.exec(
+            select(PlaceView.id, PlaceView.name).where(PlaceView.id.in_(parents))
+        ).all()
+    )
+    return [
+        FoundOut(**f.model_dump(), part_of_name=names.get(f.part_of)) for f in found
+    ]
 
 
 @router.get("/places/{key}", response_model=PlaceView)
@@ -79,6 +109,7 @@ class TopothekIn(BaseModel):
 class Harvested(BaseModel):
     media: MediaView
     created: bool
+    title: str | None = None  # the document's title, as harvested
 
 
 @router.post("/media/topothek/", response_model=Harvested)
@@ -96,7 +127,9 @@ async def post_topothek(data: TopothekIn, session: SessionDep, actor: Writer):
     id, created = await run_in_threadpool(
         harvest.topothek, session, actor, document, data.places, data.status
     )
-    return Harvested(media=media.get(session, id), created=created)
+    return Harvested(
+        media=media.get(session, id), created=created, title=document.get("title")
+    )
 
 
 # Tours ---------------------------------------------------------------------
