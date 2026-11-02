@@ -3,7 +3,7 @@
 // for its details. The view lives in the query string, like the map's:
 // /admin?type=media&status=new&kind=house&open=<id>.
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -23,23 +23,11 @@ import Typography from "@mui/material/Typography";
 import { Icon } from "../../icons";
 import { useLanguage } from "../../LanguageContext";
 import { useAuth } from "../AuthContext";
-import { fill, reviewList, setStatuses } from "../api";
+import { fill, PLACE_KINDS, reviewList, setStatuses } from "../api";
 import Detail from "./Detail";
 
 const TYPES = ["place", "media", "tour"];
 const STATUSES = ["new", "published", "muted"];
-const PLACE_KINDS = [
-  "village",
-  "hamlet",
-  "house",
-  "farm",
-  "chapel",
-  "church",
-  "wayside_shrine",
-  "mill",
-  "ruin",
-  "landmark",
-];
 const PAGE = 50;
 
 // The actions from a status: what a row can become
@@ -221,6 +209,8 @@ const Review = () => {
   const [toast, setToast] = useState(null); // {text, undo?}
   const mayReview =
     me?.scopes?.includes("review") || me?.scopes?.includes("admin");
+  const mayWrite =
+    me?.scopes?.includes("write") || me?.scopes?.includes("admin");
 
   const load = useCallback(
     async (offset = 0) => {
@@ -353,6 +343,17 @@ const Review = () => {
           </TextField>
         )}
         <Box sx={{ color: "text.secondary", fontSize: 14 }}>{list.total}</Box>
+        {view.type === "place" && mayWrite && (
+          <Button
+            component={RouterLink}
+            to="/admin/places/new"
+            size="small"
+            startIcon={<Icon name="add" size={18} />}
+            sx={{ ml: "auto" }}
+          >
+            {t.admin.newPlace}
+          </Button>
+        )}
       </Box>
 
       {/* the selection's actions, sticky so they stay at hand while scrolling */}
@@ -439,6 +440,8 @@ const Review = () => {
         actionLabel={(status) => actionLabel(t, status)}
         onAction={(status) => act([view.open], status)}
         onClose={() => setView({ open: null })}
+        mayWrite={mayWrite}
+        onChanged={() => load(0)}
       />
       <ReasonDialog
         open={Boolean(asking)}

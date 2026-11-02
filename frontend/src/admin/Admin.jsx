@@ -22,6 +22,7 @@ import { serif } from "../theme";
 import { AuthProvider, useAuth } from "./AuthContext";
 import Accounts from "./accounts/Accounts";
 import Import from "./import/Import";
+import NewPlace from "./places/NewPlace";
 import Mine from "./accounts/Mine";
 import Review from "./review/Review";
 
@@ -219,6 +220,7 @@ const Screens = () => {
           <Route index element={<Review />} />
           <Route path="me" element={<Mine />} />
           {mayWrite(me) && <Route path="import" element={<Import />} />}
+          {mayWrite(me) && <Route path="places/new" element={<NewPlace />} />}
           {me?.scopes?.includes("admin") && (
             <Route path="accounts" element={<Accounts />} />
           )}
