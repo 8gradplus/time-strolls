@@ -118,3 +118,57 @@ export const searchPlaces = ({ q, lat, lon, kind, limit = 20 }) =>
 // {media, created, title}; a document harvested before is not added again
 export const harvestTopothek = (url, places) =>
   post("/api/admin/media/topothek/", { url, places });
+
+// Places and texts (ROADMAP.md, PR 6c) ----------------------------------------
+
+export const PLACE_KINDS = [
+  "village",
+  "hamlet",
+  "house",
+  "farm",
+  "chapel",
+  "church",
+  "wayside_shrine",
+  "mill",
+  "ruin",
+  "landmark",
+];
+// The languages the app shows; texts in others stay as they are
+export const LANGS = ["de", "cs", "en"];
+
+export const getPlace = (key) =>
+  adminFetch(`/api/admin/places/${encodeURIComponent(key)}`);
+
+// {name, lang, kind, lat, lon, force?}; a place that looks like an existing
+// one is refused (409, the detail names it) unless force
+export const createPlace = (data) => post("/api/admin/places/", data);
+
+// {kind?, lat?, lon?}: the slug stays
+export const updatePlace = (id, data) =>
+  adminFetch(`/api/admin/places/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+
+export const link = (subject, predicate, object) =>
+  post("/api/admin/relations/", { subject, predicate, object });
+export const unlink = (id) =>
+  adminFetch(`/api/admin/relations/${id}`, { method: "DELETE" });
+
+const text = (id, field, lang) =>
+  `/api/admin/resources/${id}/texts/${field}/${encodeURIComponent(lang)}`;
+
+// Adds or replaces a text: an own original, or a translation (method human,
+// translated_from); an original from a source is edited with editText
+export const putText = (id, field, lang, data) =>
+  adminFetch(text(id, field, lang), {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+// Edits an original from a source, marked as edited, with a note why
+export const editText = (id, field, lang, body, note) =>
+  adminFetch(text(id, field, lang), {
+    method: "PATCH",
+    body: JSON.stringify({ body, note }),
+  });
