@@ -25,6 +25,7 @@ Reader = Annotated[Actor, Depends(scope("read:all"))]
 Writer = Annotated[Actor, Depends(scope("write"))]
 Reviewer = Annotated[Actor, Depends(scope("review"))]
 Admin = Annotated[Actor, Depends(scope("admin"))]
+Me_ = Annotated[Actor, Depends(current_actor)]  # anyone signed in
 
 
 @router.get("/parties/", response_model=list[Party])
@@ -109,9 +110,10 @@ def get_me(session: SessionDep, actor: Annotated[Actor, Depends(current_actor)])
     )
 
 
-@router.get("/accounts/", response_model=list[Account])
+@router.get("/accounts/", response_model=list[accounts.Overview])
 def get_accounts(session: SessionDep, _: Admin):
-    return accounts.accounts(session)
+    """Every account with its active roles and whether the person signed in."""
+    return accounts.overview(session)
 
 
 @router.post("/accounts/", response_model=Account, status_code=201)
@@ -182,5 +184,20 @@ def post_token(name: str, data: accounts.TokenIn, session: SessionDep, actor: Ad
 
 
 @router.post("/tokens/{id}/revoke", response_model=TokenOut)
-def revoke_token(id: UUID, session: SessionDep, actor: Admin):
+def revoke_token(id: UUID, session: SessionDep, actor: Me_):
+    """Any token for an admin, one's own for everyone else."""
     return TokenOut.of(accounts.revoke_token(session, actor, id))
+
+
+@router.get("/me/tokens", response_model=list[TokenOut])
+def get_own_tokens(session: SessionDep, actor: Me_):
+    """One's own tokens, also revoked ones."""
+    return [TokenOut.of(t) for t in accounts.tokens(session, actor.account_id)]
+
+
+@router.post("/me/tokens", response_model=NewToken, status_code=201)
+def post_own_token(data: accounts.TokenIn, session: SessionDep, actor: Me_):
+    """A personal token (scripts, an MCP client without OAuth) with at most
+    one's own scopes; it stops working with one's roles. Shown only here."""
+    row, token = accounts.create_own_token(session, actor, data)
+    return NewToken(**TokenOut.of(row).model_dump(), token=token)

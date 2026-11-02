@@ -55,7 +55,11 @@ def authenticate(
     session.add(row)
     session.commit()
     account = session.get(Account, row.account_id)
-    return Actor(account.id, account.name, frozenset(row.scopes), run)
+    scopes = frozenset(row.scopes)
+    if account.kind == "human":
+        # a person's token can do at most what their roles allow today
+        scopes &= scopes_of(active_roles(session, account.id))
+    return Actor(account.id, account.name, scopes, run)
 
 
 class AccountIn(BaseModel):
@@ -90,6 +94,39 @@ def accounts(session: Session) -> list[Account]:
     return list(session.exec(select(Account).order_by(Account.name)))
 
 
+class Overview(BaseModel):
+    """An account for the admin's list: its active roles and whether the
+    person signed in yet."""
+
+    id: UUID
+    kind: str
+    name: str
+    email: str | None
+    operated_by: str | None  # account name
+    created_at: str
+    roles: list[AccountRole]
+    signed_in: bool
+
+
+def overview(session: Session) -> list[Overview]:
+    rows = accounts(session)
+    names = {a.id: a.name for a in rows}
+    signed_in = set(session.exec(select(AccountIdentity.account_id)))
+    return [
+        Overview(
+            id=a.id,
+            kind=a.kind,
+            name=a.name,
+            email=a.email,
+            operated_by=names.get(a.operated_by),
+            created_at=a.created_at.isoformat(),
+            roles=active_roles(session, a.id),
+            signed_in=a.id in signed_in,
+        )
+        for a in rows
+    ]
+
+
 class TokenIn(BaseModel):
     name: str
     scopes: list[str]
@@ -100,11 +137,31 @@ def create_token(
 ) -> tuple[ApiToken, str]:
     """A new token; the token itself is returned only here."""
     require(actor, "admin")
+    if not session.get(Account, account_id):
+        raise NotFound(f"no account {account_id}")
+    return _new_token(session, actor, account_id, data)
+
+
+def create_own_token(
+    session: Session, actor: Actor, data: TokenIn
+) -> tuple[ApiToken, str]:
+    """A personal token of the actor, with at most the actor's scopes."""
+    beyond = [s for s in data.scopes if s in SCOPES and not actor.can(s)]
+    if beyond:
+        raise Forbidden(f"you don't have the scopes {beyond}")
+    return _new_token(session, actor, actor.account_id, data)
+
+
+def _new_token(
+    session: Session, actor: Actor, account_id: UUID, data: TokenIn
+) -> tuple[ApiToken, str]:
     unknown = set(data.scopes) - set(SCOPES)
     if unknown:
         raise Invalid(f"unknown scopes {sorted(unknown)}; known: {list(SCOPES)}")
-    if not session.get(Account, account_id):
-        raise NotFound(f"no account {account_id}")
+    if not data.scopes:
+        raise Invalid("a token needs at least one scope")
+    if not data.name.strip():
+        raise Invalid("a token needs a name")
     token = TOKEN_PREFIX + secrets.token_urlsafe(32)
     row = ApiToken(
         account_id=account_id,
@@ -120,19 +177,26 @@ def create_token(
 
 
 def revoke_token(session: Session, actor: Actor, id: UUID) -> ApiToken:
-    require(actor, "admin")
+    """Any token for an admin, one's own for everyone else."""
     row = session.get(ApiToken, id)
-    if not row:
+    if not row or (row.account_id != actor.account_id and not actor.can("admin")):
         raise NotFound(f"no token {id}")
-    row.revoked_at = now()
-    audit.log(session, actor, "api_token", "revoke", id)
-    session.commit()
-    session.refresh(row)
+    if row.revoked_at is None:
+        row.revoked_at = now()
+        audit.log(session, actor, "api_token", "revoke", id)
+        session.commit()
+        session.refresh(row)
     return row
 
 
 def tokens(session: Session, account_id: UUID) -> list[ApiToken]:
-    return list(session.exec(select(ApiToken).where(ApiToken.account_id == account_id)))
+    return list(
+        session.exec(
+            select(ApiToken)
+            .where(ApiToken.account_id == account_id)
+            .order_by(ApiToken.created_at.desc())
+        )
+    )
 
 
 # Roles and sign-in by invitation ----------------------------------------------
