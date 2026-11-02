@@ -67,3 +67,36 @@ export const setStatuses = (ids, status, reason) =>
 // "{n} selected" with n filled in
 export const fill = (text, values) =>
   text.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? "");
+
+// Accounts (admins) and tokens (ROADMAP.md, PR 6a) --------------------------
+
+const post = (path, body) =>
+  adminFetch(path, {
+    method: "POST",
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+const account = (name) => `/api/admin/accounts/${encodeURIComponent(name)}`;
+
+// Every account with its active roles and whether the person signed in yet
+export const accountList = () => adminFetch("/api/admin/accounts/");
+export const invite = (email, role) =>
+  post("/api/admin/invites/", { email, role });
+export const grantRole = (name, role) =>
+  post(`${account(name)}/roles`, { role });
+export const revokeRole = (id) => post(`/api/admin/roles/${id}/revoke`);
+
+// Tokens of an account (admins) or one's own; a new one carries `token`, once
+export const accountTokens = (name) => adminFetch(`${account(name)}/tokens`);
+export const createToken = (name, data) =>
+  post(`${account(name)}/tokens`, data);
+export const ownTokens = () => adminFetch("/api/admin/me/tokens");
+export const createOwnToken = (data) => post("/api/admin/me/tokens", data);
+export const revokeToken = (id) => post(`/api/admin/tokens/${id}/revoke`);
+
+// What a role may do, as in the API (service/accounts.py ROLES)
+export const ROLES = ["editor", "admin"];
+export const TOKEN_SCOPES = ["read:all", "write", "review", "scrape", "admin"];
+export const roleScopes = {
+  editor: ["read:all", "write", "review", "scrape"],
+  admin: TOKEN_SCOPES,
+};

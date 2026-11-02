@@ -137,3 +137,88 @@ def test_invitations_and_roles_are_in_the_change_log(admin, session):
         ("account_role", "grant"),
         ("account_identity", "link"),
     ]
+
+
+# The admin's list of accounts and personal tokens (ROADMAP.md, PR 6a) -------
+
+
+def test_the_account_list_has_roles_and_whether_one_signed_in(admin, session):
+    invite(admin)
+    rows = {a["name"]: a for a in admin.get("/api/admin/accounts/").json()}
+    anna = rows["anna@example.org"]
+    assert anna["email"] == "anna@example.org"
+    assert [r["role"] for r in anna["roles"]] == ["editor"]
+    assert anna["signed_in"] is False
+    login(session)
+    rows = {a["name"]: a for a in admin.get("/api/admin/accounts/").json()}
+    assert rows["anna@example.org"]["signed_in"] is True
+
+
+def person_token(admin, scopes, role="editor"):
+    """A token of an invited person (made by the admin, as the UI does)."""
+    invite(admin, role=role)
+    r = admin.post(
+        "/api/admin/accounts/anna@example.org/tokens",
+        json={"name": "laptop", "scopes": scopes},
+    )
+    assert r.status_code == 201, r.text
+    return {"Authorization": f"Bearer {r.json()['token']}"}
+
+
+def test_a_persons_token_stops_with_their_role(admin, client):
+    headers = person_token(admin, ["read:all", "write"])
+    assert client.get("/api/admin/review/?type=place", headers=headers).is_success
+    (role,) = admin.get("/api/admin/accounts/anna@example.org/roles").json()
+    admin.post(f"/api/admin/roles/{role['id']}/revoke")
+    r = client.get("/api/admin/review/?type=place", headers=headers)
+    assert r.status_code == 403
+
+
+def test_a_persons_token_is_limited_to_their_role(admin, client):
+    headers = person_token(admin, ["read:all", "admin"])
+    r = client.get("/api/admin/me", headers=headers).json()
+    assert r["scopes"] == ["read:all"]
+    assert client.get("/api/admin/accounts/", headers=headers).status_code == 403
+
+
+def test_everyone_makes_and_revokes_their_own_tokens(admin, client):
+    headers = person_token(admin, ["read:all", "write", "review", "scrape"])
+    r = client.post(
+        "/api/admin/me/tokens",
+        json={"name": "claude", "scopes": ["write"]},
+        headers=headers,
+    )
+    assert r.status_code == 201, r.text
+    own = r.json()
+    assert own["token"].startswith("ts_")
+    mine = client.get("/api/admin/me/tokens", headers=headers).json()
+    assert [t["name"] for t in mine] == ["claude", "laptop"]
+    assert "token" not in mine[0]
+    r = client.post(f"/api/admin/tokens/{own['id']}/revoke", headers=headers)
+    assert r.status_code == 200 and r.json()["revoked_at"]
+    r = client.get("/api/admin/me", headers={"Authorization": f"Bearer {own['token']}"})
+    assert r.status_code == 401
+
+
+def test_own_tokens_have_at_most_ones_own_scopes(admin, client):
+    headers = person_token(admin, ["read:all", "write"])
+    for scopes in (["admin"], ["review"], []):
+        r = client.post(
+            "/api/admin/me/tokens",
+            json={"name": "x", "scopes": scopes},
+            headers=headers,
+        )
+        assert r.status_code in (403, 422), (scopes, r.text)
+
+
+def test_nobody_revokes_another_persons_token(admin, client):
+    from tests.test_api import token
+
+    agent = token(admin, ["read:all"])
+    theirs = admin.get("/api/admin/accounts/agent/tokens").json()[0]
+    headers = person_token(admin, ["read:all", "write"])
+    r = client.post(f"/api/admin/tokens/{theirs['id']}/revoke", headers=headers)
+    assert r.status_code == 404
+    assert client.get(
+        "/api/admin/me", headers={"Authorization": f"Bearer {agent}"}
+    ).is_success

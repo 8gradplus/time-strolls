@@ -2,7 +2,13 @@
 // by the map. Invited people sign in with Google; locally nobody signs in.
 // It follows the colour mode and the app's language.
 import { useEffect } from "react";
-import { Link as RouterLink, Navigate, Route, Routes } from "react-router-dom";
+import {
+  Link as RouterLink,
+  NavLink,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -14,6 +20,8 @@ import { Icon } from "../icons";
 import { useLanguage } from "../LanguageContext";
 import { serif } from "../theme";
 import { AuthProvider, useAuth } from "./AuthContext";
+import Accounts from "./accounts/Accounts";
+import Mine from "./accounts/Mine";
 import Review from "./review/Review";
 
 const Brand = () => {
@@ -75,8 +83,38 @@ const Account = () => {
   );
 };
 
-const Header = ({ signedIn }) => {
+// The admin's pages; the current one in bold
+const Nav = () => {
   const { t } = useLanguage();
+  const { me } = useAuth();
+  const pages = [
+    ["/admin", t.admin.review, true],
+    me?.scopes?.includes("admin") && ["/admin/accounts", t.admin.accounts],
+    ["/admin/me", t.admin.mine],
+  ].filter(Boolean);
+  return (
+    <Box component="nav" sx={{ display: "flex", gap: 2, fontSize: 15 }}>
+      {pages.map(([to, label, end]) => (
+        <Link
+          key={to}
+          component={NavLink}
+          to={to}
+          end={end}
+          underline="none"
+          sx={{
+            color: "text.secondary",
+            "&.active": { color: "text.primary", fontWeight: 600 },
+            "@media (hover: hover)": { "&:hover": { color: "text.primary" } },
+          }}
+        >
+          {label}
+        </Link>
+      ))}
+    </Box>
+  );
+};
+
+const Header = ({ signedIn }) => {
   return (
     <Box
       component="header"
@@ -93,18 +131,7 @@ const Header = ({ signedIn }) => {
       }}
     >
       <Brand />
-      {signedIn && (
-        <Box component="nav" sx={{ display: "flex", gap: 2, fontSize: 15 }}>
-          <Link
-            component={RouterLink}
-            to="/admin"
-            underline="none"
-            sx={{ color: "text.primary", fontWeight: 600 }}
-          >
-            {t.admin.review}
-          </Link>
-        </Box>
-      )}
+      {signedIn && <Nav />}
       <Box sx={{ flex: 1 }} />
       <Box
         sx={{
@@ -166,7 +193,7 @@ const Gate = () => {
 };
 
 const Screens = () => {
-  const { status } = useAuth();
+  const { status, me } = useAuth();
   const signedIn = status === "signedIn" || status === "local";
   return (
     <Box
@@ -185,6 +212,10 @@ const Screens = () => {
       {status === "checking" ? null : signedIn ? (
         <Routes>
           <Route index element={<Review />} />
+          <Route path="me" element={<Mine />} />
+          {me?.scopes?.includes("admin") && (
+            <Route path="accounts" element={<Accounts />} />
+          )}
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       ) : (
