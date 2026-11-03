@@ -196,6 +196,18 @@ test("the menu lists the areas and marks the one in view", async () => {
   expect(within(menu).queryByText(/Weitere Gebiete/)).not.toBeInTheDocument();
 });
 
+test("the menu's small print links to the admin", async () => {
+  localStorage.setItem("language", "de");
+  render(<App />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Menü" }));
+  const menu = await screen.findByRole("dialog", { name: "Menü" });
+  expect(within(menu).getByRole("link", { name: "Anmelden" })).toHaveAttribute(
+    "href",
+    "/admin",
+  );
+});
+
 test("a tour from the menu is linked by slug and its track loaded", async () => {
   localStorage.setItem("language", "de");
   const TOUR = {

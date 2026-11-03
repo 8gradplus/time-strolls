@@ -1,5 +1,6 @@
 // A new place (/admin/places/new): its name and the name's language, its
-// kind, the village it belongs to, and where it is on the map. A place that
+// kind (a village by default), the village it belongs to (not for a
+// village), and where it is on the map. A place that
 // looks like an existing one is refused with the existing one named; it can
 // still be created when it really is another place. What is added waits for
 // review, and opens there.
@@ -41,7 +42,7 @@ const NewPlace = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [lang, setLang] = useState("de");
-  const [kind, setKind] = useState("house");
+  const [kind, setKind] = useState("village");
   const [village, setVillage] = useState(null);
   const [point, setPoint] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -60,7 +61,7 @@ const NewPlace = () => {
         ...(force ? { force: true } : {}),
       });
       // the place exists now: a failed link is fixed in its panel
-      if (village)
+      if (village && kind !== "village")
         await link(place.id, "part_of", village.id).catch(() => null);
       navigate(`/admin?type=place&status=${place.status}&open=${place.id}`);
     } catch (err) {
@@ -109,14 +110,16 @@ const NewPlace = () => {
             <KindSelect value={kind} onChange={setKind} />
           </Box>
         </Section>
-        <Section title={t.admin.village}>
-          <PlacePicker
-            multiple={false}
-            value={village}
-            onChange={setVillage}
-            label={t.admin.villageHint}
-          />
-        </Section>
+        {kind !== "village" && (
+          <Section title={t.admin.village}>
+            <PlacePicker
+              multiple={false}
+              value={village}
+              onChange={setVillage}
+              label={t.admin.villageHint}
+            />
+          </Section>
+        )}
         <Section title={t.admin.position}>
           <MapPicker value={point} onChange={setPoint} />
         </Section>
