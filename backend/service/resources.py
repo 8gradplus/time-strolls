@@ -3,6 +3,7 @@
 from uuid import UUID
 
 import logging
+import re
 
 from pydantic import BaseModel
 from sqlalchemy import text as sql
@@ -289,6 +290,111 @@ def edit_text(
     session.commit()
     session.refresh(row)
     return row
+
+
+def without(body: str, parts: list[str]) -> str:
+    """The body without `parts` (sentences, a trailing " - Wer kennt …?"),
+    each given verbatim, and without the spaces, dashes and empty lines they
+    leave behind."""
+    for part in parts:
+        if not part.strip():
+            raise Invalid("an empty part to remove")
+        if part not in body:
+            raise Invalid(f"not in the text: {part[:80]!r}")
+        body = body.replace(part, " ", 1)
+    body = re.sub(r"[ \t]+", " ", body)
+    body = re.sub(r" *\n *", "\n", body)
+    body = re.sub(r"\n{3,}", "\n\n", body)
+    # what joined a removed tail to the rest: "Haus 12 - Wer kennt …?"
+    return re.sub(r"[\s\-–—,;:]+$", "", body).strip()
+
+
+SENTENCE_END = re.compile(r"(?<=[.!?…])\s+")
+# a period after these doesn't end a sentence ("Bild Nr. 3", "sv. Jana")
+ABBREVIATIONS = {
+    "nr", "st", "hl", "sv", "č", "čp", "z", "b", "bzw", "ca", "vgl", "usw",
+    "geb", "gest", "dr", "ing", "fam", "hr", "fr", "u", "a", "s", "r", "tzv",
+    "resp", "atd", "mr", "mrs", "no", "approx", "e", "g", "i",
+}  # fmt: skip
+
+
+def sentences(body: str) -> list[str]:
+    """A text split into sentences and lines, as written (for remove). Not
+    after an abbreviation, an initial or an ordinal ("12. Mai")."""
+    out = []
+    for line in body.splitlines():
+        pending = ""
+        for part in SENTENCE_END.split(line.strip()):
+            pending = f"{pending} {part}" if pending else part
+            words = pending.rstrip(".").split()
+            last = words[-1] if words else ""
+            if pending.endswith(".") and (
+                last.casefold() in ABBREVIATIONS
+                or last.isdigit()
+                or (len(last) == 1 and last.isupper())
+            ):
+                continue
+            out.append(pending)
+            pending = ""
+        if pending:
+            out.append(pending)
+    return [s for s in out if s]
+
+
+def find_texts(
+    session: Session,
+    actor: Actor,
+    pattern: str,
+    field: str | None = None,
+    lang: str | None = None,
+    type: str | None = None,
+    status: str | None = None,
+    method: str | None = "original",
+    limit: int = 50,
+    offset: int = 0,
+) -> dict:
+    """Texts whose body matches `pattern` (a regular expression, case
+    insensitive), with only the matching sentences: enough to decide what
+    to remove, without reading whole descriptions. Newest resources first."""
+    require(actor, "read:all")
+    try:
+        regex = re.compile(pattern, re.IGNORECASE)
+    except re.error as e:
+        raise Invalid(f"pattern: {e}") from None
+    query = select(Text, Resource.type, Resource.status).join(
+        Resource, Resource.id == Text.resource_id
+    )
+    if field:
+        query = query.where(Text.field == field)
+    if lang:
+        query = query.where(Text.lang == language(lang))
+    if type:
+        query = query.where(Resource.type == type)
+    if status:
+        query = query.where(Resource.status == status)
+    if method:
+        query = query.where(Text.method == method)
+    query = query.order_by(Resource.id.desc(), Text.field, Text.lang)
+    found = []
+    for row, kind, state in session.exec(query):
+        if not regex.search(row.body):
+            continue
+        matching = [s for s in sentences(row.body) if regex.search(s)]
+        found.append(
+            {
+                "resource": str(row.resource_id),
+                "type": kind,
+                "status": state,
+                "field": row.field,
+                "lang": row.lang,
+                "method": row.method,
+                "edited": bool(row.edited_by),
+                "length": len(row.body),
+                # a match across sentences: the whole body
+                "matches": matching or [row.body],
+            }
+        )
+    return {"total": len(found), "texts": found[offset : offset + limit]}
 
 
 def verbatim(session: Session, resource_id: UUID) -> dict[str, str]:

@@ -33,6 +33,8 @@ from api.db import engine
 from importers import suedboehmen, topothek, znicenekostely
 from service import (
     Actor,
+    Invalid,
+    NotFound,
     ServiceError,
     each,
     audit,
@@ -174,7 +176,8 @@ admin_mcp = FastMCP(
   Translate only when asked, titles before descriptions. A translation
   renders the whole text: to drop a sentence that doesn't belong in the
   app ("Wer kennt diese Person?") or fix a typo, edit the original
-  (edit_texts, with a note), then translate. A wrong language code:
+  (edit_texts, with a note; find_texts finds such sentences, remove cuts
+  them), then translate. A wrong language code:
   move_text_langs.
 - Houses and sacral buildings: import_suedboehmen_houses and
   import_sacral_buildings store them directly (with their source record),
@@ -576,24 +579,33 @@ class TextEditItem(BaseModel):
     resource: str  # id or slug
     field: str
     lang: str
-    body: str
+    body: str | None = None  # the whole new text, or:
+    remove: list[str] | None = None  # parts to cut, verbatim (find_texts)
     note: str  # why, e.g. "removed a call for information"
 
 
 @admin_mcp.tool(auth=WRITE)
 async def edit_texts(texts: list[TextEditItem]) -> dict:
     """Edits originals from a source: only remove what doesn't belong in the
-    app or fix typos, never add. Marked as edited; the verbatim text stays
-    in the source record. A resource that isn't new needs the review scope.
-    Returns {done, errors, retranslate: [{resource, field, langs}]}: the
-    translations made from the earlier text."""
+    app or fix typos, never add. To cut, give `remove` (parts, verbatim)
+    instead of `body`. Marked as edited; the verbatim text stays in the
+    source record. A resource that isn't new needs the review scope. Returns {done, errors, retranslate: [{resource, field, langs}]}:
+    the translations made from the earlier text."""
     me = actor()
     stale = []
 
     def edit(session, item: TextEditItem):
         id = resources.resolve(session, item.resource)
+        if (item.body is None) == (item.remove is None):
+            raise Invalid("give either body or remove")
+        body = item.body
+        if item.remove is not None:
+            row = resources.text_row(session, id, item.field, item.lang)
+            if not row:
+                raise NotFound(f"no {item.field} in {item.lang}")
+            body = resources.without(row.body, item.remove)
         row = resources.edit_text(
-            session, me, id, item.field, item.lang, item.body, item.note
+            session, me, id, item.field, item.lang, body, item.note
         )
         if langs := resources.translations_of(session, id, item.field, row.lang):
             stale.append(
@@ -602,6 +614,37 @@ async def edit_texts(texts: list[TextEditItem]) -> dict:
 
     result = await call(each, texts, edit)
     return compact(result | {"retranslate": stale})
+
+
+@admin_mcp.tool(auth=READ_ALL)
+async def find_texts(
+    pattern: str,
+    field: str | None = None,
+    lang: str | None = None,
+    type: str | None = None,
+    status: str | None = None,
+    method: str | None = "original",
+    limit: int = 50,
+    offset: int = 0,
+) -> dict:
+    """Texts matching a regex (case insensitive), e.g. "wer kennt|danke".
+    Returns {total, texts: [{resource, type, status, field, lang, edited,
+    length, matches}]}; matches: only the matching sentences, verbatim, for
+    edit_texts(remove=...). method null: translations too."""
+    return compact(
+        await call(
+            resources.find_texts,
+            actor(),
+            pattern,
+            field,
+            lang,
+            type,
+            status,
+            method,
+            limit,
+            offset,
+        )
+    )
 
 
 class LangMoveItem(BaseModel):

@@ -554,3 +554,58 @@ def test_sacral_kinds_and_an_unknown_village(importing, admin):
     assert kinds["Kaple sv. Jana"] == "chapel"
     assert kinds["Hřbitov"] == "landmark"
     assert "No village matches" in error
+
+
+def test_an_agent_finds_requests_for_help_and_cuts_them(app, admin):
+    async def steps(client):
+        call = Meter(client)
+        (media,) = await call(
+            "harvest_topothek", {"documents": [{"url": DOCUMENT["source_url"]}]}
+        )
+        text = {"resource": media["id"], "field": "description", "lang": "de"}
+        await call(
+            "set_texts",
+            {
+                "texts": [
+                    text
+                    | {
+                        "lang": "en",
+                        "body": "Karl and Anna. See also",
+                        "method": "machine",
+                        "translated_from": "de",
+                    }
+                ]
+            },
+        )
+        found = await call(
+            "find_texts", {"pattern": "siehe auch|wer kennt", "field": "description"}
+        )
+        (hit,) = found["texts"]
+        edited = await call(
+            "edit_texts",
+            {
+                "texts": [
+                    text | {"remove": hit["matches"], "note": "a reference"},
+                    text | {"remove": ["Wer kennt sie?"], "note": "none"},
+                    text | {"note": "neither body nor remove"},
+                ]
+            },
+        )
+        again = await call("find_texts", {"pattern": "siehe auch"})
+        brief = await call("get_resource", {"key": media["id"]})
+        return found, edited, again, brief, call.bytes
+
+    found, edited, again, brief, read = run(app, "/api/mcp/admin/", API_KEY, steps)
+    (hit,) = found["texts"]
+    assert hit["matches"] == ["Siehe auch Bild Nr. [doc 742589]"]
+    assert (hit["type"], hit["lang"], hit["status"]) == ("media", "de", "new")
+    assert edited["done"] == 1
+    assert [e["item"] for e in edited["errors"]] == [1, 2]
+    assert "not in the text" in edited["errors"][0]["error"]
+    (stale,) = edited["retranslate"]
+    assert stale["langs"] == ["en"]
+    assert again["total"] == 0
+    assert brief["texts"]["description"]["de"] == {
+        "body": "Karl Hinterberger und Anna.",
+        "edited": "a reference",
+    }

@@ -53,7 +53,7 @@ and the admin delete route (401 without a token). Both sides are on
    1. **Done (#57):** Duplicate guard: a kind word ("kaple", "Kapelle", "kostel", "boží
       muka" …) is no name for the comparison (it stays the stored name, as
       a fallback); places from different source records aren't duplicates.
-   2. `remove_sentences`: the agent sends only the sentences to drop (a
+   2. **Done (#58):** `remove_sentences` (as `edit_texts(remove=...)` and `find_texts`): the agent sends only the sentences to drop (a
       request for help, thanks), the server cuts them from the original and
       marks it edited; plus a server-side search for candidate texts (no
       SQL on production).
