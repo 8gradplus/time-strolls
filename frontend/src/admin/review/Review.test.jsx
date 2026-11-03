@@ -142,6 +142,33 @@ test("several rows are published at once, and undone", async () => {
   expect(await screen.findByText("Obermarkschlag 26")).toBeInTheDocument();
 });
 
+test("publishing rows without a permission asks first", async () => {
+  ROWS[1].may_show = false;
+  try {
+    render(<App />);
+    await screen.findByText("Obermarkschlag 26");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveTextContent("1 of the 2 selected have no permission.");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(statusCalls()).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Publish anyway" }),
+    );
+    expect(await screen.findByText("2 published")).toBeInTheDocument();
+    expect(statusCalls()[0]).toEqual({
+      ids: ["p1", "p2"],
+      status: "published",
+    });
+  } finally {
+    delete ROWS[1].may_show;
+  }
+});
+
 test("muting asks for a reason", async () => {
   render(<App />);
   await screen.findByText("Rosenhügel 6");

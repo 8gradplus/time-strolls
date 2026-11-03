@@ -189,6 +189,32 @@ const ReasonDialog = ({ open, onCancel, onConfirm }) => {
   );
 };
 
+// Publishing media that no permission covers: allowed, after a confirmation
+// (they stay off the map until a permission covers them)
+const UncoveredDialog = ({ count, total, onCancel, onConfirm }) => {
+  const { t } = useLanguage();
+  return (
+    <Dialog open={count > 0} onClose={onCancel} fullWidth maxWidth="xs">
+      <DialogContent>
+        <Typography sx={{ fontWeight: 600, mb: 1 }}>
+          {total > 1
+            ? fill(t.admin.uncoveredSome, { n: count, total })
+            : t.admin.uncoveredOne}
+        </Typography>
+        <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+          {t.admin.uncoveredHint}
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onCancel}>{t.admin.cancel}</Button>
+        <Button variant="contained" disableElevation onClick={onConfirm}>
+          {t.admin.publishAnyway}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 const actionLabel = (t, status) =>
   ({ published: t.admin.publish, muted: t.admin.mute, new: t.admin.backToNew })[
     status
@@ -206,6 +232,8 @@ const Review = () => {
   });
   const [selected, setSelected] = useState(new Set());
   const [asking, setAsking] = useState(null); // ids waiting for a mute reason
+  // ids waiting for a confirmation: {ids, uncovered}
+  const [confirming, setConfirming] = useState(null);
   const [toast, setToast] = useState(null); // {text, undo?}
   const mayReview =
     me?.scopes?.includes("review") || me?.scopes?.includes("admin");
@@ -280,8 +308,18 @@ const Review = () => {
     });
   };
 
-  const act = (ids, status) =>
-    status === "muted" ? setAsking(ids) : change(ids, status);
+  // mayShow: what the panel knows of an item that isn't in the list
+  const act = (ids, status, mayShow) => {
+    if (status === "muted") return setAsking(ids);
+    if (status === "published") {
+      const uncovered = ids.filter(
+        (id) =>
+          (list.items.find((i) => i.id === id)?.may_show ?? mayShow) === false,
+      ).length;
+      if (uncovered) return setConfirming({ ids, uncovered });
+    }
+    change(ids, status);
+  };
 
   const ids = list.items.map((i) => i.id);
   const allChecked = ids.length > 0 && ids.every((id) => selected.has(id));
@@ -438,7 +476,7 @@ const Review = () => {
         row={list.items.find((i) => i.id === view.open)}
         actions={mayReview ? actionsFrom[view.status] : []}
         actionLabel={(status) => actionLabel(t, status)}
-        onAction={(status) => act([view.open], status)}
+        onAction={(status, mayShow) => act([view.open], status, mayShow)}
         onClose={() => setView({ open: null })}
         mayWrite={mayWrite}
         onChanged={() => load(0)}
@@ -450,6 +488,16 @@ const Review = () => {
           const ids = asking;
           setAsking(null);
           change(ids, "muted", reason.trim() || undefined);
+        }}
+      />
+      <UncoveredDialog
+        count={confirming?.uncovered ?? 0}
+        total={confirming?.ids.length ?? 0}
+        onCancel={() => setConfirming(null)}
+        onConfirm={() => {
+          const { ids } = confirming;
+          setConfirming(null);
+          change(ids, "published");
         }}
       />
       <Snackbar

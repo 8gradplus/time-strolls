@@ -17,7 +17,8 @@ from api.model.tables import (
 )
 from api.model.views import MediaView, PlaceView, TourView
 from service import STATUSES, Actor, Invalid, each, resources
-from service import media, places, tours
+from service import media, places, rights, tours
+from service.rights import Rights
 
 
 class Summary(BaseModel):
@@ -82,6 +83,8 @@ class Detail(BaseModel):
     verbatim: dict[str, str] = {}
     # the places a media shows (its `shows` links), named
     shows: list[Shown] = []
+    # why a media may be shown (or not)
+    rights: Rights | None = None
 
 
 def shown(session: Session, id: UUID, relations: list[Relation]) -> list[Shown]:
@@ -145,6 +148,7 @@ def detail(session: Session, key: str) -> Detail:
         verbatim=resources.verbatim(session, id),
         relations=relations,
         shows=shown(session, id, relations),
+        rights=rights.of_media(session, id) if resource.type == "media" else None,
         sources=[
             r.model_dump(include={"id", "external_id", "url", "lang", "retrieved_at"})
             for r in records

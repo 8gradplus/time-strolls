@@ -103,6 +103,13 @@ beforeEach(() => {
               part_of_name: "Oberuresch",
             },
           ],
+          rights: {
+            own: false,
+            sources: ["Topothek Deutsch Reichenau"],
+            creator: "Franz Bertlwieser",
+            owner: "Franz Bertlwieser",
+            permissions: [],
+          },
           sources: [],
           verbatim: {},
         });
@@ -223,6 +230,12 @@ test("the places a photo shows are removed and added at once", async () => {
   window.history.replaceState(null, "", "/admin?type=media&open=m1");
   render(<App />);
   const chip = await screen.findByRole("button", { name: "Oberuresch 3" });
+  // and why it isn't on the map: who would have to agree
+  expect(screen.getByText(/No permission: the map/)).toBeInTheDocument();
+  expect(
+    screen.getByText("Source: Topothek Deutsch Reichenau"),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Owner: Franz Bertlwieser")).toBeInTheDocument();
   fireEvent.keyDown(chip, { key: "Backspace" });
   await waitFor(() =>
     expect(sent("/api/admin/relations/r1", "DELETE")).toHaveLength(1),
