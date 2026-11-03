@@ -2,10 +2,13 @@
 
 from fastmcp.server.auth.oauth_proxy.ui import create_consent_html
 
-from api.main import app
 
+def test_consent_page_shows_our_logo_and_site(database):
+    # Importing the API creates the database engine from the settings that
+    # the fixture `database` provides: never import it at the top of a test
+    # module (in CI every database test then failed with port 5432)
+    from api.main import app
 
-def test_consent_page_shows_our_logo_and_site():
     server = app.state.fastmcp_server
     html = create_consent_html(
         client_id="client",
