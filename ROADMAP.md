@@ -41,9 +41,12 @@ in the Google console (Audience → Test users, 100 at most); sign-ins
 expire after 7 days, then they sign in again (claude.ai reconnects the
 connector).
 
-**Start here: the feedback below.** Prioritise it with the user, then one
-small PR per point; point 6 needs decisions first. After that, item 0's
-"after step 5" list.
+**Start here: the feedback below**, one small PR each, in this order
+(agreed 2026-11-03): A = 1 + 2 (login link, new place defaults to village),
+B = 4 (image places), C = 5 (rights and the publish warning), D = 3 (place
+descriptions), E = 6 (hard delete: admins only; a place that still has
+children is refused until they are moved). After that, item 0's "after
+step 5" list.
 
 **Feedback after v0.6.0 (2026-11-03, the user's test on production; in
 the order it came, to be prioritised together, not implemented yet):**
