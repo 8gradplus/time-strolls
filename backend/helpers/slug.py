@@ -1,4 +1,5 @@
 import re
+import unicodedata
 
 
 def slugify(text: str) -> str:
@@ -46,6 +47,11 @@ def slugify(text: str) -> str:
 
     for char, replacement in replacements.items():
         text = text.replace(char, replacement)
+
+    # Other accents (Czech č, ř, š, ž, ě, ů, ...): drop the diacritic
+    text = "".join(
+        c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c)
+    )
 
     # Remove apostrophes and quotes
     text = re.sub(r"['\"]", "", text)

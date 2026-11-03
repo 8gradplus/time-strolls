@@ -57,7 +57,19 @@ and the admin delete route (401 without a token). Both sides are on
       request for help, thanks), the server cuts them from the original and
       marks it edited; plus a server-side search for candidate texts (no
       SQL on production).
-   3. Clean the 88+ descriptions on production with the agent.
+   3. **Done (2026-11-03):** the agent cleaned 197 descriptions on production
+      through the live MCP (`find_texts` + `edit_texts(remove=...)`: 11 calls,
+      ~88 KB read): requests for help and personal thanks cut, provenance kept.
+      Open: one published image (`01a19673-192b-…`) forbids public showing in
+      its own text; the user decides.
+      The same session added 39 vanished villages and hamlets between
+      St. Oswald and Oberplan (incl. the Lipno lake) with ~1,030 houses and
+      ~29 sacral buildings, all `new` for review (4 agents, 211 calls, 825 KB;
+      zanikleobce 61 % of the bytes). Their feedback for 4.4: a compact
+      zanikleobce answer and coordinates in `nearby`; the house import must
+      say which archive village it matched (it took a "Rosenau" 30 km away)
+      and flag far houses; the archive lists some houses twice (Karlshöfen =
+      Stuben 28–83); slugs dropped Czech letters (fixed with this step).
    4. Knowledge for every agent (claude.ai, ChatGPT, Gemini, not only
       Claude Code): the sources' quirks and costs into the scraper's MCP
       instructions and tool docs (`../time-strolls-scraper`, standalone);
