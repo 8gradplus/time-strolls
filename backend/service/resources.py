@@ -173,7 +173,15 @@ def set_text(
         )
     else:
         row.updated_at = now()
-    row.sqlmodel_update(text.model_dump())
+    values = text.model_dump()
+    if action == "update":
+        # replacing a text keeps what the caller doesn't say: the primary name
+        # stays primary, a text from a source keeps its source
+        if not text.is_primary:
+            values.pop("is_primary")
+        if source_record_id is None:
+            source_record_id = row.source_record_id
+    row.sqlmodel_update(values)
     row.source_record_id = source_record_id
     if row.is_primary:
         for other in session.exec(

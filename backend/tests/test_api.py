@@ -819,3 +819,15 @@ def test_the_review_list_names_and_filters_the_sources_of_photos(admin, harveste
     admin.post("/api/admin/permissions/", json={"source": source["code"]})
     assert sources()[0]["permitted"] is True
     assert media()["items"][0]["source_permitted"] is True
+
+
+def test_renaming_a_place_keeps_its_primary_name(admin):
+    p = place(admin, "Ottenschlag (Deutsch Reichenau) 5", kind="house")
+    r = admin.put(
+        f"/api/admin/resources/{p['id']}/texts/name/de",
+        json={"body": "Ottenschlag 5"},
+    )
+    assert r.status_code == 200, r.text
+    assert admin.get(f"/api/admin/places/{p['slug']}").json()["name"] == "Ottenschlag 5"
+    found = admin.get("/api/admin/places/search", params={"text": "Ottenschlag 5"})
+    assert [row["name"] for row in found.json()] == ["Ottenschlag 5"]
