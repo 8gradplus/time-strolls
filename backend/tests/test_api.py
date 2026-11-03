@@ -792,3 +792,30 @@ def test_a_deleted_photo_is_not_harvested_again(admin, harvested):
         ).one()
     assert snapshot["type"] == "media"
     assert any(t["body"] == DOCUMENT["title"] for t in snapshot["texts"])
+
+
+def test_the_review_list_names_and_filters_the_sources_of_photos(admin, harvested):
+    def sources():
+        return admin.get(
+            "/api/admin/review/sources", params={"status": "published"}
+        ).json()
+
+    (source,) = sources()
+    assert source["code"] == "topothek:deutsch-reichenau"
+    assert source["count"] == 1 and source["permitted"] is False
+
+    def media(**params):
+        return admin.get(
+            "/api/admin/review/",
+            params={"type": "media", "status": "published"} | params,
+        ).json()
+
+    (row,) = media()["items"]
+    assert row["source"] == source["name"] and row["source_permitted"] is False
+    assert media(source=[source["code"]])["total"] == 1
+    assert media(source=["topothek:lichtenau"])["total"] == 0
+    assert media(source=["topothek:lichtenau", source["code"]])["total"] == 1
+
+    admin.post("/api/admin/permissions/", json={"source": source["code"]})
+    assert sources()[0]["permitted"] is True
+    assert media()["items"][0]["source_permitted"] is True
