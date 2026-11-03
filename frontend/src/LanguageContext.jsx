@@ -218,6 +218,9 @@ const translations = {
       edit: "Bearbeiten",
       editPlace: "Ort bearbeiten",
       placeSection: "Ort",
+      shows: "Zeigt",
+      showsNone: "Noch keinem Ort zugeordnet.",
+      addPlace: "Ort hinzufügen",
       editNote: "Warum geändert",
       editNoteHint:
         "Z. B. „Bitte um Hinweise entfernt“ oder „Tippfehler“. Der Text der Quelle bleibt erhalten.",
@@ -436,6 +439,9 @@ const translations = {
       edit: "Upravit",
       editPlace: "Upravit místo",
       placeSection: "Místo",
+      shows: "Zobrazuje",
+      showsNone: "Zatím bez místa.",
+      addPlace: "Přidat místo",
       editNote: "Proč změněno",
       editNoteHint:
         "Např. „odstraněna prosba o informace“ nebo „překlep“. Text zdroje zůstane zachován.",
@@ -653,6 +659,9 @@ const translations = {
       edit: "Edit",
       editPlace: "Edit place",
       placeSection: "Place",
+      shows: "Shows",
+      showsNone: "Not linked to a place yet.",
+      addPlace: "Add a place",
       editNote: "Why changed",
       editNoteHint:
         "E.g. “removed a call for information” or “typo”. The source's text is kept.",

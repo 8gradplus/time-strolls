@@ -588,6 +588,30 @@ def test_the_review_list_shows_a_photo_with_its_title_and_source(admin, harveste
     assert row["may_show"] is False  # no permission yet
 
 
+def test_a_photo_shows_several_places_that_can_change(admin, harvested):
+    village, harvest = harvested
+    id = harvest["media"]["id"]
+    house = place(admin, "Oberuresch 3", kind="house", lat=48.6092)
+    admin.post(
+        "/api/admin/relations/",
+        json={"subject": house["slug"], "predicate": "part_of", "object": village},
+    )
+    added = admin.post(
+        "/api/admin/relations/",
+        json={"subject": id, "predicate": "shows", "object": house["id"]},
+    )
+    assert added.status_code == 201
+    shows = admin.get(f"/api/admin/resources/{id}").json()["shows"]
+    assert [(s["name"], s["kind"], s["part_of_name"]) for s in shows] == [
+        ("Oberuresch", "village", None),
+        ("Oberuresch 3", "house", "Oberuresch"),
+    ]
+    first = shows[0]["relation_id"]
+    assert admin.delete(f"/api/admin/relations/{first}").status_code == 204
+    (left,) = admin.get(f"/api/admin/resources/{id}").json()["shows"]
+    assert left["slug"] == house["slug"]
+
+
 def test_the_review_list_pages(admin):
     for i in range(3):
         place(admin, f"Haus {i}", status="new", lat=48.6 + i / 100, lon=14.0)
