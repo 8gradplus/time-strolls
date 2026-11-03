@@ -215,8 +215,8 @@ admin_mcp = FastMCP(
     "Time Strolls admin",
     instructions="""Curate the content of Time Strolls.
 
-- Resources: places (kinds: village, hamlet, house, farm, chapel, church,
-  wayside_shrine, mill, ruin, landmark), media (image, document, audio) and
+- Resources: places (kinds: village (also a hamlet or a few farms), house,
+  farm, chapel, church, wayside_shrine, mill, ruin, landmark), media (image, document, audio) and
   tours. Status: new (waiting for review), published, muted, withdrawn.
   Nothing is deleted here: mute what doesn't belong.
 - Links: part_of (place -> place, a house in a village), shows (media ->

@@ -1,5 +1,6 @@
 // The review list (ROADMAP.md, step 5): one type's content in a status,
-// newest first. Select rows, publish or mute them (with an undo), open one
+// places and tours by name (house numbers as numbers), media newest first.
+// Select rows, publish or mute them (with an undo), open one
 // for its details. The view lives in the query string, like the map's:
 // /admin?type=media&status=new&kind=house&open=<id>.
 import { useCallback, useEffect, useState } from "react";
