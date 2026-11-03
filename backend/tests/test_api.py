@@ -612,6 +612,38 @@ def test_a_photo_shows_several_places_that_can_change(admin, harvested):
     assert left["slug"] == house["slug"]
 
 
+def test_a_photo_says_which_permission_covers_it(admin, harvested):
+    _, harvest = harvested
+    id = harvest["media"]["id"]
+    rights = admin.get(f"/api/admin/resources/{id}").json()["rights"]
+    assert rights == {
+        "own": False,
+        "sources": [rights["sources"][0]],
+        "creator": DOCUMENT["author"],
+        "owner": DOCUMENT["owner"],
+        "permissions": [],
+    }
+    admin.post(
+        "/api/admin/permissions/",
+        json={"source": "topothek:deutsch-reichenau", "note": "by mail"},
+    )
+    admin.post(
+        "/api/admin/permissions/",
+        json={"party": DOCUMENT["owner"], "party_role": "owner", "copy": True},
+    )
+    detail = admin.get(f"/api/admin/resources/{id}").json()
+    assert detail["item"]["may_show"] is True
+    assert [
+        (p["scope"], p["via"], p["show"], p["copy"], p["note"])
+        for p in detail["rights"]["permissions"]
+    ] == [
+        ("source", rights["sources"][0], True, False, "by mail"),
+        ("owner", DOCUMENT["owner"], True, True, None),
+    ]
+    place_detail = admin.get(f"/api/admin/resources/{harvested[0]}").json()
+    assert place_detail["rights"] is None
+
+
 def test_the_review_list_pages(admin):
     for i in range(3):
         place(admin, f"Haus {i}", status="new", lat=48.6 + i / 100, lon=14.0)

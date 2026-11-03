@@ -317,6 +317,56 @@ const ShownPlaces = ({ id, shows, editable, onChanged }) => {
   );
 };
 
+// Why a photo may be shown: our own, or the permissions that cover it,
+// through a source (library scope) or its creator or owner (owner scope);
+// else who would have to agree.
+const RightsInfo = ({ rights }) => {
+  const { t, language } = useLanguage();
+  if (rights.own) return <Box sx={{ fontSize: 14 }}>{t.admin.rightsOwn}</Box>;
+  if (!rights.permissions.length) {
+    const who = [
+      ...rights.sources.map((s) => `${t.admin.rightsScopes.source}: ${s}`),
+      rights.owner && `${t.admin.rightsScopes.owner}: ${rights.owner}`,
+      rights.creator &&
+        rights.creator !== rights.owner &&
+        `${t.admin.rightsScopes.creator}: ${rights.creator}`,
+    ].filter(Boolean);
+    return (
+      <Box sx={{ fontSize: 14 }}>
+        <Box sx={{ color: "warning.main", mb: 0.5 }}>{t.admin.rightsNone}</Box>
+        {who.map((w) => (
+          <Box key={w} sx={{ color: "text.secondary" }}>
+            {w}
+          </Box>
+        ))}
+      </Box>
+    );
+  }
+  return rights.permissions.map((p) => (
+    <Box key={p.id} sx={{ fontSize: 14, mb: 1 }}>
+      <Box>
+        <Box component="span" sx={{ color: "text.secondary" }}>
+          {t.admin.rightsScopes[p.scope] ?? p.scope}:{" "}
+        </Box>
+        {p.via}
+      </Box>
+      <Box sx={{ color: "text.secondary", fontSize: 13 }}>
+        {[
+          p.copy ? t.admin.mayCopy : t.admin.mayShow,
+          p.granted_by && fill(t.admin.grantedBy, { name: p.granted_by }),
+          p.granted_at &&
+            new Date(p.granted_at).toLocaleDateString(language, {
+              dateStyle: "medium",
+            }),
+          p.note,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </Box>
+    </Box>
+  ));
+};
+
 const Detail = ({
   id,
   row,
@@ -510,6 +560,11 @@ const Detail = ({
                 />
               </Section>
             )}
+            {detail.rights && (
+              <Section title={t.admin.rights}>
+                <RightsInfo rights={detail.rights} />
+              </Section>
+            )}
             {(detail.sources.length > 0 || item.source_url) && (
               <Section title={t.admin.source}>
                 {[
@@ -588,7 +643,7 @@ const Detail = ({
               key={status}
               variant={status === "published" ? "contained" : "outlined"}
               disableElevation
-              onClick={() => onAction(status)}
+              onClick={() => onAction(status, item.may_show)}
             >
               {actionLabel(status)}
             </Button>

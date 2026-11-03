@@ -8,7 +8,15 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 from sqlmodel import Session, select
 
-from api.model.tables import Party, Permission, Source, now
+from api.model.tables import (
+    Media,
+    Party,
+    Permission,
+    ResourceSource,
+    Source,
+    SourceRecord,
+    now,
+)
 from service import Actor, Invalid, NotFound, audit, require
 
 
@@ -137,3 +145,86 @@ def revoke(session: Session, actor: Actor, id: UUID) -> Permission:
 
 def permissions(session: Session) -> list[Permission]:
     return list(session.exec(select(Permission).order_by(Permission.recorded_at)))
+
+
+# Why a media may be shown ---------------------------------------------------------
+
+
+class Covering(BaseModel):
+    """A permission that covers a media: through one of its sources (library
+    scope) or through its creator or owner (owner scope)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+    scope: str  # source | creator | owner
+    via: str  # the source's or the party's name
+    show: bool
+    # "copy" in JSON (the name would shadow BaseModel.copy)
+    allow_copy: bool = Field(alias="copy")
+    granted_by: str | None = None
+    granted_at: date | None = None
+    note: str | None = None
+
+
+class Rights(BaseModel):
+    """What decides whether a media may be shown, as the view media_rights
+    does: our own (no creator, owner or source), else the permissions."""
+
+    own: bool
+    sources: list[str]  # the names of its sources
+    creator: str | None = None
+    owner: str | None = None
+    permissions: list[Covering] = []
+
+
+def of_media(session: Session, id: UUID) -> Rights:
+    media = session.get(Media, id)
+    if not media:
+        raise NotFound(f"no media {id}")
+    sources = list(
+        session.exec(
+            select(Source)
+            .join(SourceRecord, SourceRecord.source_id == Source.id)
+            .join(ResourceSource, ResourceSource.source_record_id == SourceRecord.id)
+            .where(ResourceSource.resource_id == id)
+            .distinct()
+        )
+    )
+    parties = {p.id: p.name for p in session.exec(select(Party))}
+    party_ids = [x for x in (media.creator_id, media.rights_holder_id) if x]
+    found = session.exec(
+        select(Permission)
+        .where(Permission.revoked_at.is_(None))
+        .where(
+            Permission.source_id.in_([s.id for s in sources])
+            | Permission.party_id.in_(party_ids)
+        )
+        .order_by(Permission.recorded_at)
+    )
+    names = {s.id: s.name for s in sources}
+    covering = []
+    for p in found:
+        if p.source_id:
+            scope, via = "source", names[p.source_id]
+        else:
+            scope = "owner" if p.party_id == media.rights_holder_id else "creator"
+            via = parties.get(p.party_id, "?")
+        covering.append(
+            Covering(
+                id=p.id,
+                scope=scope,
+                via=via,
+                show=p.show,
+                allow_copy=p.allow_copy,
+                granted_by=parties.get(p.granted_by),
+                granted_at=p.granted_at,
+                note=p.note,
+            )
+        )
+    return Rights(
+        own=not (media.creator_id or media.rights_holder_id or sources),
+        sources=[s.name for s in sources],
+        creator=parties.get(media.creator_id),
+        owner=parties.get(media.rights_holder_id),
+        permissions=covering,
+    )
