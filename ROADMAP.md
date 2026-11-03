@@ -30,30 +30,30 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   background GPS and audio. So offline lands as a PWA, and Capacitor wraps
   the same build later.
 
-## Next session (state on 2026-11-03)
-**v0.6.0 is live (2026-11-03): the admin** (step 5 done, 5a–6c #41–#46).
-The release workflow passed; `/api/ready`, `/admin` and the OAuth metadata
-answer. The user checked `/admin` on production and published two items
-(a harvest and a place work there too). The Google client stays in
-**"Testing"** (decided 2026-11-03: the legal side comes first, see "Later"
-below): every editor is invited under Konten **and** added as a test user
-in the Google console (Audience → Test users, 100 at most); sign-ins
-expire after 7 days, then they sign in again (claude.ai reconnects the
-connector).
+## Next session (state on 2026-11-03, after v0.7.0)
+**v0.7.0 is live (2026-11-03): the admin after its first feedback.** The
+release passed (migration 001.008 with it); production answers
+`/api/ready`, `/admin`, 293 places, the new `description` field on a place
+and the admin delete route (401 without a token). Local and production are
+both on 001.008, so `make pull`/`make push` in `../time-strolls-backup`
+work again.
 
-**The feedback below is implemented** (2026-11-03), one PR each, in the
-agreed order: A = 1 + 2 (login link, new place defaults to village, #50,
-merged), B = 4 (image places, #51), C = 5 (rights and the publish warning,
-#52), D = 3 (place descriptions, #53), E = 6 (hard delete: admins only; a
-place that still has children is refused until they are moved; migration
-001.008, #54). B–E are stacked (each on the one before). Agreed with the
-user: implement everything, release it (v0.7.0, with the migration), try it
-on production, then adjust. After the release `make pull`/`make push` in
-`../time-strolls-backup` need both sides on 001.008. Then item 0's "after
-step 5" list.
+**Start here:** the user tries v0.7.0 on production (a photo's places as
+chips, the "Rechte" section and the question before publishing an
+uncovered photo, a village's description on the map, deleting a test place
+and a refused village with houses). Record their feedback in this section
+first (numbered, in their words, prioritised later), then implement it.
+Then item 0's "after step 5" list.
 
-**Feedback after v0.6.0 (2026-11-03, the user's test on production; in
-the order it came, to be prioritised together, not implemented yet):**
+**Still true from v0.6.0:** the Google client stays in **"Testing"**
+(decided 2026-11-03: the legal side comes first, see "Later" below):
+every editor is invited under Konten **and** added as a test user in the
+Google console (Audience → Test users, 100 at most); sign-ins expire after
+7 days, then they sign in again (claude.ai reconnects the connector).
+
+**Feedback after v0.6.0 (2026-11-03, the user's test on production), all
+done in v0.7.0:** A = 1 + 2 (#50), B = 4 (#51), C = 5 (#52), D = 3 (#53),
+E = 6 (#54, migration 001.008); B–E were stacked PRs.
 1. Menu: a "Login" link next to the imprint in the map's menu colophon,
    leading to `/admin`; just a plain clickable link.
 2. New place (`/admin/places/new`): the kind defaults to village; when the
@@ -257,7 +257,7 @@ machine-translated into cs/en. Production gets this by `make push` in
 | 2e | Houses and chapels on the map (round B), tap label and pips | Done (#24, #25) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Done (#10, #11) |
-| 5 | Auth (OAuth with Google, invited editors, tokens) and admin (own MUI pages) | Done: v0.5.1 (auth), v0.6.0 (admin, 2026-11-03); feedback in "Next session" |
+| 5 | Auth (OAuth with Google, invited editors, tokens) and admin (own MUI pages) | Done: v0.5.1 (auth), v0.6.0 (admin), v0.7.0 (its first feedback, 2026-11-03) |
 | 6 | Capacitor Android: geofence notifications, background audio | Open |
 | 7 | MCP server on the same auth | First version for agents done (#20, #21, #22, scraper v0.4.0); bearer tokens for now, OAuth with step 5; text cleanup (#27); live since v0.4.0 (2026-11-01) |
 
