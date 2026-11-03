@@ -73,6 +73,19 @@ the order it came, to be prioritised together, not implemented yet):**
    places as chips (removable) with a picker to add more; removing one
    deletes the relation (the app user may `DELETE` on `relation`; the
    change log keeps it).
+5. Rights must be clear at a glance. We have the confirmation for the
+   Topothek Lichtenau and Deutsch Reichenau (a permission per source). For
+   each image the admin shows *why* it may be shown: through its source
+   (library scope, e.g. `topothek:deutsch-reichenau`) or through its owner
+   or creator (owner scope, a permission for that party), with the
+   permission's kind (`show`/`copy`) and who granted it; or that nothing
+   covers it. Today the panel only says "no permission yet" (`may_show`
+   false), without the reason. Publishing an image without a permission
+   asks first: a warning in the panel and in the list's bulk publish
+   (how many of the selected aren't covered). It is still allowed, as
+   published-but-not-permitted stays off the map. Probably needed: the
+   admin detail returns the matching permission(s) and their scope, not
+   only `may_show`.
 
 **Later (postponed 2026-11-03):** switch the Google client to "In
 production" once the legal side is done (the user's task; e.g. a privacy
