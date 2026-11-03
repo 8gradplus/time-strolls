@@ -245,6 +245,9 @@ class SourceRecord(SQLModel, table=True):
     retrieved_by: UUID
     created_at: datetime = Field(default_factory=now)
     updated_at: datetime | None = None
+    # its resource was deleted: not harvested or imported again
+    deleted_at: datetime | None = None
+    deleted_by: UUID | None = None
 
 
 class ResourceSource(SQLModel, table=True):

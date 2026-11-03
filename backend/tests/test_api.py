@@ -721,3 +721,61 @@ def test_places_are_searched_by_name_and_position_with_their_village(admin):
     ]
     near = admin.get("/api/admin/places/search?lat=48.6095&lon=14.056219").json()
     assert near[0]["name"] == "Oberuresch 3" and near[0]["distance_m"] < 1
+
+
+# Hard delete -----------------------------------------------------------------------
+
+
+def test_only_admins_delete(admin, client):
+    p = place(admin)
+    editor = token(admin, ["read:all", "write", "review"])
+    r = client.delete(
+        f"/api/admin/resources/{p['id']}",
+        headers={"Authorization": f"Bearer {editor}"},
+    )
+    assert r.status_code == 403
+    assert admin.get(f"/api/admin/resources/{p['id']}").status_code == 200
+
+
+def test_a_village_with_houses_is_deleted_after_them(admin):
+    village = place(admin)
+    house = place(admin, "Oberuresch 3", kind="house", lat=48.6092)
+    admin.post(
+        "/api/admin/relations/",
+        json={"subject": house["id"], "predicate": "part_of", "object": village["id"]},
+    )
+    r = admin.delete(f"/api/admin/resources/{village['id']}")
+    assert r.status_code == 409
+    assert "Oberuresch 3" in r.json()["detail"]
+    assert admin.delete(f"/api/admin/resources/{house['id']}").status_code == 200
+    assert admin.delete(f"/api/admin/resources/{village['slug']}").status_code == 200
+    assert admin.get(f"/api/locations/{village['slug']}").status_code == 404
+    assert admin.get("/api/locations/").json() == []
+
+
+def test_a_deleted_photo_is_not_harvested_again(admin, harvested):
+    from api.db import engine
+
+    slug, harvest = harvested
+    id = harvest["media"]["id"]
+    r = admin.delete(f"/api/admin/resources/{id}")
+    assert r.status_code == 200, r.text
+    assert r.json()["type"] == "media"
+    assert admin.get(f"/api/admin/resources/{id}").status_code == 404
+    # the place stays, without the photo
+    assert admin.get(f"/api/locations/{slug}").json()["images"] == []
+    again = admin.post(
+        "/api/admin/media/topothek/",
+        json={"url": DOCUMENT["source_url"], "places": [slug]},
+    )
+    assert again.status_code == 409
+    assert "deleted" in again.json()["detail"]
+    with engine.connect() as connection:
+        (snapshot,) = connection.execute(
+            text(
+                "SELECT diff FROM timestrolls.change_log "
+                "WHERE action = 'delete' AND table_name = 'resource'"
+            )
+        ).one()
+    assert snapshot["type"] == "media"
+    assert any(t["body"] == DOCUMENT["title"] for t in snapshot["texts"])

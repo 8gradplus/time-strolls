@@ -239,6 +239,7 @@ const Review = () => {
     me?.scopes?.includes("review") || me?.scopes?.includes("admin");
   const mayWrite =
     me?.scopes?.includes("write") || me?.scopes?.includes("admin");
+  const mayDelete = Boolean(me?.scopes?.includes("admin"));
 
   const load = useCallback(
     async (offset = 0) => {
@@ -479,7 +480,18 @@ const Review = () => {
         onAction={(status, mayShow) => act([view.open], status, mayShow)}
         onClose={() => setView({ open: null })}
         mayWrite={mayWrite}
+        mayDelete={mayDelete}
         onChanged={() => load(0)}
+        onDeleted={() => {
+          const id = view.open;
+          setView({ open: null });
+          setList((l) => ({
+            ...l,
+            total: l.total - 1,
+            items: l.items.filter((item) => item.id !== id),
+          }));
+          setToast({ text: t.admin.deleted });
+        }}
       />
       <ReasonDialog
         open={Boolean(asking)}

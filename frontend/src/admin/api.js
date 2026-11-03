@@ -172,3 +172,8 @@ export const editText = (id, field, lang, body, note) =>
     method: "PATCH",
     body: JSON.stringify({ body, note }),
   });
+
+// Hard delete (admins): {id, type, files}; 409 while other places are part
+// of it. Muting stays the rule.
+export const deleteResource = (id) =>
+  adminFetch(`/api/admin/resources/${id}`, { method: "DELETE" });
