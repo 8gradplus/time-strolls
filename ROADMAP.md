@@ -30,39 +30,54 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   background GPS and audio. So offline lands as a PWA, and Capacitor wraps
   the same build later.
 
-## Next session (state on 2026-11-03)
-**v0.6.0 went live on 2026-11-03: the admin** (step 5 done, 5a–6c #41–#46).
-The release workflow passed; `/api/ready`, `/admin` and the OAuth metadata
-answer. The user checked `/admin` on production and published two items
-(a harvest and a place work there too). The Google client stays in
-**"Testing"** (decided 2026-11-03: the legal side comes first, see "Later"
-below): every editor is invited under Konten **and** added as a test user
-in the Google console (Audience → Test users, 100 at most); sign-ins
-expire after 7 days, then they sign in again (claude.ai reconnects the
-connector).
-
-**v0.7.0 is live (2026-11-03)** with the feedback below (#50–#54,
-migration 001.008; both sides on 001.008, so `make pull`/`make push` work).
-The user tested parts of it: **done**; further feedback comes from the
-editors and is raised as a new point when it arrives.
+## Next session (state on 2026-11-03, after v0.7.0)
+**v0.7.0 is live (2026-11-03): the admin after its first feedback.** The
+release passed (migration 001.008 with it); production answers
+`/api/ready`, `/admin`, 293 places, the new `description` field on a place
+and the admin delete route (401 without a token). Both sides are on
+001.008. **Production is the master copy from now on** (agreed
+2026-11-03): we curate there through the live MCP (claude.ai connector
+"Time Strolls"); `make pull` in `../time-strolls-backup` refreshes local,
+`make push` is no longer used.
 
 **Agreed order (2026-11-03):**
-1. v0.7.0 feedback: done (see above).
+1. Trying v0.7.0: **done** (the user tested parts of it). Further feedback
+   comes from the editors and is raised as a new point when it arrives.
 2. OAuth consent page, the cheap first step: `admin_mcp` has our logo and
-   website (PR "OAuth consent page: our logo and site"), released at once.
-   Our own page in the Wall-label look stays open (below).
+   website (#56), released at once. Our own page in the Wall-label look
+   stays open (below).
 3. Slug collisions: later (below).
-4. **Next: the crawling flaws, then the skill.** The duplicate guard treats
-   a kind word ("kaple") as a name; descriptions still hold requests for
-   help (88+); translations. Fix the data and the tools, then revise the
-   curation skill (`.claude/skills/scrape-places`, git-excluded) with fewer
-   hard rules, and re-run it on a new village with the agent's own report
-   on token use and speed. Where the skill lives (here or in the scraper)
-   is under discussion. Work against the live MCP (claude.ai connector
-   "Time Strolls") where it makes sense.
+4. **Next: fix the flaws from crawling in the tools, then move the
+   knowledge into the MCP servers.** The model judges, the server does the
+   mechanics; hard rules that only work around a tool flaw go away.
+   1. Duplicate guard: a kind word ("kaple", "Kapelle", "kostel", "boží
+      muka" …) is no name for the comparison (it stays the stored name, as
+      a fallback); places from different source records aren't duplicates.
+   2. `remove_sentences`: the agent sends only the sentences to drop (a
+      request for help, thanks), the server cuts them from the original and
+      marks it edited; plus a server-side search for candidate texts (no
+      SQL on production).
+   3. Clean the 88+ descriptions on production with the agent.
+   4. Knowledge for every agent (claude.ai, ChatGPT, Gemini, not only
+      Claude Code): the sources' quirks and costs into the scraper's MCP
+      instructions and tool docs (`../time-strolls-scraper`, standalone);
+      the curation goals (what a good title, text and translation is; the
+      Czech place names) into the admin MCP's instructions, maybe an MCP
+      prompt. The local skill (`.claude/skills/scrape-places`,
+      git-excluded) keeps only developer shortcuts.
+   5. Re-run on a new village and measure: per run (`X-Run`) the calls,
+      answer bytes and duration per tool on the server, plus a short
+      report by the agent (what was missing, slow, costly).
 
-**Feedback after v0.6.0 (2026-11-03, the user's test on production; in
-the order it came, to be prioritised together, not implemented yet):**
+**Still true from v0.6.0:** the Google client stays in **"Testing"**
+(decided 2026-11-03: the legal side comes first, see "Later" below):
+every editor is invited under Konten **and** added as a test user in the
+Google console (Audience → Test users, 100 at most); sign-ins expire after
+7 days, then they sign in again (claude.ai reconnects the connector).
+
+**Feedback after v0.6.0 (2026-11-03, the user's test on production), all
+done in v0.7.0:** A = 1 + 2 (#50), B = 4 (#51), C = 5 (#52), D = 3 (#53),
+E = 6 (#54, migration 001.008); B–E were stacked PRs.
 1. Menu: a "Login" link next to the imprint in the map's menu colophon,
    leading to `/admin`; just a plain clickable link.
 2. New place (`/admin/places/new`): the kind defaults to village; when the
@@ -266,7 +281,7 @@ machine-translated into cs/en. Production gets this by `make push` in
 | 2e | Houses and chapels on the map (round B), tap label and pips | Done (#24, #25) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Done (#10, #11) |
-| 5 | Auth (OAuth with Google, invited editors, tokens) and admin (own MUI pages) | Done: v0.5.1 (auth), v0.6.0 (admin, 2026-11-03); feedback in "Next session" |
+| 5 | Auth (OAuth with Google, invited editors, tokens) and admin (own MUI pages) | Done: v0.5.1 (auth), v0.6.0 (admin), v0.7.0 (its first feedback, 2026-11-03) |
 | 6 | Capacitor Android: geofence notifications, background audio | Open |
 | 7 | MCP server on the same auth | First version for agents done (#20, #21, #22, scraper v0.4.0); bearer tokens for now, OAuth with step 5; text cleanup (#27); live since v0.4.0 (2026-11-01) |
 
