@@ -183,6 +183,17 @@ machine-translated into cs/en. Production gets this by `make push` in
   the name when the record keys differ.
 - **Later (2026-11-03):** slugs collide for same-name places within ~100 m (3 decimals): one chapel
   in Deutsch Reichenau (znicenekostely 19688) couldn't be created.
+- **Done 2026-11-03 (#61):** slugs before #60 dropped Czech letters
+  (`kapli-ka-…`); migration 001.010 renames them and keeps the old slug as
+  an alias.
+- **Idea (2026-11-03):** in the admin, select an area on the map and copy its
+  coordinate box (w, s, e, n) to paste into an agent's brief: sectors for
+  parallel agents without guessing the border (the 2026-11-03 run gave one
+  agent a box without Czech land).
+- **Later (2026-11-03):** villages with the same name: `import_suedboehmen_houses`
+  matched a "Rosenau" 30 km away (4 houses muted), and the archive lists some
+  houses twice (Karlshöfen = Stuben 28–83). The import should say which
+  village it matched and flag houses far from the place.
 - The OAuth consent page ("Application Access Request", seen on sign-in to
   the admin and the MCP) is FastMCP's own and doesn't match our look (noted
   2026-11-03). It comes from `create_consent_html` in fastmcp 3.4.0
