@@ -63,6 +63,16 @@ the order it came, to be prioritised together, not implemented yet):**
    the admin's text editor offers a description for places, the public
    place (`/api/locations/{slug}`, `?lang=`) returns it, and the place
    panel shows it.
+4. Editing an image: add, change and remove the specific places it shows
+   (a village, a house, a chapel …), several at once. This is what the
+   schema was designed for: each is a `shows` relation (media → place),
+   so no schema change; the admin REST routes exist (`POST
+   /api/admin/relations/`, `DELETE /api/admin/relations/{id}`), and the
+   place search (`PlacePicker`, `GET /api/admin/places/search`) from the
+   import page can be reused. Needed: the review panel lists an image's
+   places as chips (removable) with a picker to add more; removing one
+   deletes the relation (the app user may `DELETE` on `relation`; the
+   change log keeps it).
 
 **Later (postponed 2026-11-03):** switch the Google client to "In
 production" once the legal side is done (the user's task; e.g. a privacy
