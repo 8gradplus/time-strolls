@@ -288,3 +288,19 @@ class ChangeLog(SQLModel, table=True):
     action: str
     diff: dict = jsonb()
     run: dict | None = Field(default=None, sa_column=Column(JSONB))
+
+
+class ToolCall(SQLModel, table=True):
+    """One MCP tool call on the admin server: what the model read, how long
+    it took (service/usage.py)."""
+
+    __tablename__ = "tool_call"
+    __table_args__ = SCHEMA
+    id: int | None = Field(default=None, primary_key=True)
+    at: datetime = Field(default_factory=now)
+    account_id: UUID
+    run: dict | None = Field(default=None, sa_column=Column(JSONB))
+    tool: str
+    bytes: int
+    ms: int
+    ok: bool

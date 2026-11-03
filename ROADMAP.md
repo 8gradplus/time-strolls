@@ -65,7 +65,7 @@ and the admin delete route (401 without a token). Both sides are on
       Czech place names) into the admin MCP's instructions, maybe an MCP
       prompt. The local skill (`.claude/skills/scrape-places`,
       git-excluded) keeps only developer shortcuts.
-   5. Re-run on a new village and measure: per run (`X-Run`) the calls,
+   5. **Measuring done (#59, migration 001.009):** the `usage` tool. Re-run on a new village and measure: per run (`X-Run`) the calls,
       answer bytes and duration per tool on the server, plus a short
       report by the agent (what was missing, slow, costly).
 
