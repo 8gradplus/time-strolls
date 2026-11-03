@@ -121,9 +121,9 @@ export const harvestTopothek = (url, places) =>
 
 // Places and texts (ROADMAP.md, PR 6c) ----------------------------------------
 
+// No "hamlet": a hamlet is a village (decided 2026-11-03)
 export const PLACE_KINDS = [
   "village",
-  "hamlet",
   "house",
   "farm",
   "chapel",

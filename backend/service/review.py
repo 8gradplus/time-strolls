@@ -4,6 +4,7 @@ status 'new'), and one resource with everything attached to it."""
 from uuid import UUID
 
 from pydantic import BaseModel
+from sqlalchemy import Integer, cast
 from sqlmodel import Session, func, select
 
 from api.model.tables import (
@@ -205,6 +206,21 @@ class Queue(BaseModel):
     items: list[QueueItem]
 
 
+def _order(view):
+    """Places and tours alphabetically, house numbers as numbers ("Stuben 2"
+    before "Stuben 10"); media (no title in the view) newest first."""
+    if view is MediaView:
+        return [view.created_at.desc(), view.id]
+    name = func.coalesce(view.name, "")
+    number = func.substring(name, r"(\d+)\s*$")
+    return [
+        func.lower(func.regexp_replace(name, r"\s*\d+\s*$", "")),
+        cast(number, Integer).nulls_first(),
+        func.lower(name),
+        view.id,
+    ]
+
+
 def queue(
     session: Session,
     type: str,
@@ -213,8 +229,9 @@ def queue(
     limit: int = 50,
     offset: int = 0,
 ) -> Queue:
-    """One type's resources in a status, newest first, with what a row of
-    the review list shows; a few queries per page, not one per row."""
+    """One type's resources in a status (places and tours by name, media
+    newest first), with what a row of the review list shows; a few queries
+    per page, not one per row."""
     views = {"place": PlaceView, "media": MediaView, "tour": TourView}
     if type not in views:
         raise Invalid(f"unknown type {type!r}; known: {list(TYPES)}")
@@ -229,7 +246,7 @@ def queue(
         session.exec(
             select(view)
             .where(*where)
-            .order_by(view.created_at.desc(), view.id)
+            .order_by(*_order(view))
             .offset(offset)
             .limit(min(limit, 200))
         )

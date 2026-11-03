@@ -679,7 +679,20 @@ def test_the_review_list_pages(admin):
         "/api/admin/review/", params={"type": "place", "limit": 2, "offset": 2}
     ).json()
     assert page["total"] == 3
-    assert [r["label"] for r in page["items"]] == ["Haus 0"]  # newest first
+    assert [r["label"] for r in page["items"]] == ["Haus 2"]  # by name
+
+
+def test_the_review_list_sorts_places_by_name_and_number(admin):
+    for i, name in enumerate(["Stuben 10", "asang", "Stuben 2", "Stuben", "Bernek 1"]):
+        place(admin, name, status="new", kind="house", lat=48.6 + i / 100, lon=14.0)
+    rows = admin.get("/api/admin/review/", params={"type": "place"}).json()["items"]
+    assert [r["label"] for r in rows] == [
+        "asang",
+        "Bernek 1",
+        "Stuben",
+        "Stuben 2",
+        "Stuben 10",
+    ]
     assert admin.get("/api/admin/review/", params={"type": "x"}).status_code == 422
     r = admin.get("/api/admin/review/", params={"status": "draft"})
     assert r.status_code == 422
