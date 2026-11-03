@@ -50,6 +50,20 @@ Then set 6d to done, and pick up item 0's "after step 5" list below.
 Not tried on production yet: a real harvest from the import page and
 creating a place (both were checked by hand only without saving).
 
+**Feedback after v0.6.0 (2026-11-03, the user's test on production; in
+the order it came, to be prioritised together, not implemented yet):**
+1. Menu: a "Login" link next to the imprint in the map's menu colophon,
+   leading to `/admin`; just a plain clickable link.
+2. New place (`/admin/places/new`): the kind defaults to village; when the
+   kind is village, hide "part of" (a village isn't part of a village).
+3. Places get a description like the photos have, per language (original
+   and translations), mostly empty for now; editors write them in the
+   admin. No new database fields: `text.field` is free (`name`, `title`,
+   `description`, …) and `resources.set_texts` writes any field. Needed:
+   the admin's text editor offers a description for places, the public
+   place (`/api/locations/{slug}`, `?lang=`) returns it, and the place
+   panel shows it.
+
 **Later (postponed 2026-11-03):** switch the Google client to "In
 production" once the legal side is done (the user's task; e.g. a privacy
 policy and the home page on the consent screen). No Google review is needed
