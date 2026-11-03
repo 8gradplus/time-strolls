@@ -22,6 +22,10 @@ class TestSlugify:
             ("Über-Straße", "ueber-strasse"),
             ("Multiple   Spaces", "multiple-spaces"),
             ("123 Main Street", "123-main-street"),
+            ("kaplička", "kaplicka"),
+            ("Růžový Vrch", "ruzovy-vrch"),
+            ("Horní Ureš, Dolní Hraničná", "horni-ures-dolni-hranicna"),
+            ("Přední Výtoň, Ďáblice", "predni-vyton-dablice"),
         ],
     )
     def test_slugify_basic(self, input_text, expected):
