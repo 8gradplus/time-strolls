@@ -80,6 +80,35 @@ and the admin delete route (401 without a token). Both sides are on
    5. **Measuring done (#59, migration 001.009):** the `usage` tool. Re-run on a new village and measure: per run (`X-Run`) the calls,
       answer bytes and duration per tool on the server, plus a short
       report by the agent (what was missing, slow, costly).
+   6. **Tools for the harvest agents** (from 17 agent runs on 2026-11-03:
+      ~80 vanished villages, ~1,900 houses, ~100 pictures, ~500 photo-to-house
+      links on production; the afternoon alone 523 calls, 1.66 MB). Ranked by
+      the calls they would save:
+      1. **House tagger** (server): find "<village> Nr. N" in the captions of
+         a place's photos, resolve the house, answer photo, house, the
+         sentence and "already linked"; the agent only judges. Today: regex
+         paging with `find_texts` (415 KB) and copying ids by hand.
+      2. **Böhmerwald import** like `harvest_topothek`: source record and
+         record id, owner by `owner_visible`, no duplicates (the same postcard
+         came 4×), a list per call; `add_media` stays for single files.
+      3. **`import_suedboehmen_houses` by archive village id**, answering the
+         matched village with its coordinates; a list of same-name villages
+         with coordinates on an ambiguous name. Today: wrong villages
+         (Rosenau by Kaplitz, Sonnberg by Budweis), suffixed names
+         ("Ottenschlag (Deutsch Reichenau) 5") renamed by hand.
+      4. **zanikleobce** (scraper): coordinates, German name and type in
+         `nearby`, a compact answer without photos, a search by area.
+      5. **`get_resource` filtered by predicate** (or a picture count per
+         place): "has it pictures?" loaded every house link (40 KB for
+         Glöckelberg). `find_places` for several villages, only id and number.
+      6. **Topotheks near a point**, a search across them, a clear error for
+         an unknown name (today a raw 302); a filter for death notices.
+      7. **Clean requests for help at harvest time** (the same patterns as
+         `find_texts`), so a harvest doesn't bring them back.
+      Also seen: the claude.ai connector kept its old tool list after the
+      v0.9.0 release (`check_houses`/`move_places` missing for every agent);
+      `set_texts` dropped a name's primary flag (#66). The coordinator's
+      method is in the local skill `harvest-area`.
 
 **Still true from v0.6.0:** the Google client stays in **"Testing"**
 (decided 2026-11-03: the legal side comes first, see "Later" below):
