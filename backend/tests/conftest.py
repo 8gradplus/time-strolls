@@ -11,6 +11,7 @@ server they are skipped (in CI, with REQUIRE_TEST_DB set, they fail).
 import os
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -24,8 +25,13 @@ ADMIN_URL = os.environ.get(
 DB, USER, PASSWORD = "timestrolls_test", "timestrolls_test", "test"
 API_KEY = "test-api-key"
 
-# Read by config.yml when the API is imported (only by the database tests)
+# Read by config.yml when the config is first imported, which may happen
+# while pytest collects a test module, before any fixture: so the database
+# tests' host and port are put here too, not only in the fixture
+_admin = urlsplit(ADMIN_URL)
 os.environ.update(
+    POSTGRES_HOST=_admin.hostname or "localhost",
+    POSTGRES_PORT=str(_admin.port or 5432),
     API_KEY=API_KEY,
     POSTGRES_DB=DB,
     POSTGRES_USER=USER,
