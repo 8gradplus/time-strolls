@@ -22,6 +22,7 @@ router = APIRouter(tags=["Admin: content"], prefix="/api/admin")
 Reader = Annotated[Actor, Depends(scope("read:all"))]
 Writer = Annotated[Actor, Depends(scope("write"))]
 Reviewer = Annotated[Actor, Depends(scope("review"))]
+Admin = Annotated[Actor, Depends(scope("admin"))]
 
 
 # Places --------------------------------------------------------------------
@@ -175,6 +176,15 @@ def get_resources(
 def get_resource(key: str, session: SessionDep, _: Reader):
     """A resource (id or slug) with its texts, links and sources."""
     return review.detail(session, key)
+
+
+@router.delete("/resources/{key}")
+def delete_resource(key: str, session: SessionDep, actor: Admin):
+    """Deletes a resource for good (admins; muting stays the rule): its
+    texts, links, sources and slugs go along, the change log keeps a
+    snapshot, and its source records stay marked so it isn't harvested
+    again. 409 while other places are part of it."""
+    return resources.delete(session, actor, key)
 
 
 @router.get("/resources/{id}/history", response_model=list[ChangeLog])

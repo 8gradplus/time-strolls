@@ -2,7 +2,10 @@
 
 from uuid import UUID
 
+import logging
+
 from pydantic import BaseModel
+from sqlalchemy import text as sql
 from sqlmodel import Session, select
 
 from api.model.tables import (
@@ -15,6 +18,7 @@ from api.model.tables import (
     Tour,
     now,
 )
+from helpers import cdn
 from helpers.lang import normalize_lang
 from service import (
     STATUSES,
@@ -480,3 +484,62 @@ def check_slug_free(session: Session, slug: str):
             raise Conflict(f"the slug {slug!r} is taken")
     if session.get(SlugAlias, slug):
         raise Conflict(f"the slug {slug!r} is taken (an earlier slug)")
+
+
+# Hard delete ---------------------------------------------------------------------
+
+log = logging.getLogger(__name__)
+
+
+def delete(session: Session, actor: Actor, key: str | UUID) -> dict:
+    """Deletes a resource for good, with its texts, links, sources and slugs
+    (admins only; muting stays the rule). A place others are part of is
+    refused: move them first. The change log keeps a snapshot, and its
+    source records stay, marked, so it isn't harvested or imported again.
+    Our CDN copies are removed after the commit."""
+    require(actor, "admin")
+    id = resolve(session, key)
+    resource = get(session, id)
+    type = resource.type
+    links = relations(session, id)
+    children = [
+        r.subject_id for r in links if r.predicate == "part_of" and r.object_id == id
+    ]
+    if children:
+        names = session.exec(
+            select(Text.body).where(
+                Text.resource_id.in_(children), Text.field == "name", Text.is_primary
+            )
+        ).all()
+        raise Conflict(
+            f"{len(children)} places are part of it ({', '.join(sorted(names)[:5])}"
+            f"{', …' if len(children) > 5 else ''}): move or delete them first"
+        )
+    snapshot = {
+        "type": type,
+        "status": resource.status,
+        "texts": [
+            t.model_dump(include={"field", "lang", "body", "method"})
+            for t in texts(session, id)
+        ],
+        "relations": [
+            r.model_dump(include={"subject_id", "predicate", "object_id"})
+            for r in links
+        ],
+    }
+    audit.log(session, actor, "resource", "delete", id, id, snapshot)
+    try:
+        paths = session.execute(
+            sql("SELECT timestrolls.delete_resource(:id, :actor)"),
+            {"id": id, "actor": actor.account_id},
+        ).scalar_one()
+    except Exception as e:  # the function refuses (a role's area)
+        session.rollback()
+        raise Conflict(str(getattr(e, "orig", e)).split("\n")[0]) from e
+    session.commit()
+    for path in paths or []:
+        try:
+            cdn.delete_object(path)
+        except Exception:  # the database is what counts; a stray file stays
+            log.exception("could not delete %s from the CDN", path)
+    return {"id": id, "type": type, "files": len(paths or [])}

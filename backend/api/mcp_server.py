@@ -155,7 +155,7 @@ admin_mcp = FastMCP(
 - Resources: places (kinds: village, hamlet, house, farm, chapel, church,
   wayside_shrine, mill, ruin, landmark), media (image, document, audio) and
   tours. Status: new (waiting for review), published, muted, withdrawn.
-  Nothing is deleted.
+  Nothing is deleted here: mute what doesn't belong.
 - Links: part_of (place -> place, a house in a village), shows (media ->
   place), about (media or tour -> place or tour), stop (tour -> place),
   same_as (media -> media).

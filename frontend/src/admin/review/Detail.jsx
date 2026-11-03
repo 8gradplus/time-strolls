@@ -5,6 +5,9 @@
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -17,6 +20,7 @@ import { serif } from "../../theme";
 import TextField from "@mui/material/TextField";
 import { Plain } from "../../Components/Preferences";
 import {
+  deleteResource,
   editText,
   fill,
   LANGS,
@@ -376,6 +380,81 @@ const RightsInfo = ({ rights }) => {
   ));
 };
 
+// Deleting for good (admins): muting stays the rule. The confirmation says
+// what goes along; a place others are part of is refused by the API.
+const DeleteForGood = ({ detail, label, onDeleted }) => {
+  const { t } = useLanguage();
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const confirm = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteResource(detail.resource.id);
+      setAsking(false);
+      onDeleted();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      <Button
+        size="small"
+        color="error"
+        onClick={() => {
+          setError(null);
+          setAsking(true);
+        }}
+      >
+        {t.admin.deleteForGood}
+      </Button>
+      <Dialog
+        open={asking}
+        onClose={() => setAsking(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogContent>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>
+            {fill(t.admin.deleteWhat, { label })}
+          </Typography>
+          <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+            {fill(t.admin.deleteAlong, {
+              texts: detail.texts.length,
+              links: detail.relations.length,
+            })}
+            {detail.sources.length > 0 && ` ${t.admin.deleteSource}`}
+          </Typography>
+          {error && (
+            <Typography
+              role="alert"
+              sx={{ color: "error.main", fontSize: 14, mt: 1.5 }}
+            >
+              {error}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAsking(false)}>{t.admin.cancel}</Button>
+          <Button
+            variant="contained"
+            color="error"
+            disableElevation
+            disabled={busy}
+            onClick={confirm}
+          >
+            {t.admin.deleteConfirm}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+};
+
 const Detail = ({
   id,
   row,
@@ -384,7 +463,9 @@ const Detail = ({
   onAction,
   onClose,
   mayWrite = false,
+  mayDelete = false,
   onChanged = () => {},
+  onDeleted = () => {},
 }) => {
   const { t, language } = useLanguage();
   const mobile = useMediaQuery((theme) => theme.breakpoints.down("sm"));
@@ -630,6 +711,15 @@ const Detail = ({
                       {h.diff?.reason ? ` (${h.diff.reason})` : ""}
                     </Box>
                   ))}
+              </Section>
+            )}
+            {mayDelete && (
+              <Section title={t.admin.danger}>
+                <DeleteForGood
+                  detail={detail}
+                  label={label}
+                  onDeleted={onDeleted}
+                />
               </Section>
             )}
           </>

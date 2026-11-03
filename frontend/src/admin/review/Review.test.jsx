@@ -199,6 +199,29 @@ test("a row opens its details: texts per language and the source", async () => {
   expect(new URLSearchParams(window.location.search).get("open")).toBe("p1");
 });
 
+test("an admin deletes a row for good, after a confirmation", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByText("Obermarkschlag 26"));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Delete for good" }),
+  );
+  const dialog = await screen.findByRole("dialog");
+  expect(dialog).toHaveTextContent("Delete “Obermarkschlag 26” for good?");
+  expect(dialog).toHaveTextContent("With 2 texts and 0 links.");
+  expect(dialog).toHaveTextContent("The source's record stays");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+  expect(await screen.findByText("Deleted")).toBeInTheDocument();
+  expect(
+    calls.filter(
+      (c) => c.path === "/api/admin/resources/p1" && c.init.method === "DELETE",
+    ),
+  ).toHaveLength(1);
+  // the row is gone from the list, and the panel closes
+  await waitFor(() =>
+    expect(screen.queryAllByText("Obermarkschlag 26")).toHaveLength(0),
+  );
+});
+
 test("the type and status are in the URL", async () => {
   window.history.replaceState(null, "", "/admin?type=media&status=muted");
   render(<App />);

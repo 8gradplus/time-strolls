@@ -8,8 +8,10 @@ The rules behind the content model and why it looks the way it does. Agreed on
 - An LLM agent harvests data via MCP and stores it as preliminary content; a
   person reviews it (via REST, MCP or the admin later) and decides what is
   published. Every write shows who made it: about 5 people and their agents.
-- Everything harvested is kept. Nothing is deleted; content is published or
-  muted.
+- Everything harvested is kept. Content is published or muted, not deleted.
+  Since 2026-11-03 an admin may delete for good what never belonged here (a
+  logo harvested as a photo): its source record stays, marked as deleted, so
+  it isn't harvested again, and the change log keeps a snapshot.
 - Content is distributed (API, MCP, map) only with permission from its source
   or its author. Permissions come from personal communication and are tracked.
 - Texts exist in several languages. The original language is recorded, and

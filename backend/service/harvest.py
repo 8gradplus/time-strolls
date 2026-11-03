@@ -16,7 +16,7 @@ from uuid import UUID
 from sqlmodel import Session, select
 
 from api.model.tables import ResourceSource, SourceRecord, now
-from service import Actor, ServiceError, audit, require
+from service import Actor, Conflict, ServiceError, audit, require
 from service import media, resources, rights
 from service import places as place_service
 
@@ -69,6 +69,11 @@ def keep_record(
             SourceRecord.external_id == external_id,
         )
     ).first()
+    if record and record.deleted_at:
+        raise Conflict(
+            f"{source.code} {external_id} was deleted on "
+            f"{record.deleted_at:%Y-%m-%d}: it isn't added again"
+        )
     if record:
         record.raw = raw
         record.retrieved_at = retrieved_at

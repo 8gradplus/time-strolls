@@ -41,11 +41,15 @@ in the Google console (Audience → Test users, 100 at most); sign-ins
 expire after 7 days, then they sign in again (claude.ai reconnects the
 connector).
 
-**Start here: the feedback below**, one small PR each, in this order
-(agreed 2026-11-03): A = 1 + 2 (login link, new place defaults to village),
-B = 4 (image places), C = 5 (rights and the publish warning), D = 3 (place
-descriptions), E = 6 (hard delete: admins only; a place that still has
-children is refused until they are moved). After that, item 0's "after
+**The feedback below is implemented** (2026-11-03), one PR each, in the
+agreed order: A = 1 + 2 (login link, new place defaults to village, #50,
+merged), B = 4 (image places, #51), C = 5 (rights and the publish warning,
+#52), D = 3 (place descriptions, #53), E = 6 (hard delete: admins only; a
+place that still has children is refused until they are moved; migration
+001.008, #54). B–E are stacked (each on the one before). Agreed with the
+user: implement everything, release it (v0.7.0, with the migration), try it
+on production, then adjust. After the release `make pull`/`make push` in
+`../time-strolls-backup` need both sides on 001.008. Then item 0's "after
 step 5" list.
 
 **Feedback after v0.6.0 (2026-11-03, the user's test on production; in
