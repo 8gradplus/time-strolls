@@ -50,7 +50,7 @@ and the admin delete route (401 without a token). Both sides are on
 4. **Next: fix the flaws from crawling in the tools, then move the
    knowledge into the MCP servers.** The model judges, the server does the
    mechanics; hard rules that only work around a tool flaw go away.
-   1. Duplicate guard: a kind word ("kaple", "Kapelle", "kostel", "boží
+   1. **Done (#57):** Duplicate guard: a kind word ("kaple", "Kapelle", "kostel", "boží
       muka" …) is no name for the comparison (it stays the stored name, as
       a fallback); places from different source records aren't duplicates.
    2. `remove_sentences`: the agent sends only the sentences to drop (a
@@ -166,7 +166,7 @@ machine-translated into cs/en. Production gets this by `make push` in
   Südböhmen-Archiv covers Bohemia only.
 - Obermarkschlag 26 (lon = lat in the archive) and Rosenhügel 6 (3 km off)
   stay `new`.
-- The duplicate guard refuses chapels that are all named "kaple" within
+- **Done 2026-11-03 (#57):** the duplicate guard refused chapels that are all named "kaple" within
   1 km; they were created with `force` (no source record). Better: ignore
   the name when the record keys differ.
 - **Later (2026-11-03):** slugs collide for same-name places within ~100 m (3 decimals): one chapel

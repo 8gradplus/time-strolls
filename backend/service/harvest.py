@@ -206,7 +206,9 @@ def import_places(
             if place_id:
                 summary["existing"].append(row | {"id": place_id})
             else:
-                place = place_service.create(session, actor, data, commit=False)
+                place = place_service.create(
+                    session, actor, data, commit=False, record=record
+                )
                 place_id = place.id
                 session.add(
                     ResourceSource(resource_id=place_id, source_record_id=record.id)
