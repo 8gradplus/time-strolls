@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 
 from api.auth.oauth import routes as oauth_routes
 from api.controller import admin_content, admin_rights, public
-from api.mcp_server import admin_app, public_app
+from api.mcp_server import admin_app, admin_mcp, public_app
 from service import Conflict, Forbidden, Invalid, NotFound, ServiceError
 
 
@@ -43,6 +43,9 @@ app.mount("/api/mcp", public_app)
 # Single routes, never a mount of /api: that would answer every /api path
 # registered after it (v0.5.0 lost /api/ready, the health check, that way)
 app.router.routes.extend(oauth_routes())
+# The consent page takes the server's name, logo and website from here
+# (the OAuth routes are on this app, not on the mounted MCP app)
+app.state.fastmcp_server = admin_mcp
 
 MCP_PATHS = ("/api/mcp", "/api/mcp/admin")
 

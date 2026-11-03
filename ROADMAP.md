@@ -31,7 +31,7 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   the same build later.
 
 ## Next session (state on 2026-11-03)
-**v0.6.0 is live (2026-11-03): the admin** (step 5 done, 5a–6c #41–#46).
+**v0.6.0 went live on 2026-11-03: the admin** (step 5 done, 5a–6c #41–#46).
 The release workflow passed; `/api/ready`, `/admin` and the OAuth metadata
 answer. The user checked `/admin` on production and published two items
 (a harvest and a place work there too). The Google client stays in
@@ -41,16 +41,25 @@ in the Google console (Audience → Test users, 100 at most); sign-ins
 expire after 7 days, then they sign in again (claude.ai reconnects the
 connector).
 
-**The feedback below is implemented** (2026-11-03), one PR each, in the
-agreed order: A = 1 + 2 (login link, new place defaults to village, #50,
-merged), B = 4 (image places, #51), C = 5 (rights and the publish warning,
-#52), D = 3 (place descriptions, #53), E = 6 (hard delete: admins only; a
-place that still has children is refused until they are moved; migration
-001.008, #54). B–E are stacked (each on the one before). Agreed with the
-user: implement everything, release it (v0.7.0, with the migration), try it
-on production, then adjust. After the release `make pull`/`make push` in
-`../time-strolls-backup` need both sides on 001.008. Then item 0's "after
-step 5" list.
+**v0.7.0 is live (2026-11-03)** with the feedback below (#50–#54,
+migration 001.008; both sides on 001.008, so `make pull`/`make push` work).
+The user tested parts of it: **done**; further feedback comes from the
+editors and is raised as a new point when it arrives.
+
+**Agreed order (2026-11-03):**
+1. v0.7.0 feedback: done (see above).
+2. OAuth consent page, the cheap first step: `admin_mcp` has our logo and
+   website (PR "OAuth consent page: our logo and site"), released at once.
+   Our own page in the Wall-label look stays open (below).
+3. Slug collisions: later (below).
+4. **Next: the crawling flaws, then the skill.** The duplicate guard treats
+   a kind word ("kaple") as a name; descriptions still hold requests for
+   help (88+); translations. Fix the data and the tools, then revise the
+   curation skill (`.claude/skills/scrape-places`, git-excluded) with fewer
+   hard rules, and re-run it on a new village with the agent's own report
+   on token use and speed. Where the skill lives (here or in the scraper)
+   is under discussion. Work against the live MCP (claude.ai connector
+   "Time Strolls") where it makes sense.
 
 **Feedback after v0.6.0 (2026-11-03, the user's test on production; in
 the order it came, to be prioritised together, not implemented yet):**
@@ -145,13 +154,13 @@ machine-translated into cs/en. Production gets this by `make push` in
 - The duplicate guard refuses chapels that are all named "kaple" within
   1 km; they were created with `force` (no source record). Better: ignore
   the name when the record keys differ.
-- Slugs collide for same-name places within ~100 m (3 decimals): one chapel
+- **Later (2026-11-03):** slugs collide for same-name places within ~100 m (3 decimals): one chapel
   in Deutsch Reichenau (znicenekostely 19688) couldn't be created.
 - The OAuth consent page ("Application Access Request", seen on sign-in to
   the admin and the MCP) is FastMCP's own and doesn't match our look (noted
   2026-11-03). It comes from `create_consent_html` in fastmcp 3.4.0
   (`server/auth/oauth_proxy/ui.py`); the error page from `create_error_html`.
-  Cheap first step: give `admin_mcp` a name, our logo (`icons`) and
+  Cheap first step (done 2026-11-03): give `admin_mcp` a name, our logo (`icons`) and
   `website_url`, which the page already shows. Then our own page in the
   Wall-label look (Cormorant + Jost, theme tokens, light and dark,
   de/cs/en), keeping FastMCP's form fields and CSRF/transaction checks; a
