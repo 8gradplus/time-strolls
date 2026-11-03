@@ -87,6 +87,23 @@ the order it came, to be prioritised together, not implemented yet):**
    published-but-not-permitted stays off the map. Probably needed: the
    admin detail returns the matching permission(s) and their scope, not
    only `may_show`.
+6. Hard delete (images, villages, any resource): muting stays the rule,
+   but some things never belonged here (a Facebook logo harvested as an
+   image). This changes a principle ("nothing is deleted", `CLAUDE.md`,
+   `SCHEMA_CONCEPT.md`, the MCP instructions), so decide first:
+   - Who: `admin` only (a new scope, e.g. `delete`), with a confirmation
+     naming what goes along.
+   - What goes along: its texts, relations, `resource_source`, slug
+     aliases, the type row (`media`/`place`/`tour`) and the `resource`;
+     a place's children lose `part_of` (or refuse while it has children?);
+     CDN files we uploaded (not Topothek links, `storage = external`).
+     The app user has no `DELETE` except on `relation`: a migration grants
+     it on these tables, or a `SECURITY DEFINER` function does the delete.
+   - What stays: the `change_log` entry (who, when, a snapshot), and the
+     `source_record`, marked so a later harvest or replay doesn't bring
+     the item back (else the Facebook logo returns with the next
+     `harvest_topothek` of that document). The replay only adds what is
+     missing: remove the link from `replay/places.yml` too.
 
 **Later (postponed 2026-11-03):** switch the Google client to "In
 production" once the legal side is done (the user's task; e.g. a privacy
