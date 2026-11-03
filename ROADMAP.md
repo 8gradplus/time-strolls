@@ -30,23 +30,31 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   background GPS and audio. So offline lands as a PWA, and Capacitor wraps
   the same build later.
 
-## Next session (state on 2026-11-02)
+## Next session (state on 2026-11-03)
 **Start here: release v0.6.0 (step 5, PR 6d).** The admin UI is merged
 (5a–5c #41–#43, 6a–6c #44–#46; CI green on `main`), but not released: v0.5.1
-is the latest tag. In this order, by the user:
-1. Google Cloud console: switch the OAuth client from "Testing" to "In
-   production" (else every editor must be a Google test user and sign-ins
-   expire after 7 days).
-2. Publish the release `v0.6.0` (target `main`, title "v0.6.0: the admin";
+is the latest tag. The Google client stays in **"Testing"** for now (decided
+2026-11-03: the legal side comes first, see "Later" below). In this order,
+by the user:
+1. Publish the release `v0.6.0` (target `main`, title "v0.6.0: the admin";
    notes: review list, accounts and tokens, Topothek import, places and
    texts; a person's token now does at most what their current roles
    allow). No migration. It is the first release with #39 (recreate Caddy
    when `Caddyfile.prod` changed): that step should do nothing.
-3. Check `/admin` on production: Prüfen, Importieren, Konten, Mein Zugang.
-4. Invite the first editors under Konten; collect their feedback.
+2. Check `/admin` on production: Prüfen, Importieren, Konten, Mein Zugang.
+3. Invite the first editors under Konten **and** add each address as a test
+   user in the Google console (Audience → Test users, 100 at most). Their
+   sign-ins expire after 7 days; then they sign in again (claude.ai
+   reconnects the connector). Collect their feedback.
 Then set 6d to done, and pick up item 0's "after step 5" list below.
 Not tried on production yet: a real harvest from the import page and
 creating a place (both were checked by hand only without saving).
+
+**Later (postponed 2026-11-03):** switch the Google client to "In
+production" once the legal side is done (the user's task; e.g. a privacy
+policy and the home page on the consent screen). No Google review is needed
+for `openid email profile`. Afterwards test users and the 7-day expiry no
+longer apply: update this section, §5 and CLAUDE.md.
 
 ### State on 2026-11-01
 **v0.4.0 is live (2026-11-01).** The release brought the new content model
@@ -539,7 +547,7 @@ days). The first admin is invited through the admin API with `API_KEY`.
 | 6a | Accounts (admins): the list with email, roles and whether they signed in yet, invite, grant and revoke roles, each account's tokens (created and shown once, revoked). Personal tokens for everyone ("Mein Zugang", `/api/admin/me/tokens`, scopes at most one's own); a person's token is limited to their current roles at every request, so revoking a role also stops their tokens | done (#44) |
 | 6b | Topothek import: paste links (one per line), choose the places they show (place search), harvested one after another with a row per link (new, known, error) that opens in the review panel. `POST /api/admin/media/topothek/` per link (now with the title); `GET /api/admin/places/search` (name and/or position, with the village), shared with 6c | done (#45) |
 | 6c | Places: a new place with a map picker (click or drag the pin; kind, name and its language, the village it is part of; a refused duplicate is shown with "create anyway"), editing name, kind, position and village, and texts per language in the detail panel (edit an original with a note, add or fix a translation) | done (#46) |
-| 6d | Release (v0.6.0) with 5a–6c; invite the first editors (Google client "In production" first) | next: Google client "In production", then the release |
+| 6d | Release (v0.6.0) with 5a–6c; invite the first editors (as Google test users while the client is in "Testing"; "In production" postponed until the legal side is done) | next: the release |
 
 **Admin UI decisions (2026-11-01):** our own MUI pages in the app's look (not
 react-admin: our API isn't a standard REST shape, and the screens such as the
@@ -555,8 +563,9 @@ first but usable on phones. The app never loads the admin code.
   (`/.well-known/oauth-*` served the app). Since #39 the deploy recreates
   Caddy when the Caddyfile differs.
 - The Google client is in **"Testing"**: every editor must also be a test user
-  (100 at most), and sign-ins expire after 7 days. Switch it to "In
-  production" before inviting others (no Google review for `openid email`).
+  (100 at most), and sign-ins expire after 7 days. It stays so for the first
+  editors; "In production" is postponed until the legal side is done
+  (2026-11-03, see "Next session"; no Google review for `openid email`).
 - Checked: claude.ai (custom connector, OAuth) lists the admin tools for the
   invited admin `viktor.atalla@gmail.com`. Not tried yet: ChatGPT, Gemini CLI.
 
