@@ -12,6 +12,9 @@ A tool the scopes don't allow is not listed; the tools only ask for scopes.
 """
 
 import json
+import logging
+from datetime import datetime, timedelta, timezone
+import time
 from functools import partial
 from uuid import UUID
 
@@ -20,6 +23,7 @@ import httpx
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from fastmcp.server.dependencies import get_access_token, get_http_headers
+from fastmcp.server.middleware import Middleware
 from fastmcp.server.middleware.authorization import AuthMiddleware
 from mcp.types import Icon
 from pydantic import BaseModel
@@ -45,6 +49,7 @@ from service import (
     review,
     rights,
 )
+from service import usage as usage_service
 from service import places as place_service
 
 # Calling the service layer -----------------------------------------------------
@@ -70,11 +75,7 @@ def actor() -> Actor:
     token = get_access_token()
     if token is None:
         raise ToolError("a bearer token is required")
-    raw = get_http_headers().get("x-run")
-    try:
-        run = json.loads(raw) if raw else None
-    except json.JSONDecodeError:
-        run = {"text": raw}
+    run = run_header()
     return Actor(
         UUID(token.claims["account_id"]),
         token.claims["name"],
@@ -101,6 +102,64 @@ def scraper_scope(ctx) -> bool:
     """The mounted scraper tools need the scope scrape."""
     name = getattr(ctx.component, "name", "")
     return not name.startswith("scraping_") or scope("scrape")(ctx)
+
+
+# What agents cost -----------------------------------------------------------------
+
+log = logging.getLogger(__name__)
+
+
+def run_header() -> dict | None:
+    raw = get_http_headers().get("x-run")
+    try:
+        return json.loads(raw) if raw else None
+    except json.JSONDecodeError:
+        return {"text": raw}
+
+
+def save_call(account_id: UUID, run: dict | None, tool: str, size, ms, ok):
+    try:
+        with Session(engine) as session:
+            usage_service.record(session, account_id, run, tool, size, ms, ok)
+    except Exception:  # measuring never breaks a tool
+        log.exception("tool_call not recorded")
+
+
+class Usage(Middleware):
+    """Records every tool call and tool list of the admin server: the bytes
+    the model reads (the text content) and the time (service/usage.py)."""
+
+    async def measure(self, name, context, call_next, size_of):
+        token = get_access_token()
+        start, ok, size = time.monotonic(), False, 0
+        try:
+            result = await call_next(context)
+            size, ok = size_of(result), True
+            return result
+        finally:
+            if token is not None and "account_id" in token.claims:
+                ms = round((time.monotonic() - start) * 1000)
+                account = UUID(token.claims["account_id"])
+                save = partial(save_call, account, run_header(), name, size, ms, ok)
+                await anyio.to_thread.run_sync(save)
+
+    async def on_call_tool(self, context, call_next):
+        def size_of(result):
+            texts = (getattr(c, "text", None) for c in result.content)
+            return sum(len(t.encode()) for t in texts if t)
+
+        name = context.message.name
+        return await self.measure(name, context, call_next, size_of)
+
+    async def on_list_tools(self, context, call_next):
+        def size_of(tools):
+            listed = [
+                t.to_mcp_tool().model_dump(mode="json", exclude_none=True)
+                for t in tools
+            ]
+            return len(json.dumps(listed, ensure_ascii=False).encode())
+
+        return await self.measure("tools/list", context, call_next, size_of)
 
 
 # The public server -------------------------------------------------------------
@@ -189,7 +248,8 @@ admin_mcp = FastMCP(
 - The public map shows only published content whose source or owner gave a
   permission.""",
     auth=auth,
-    middleware=[AuthMiddleware(auth=scraper_scope)],
+    # Usage outside: it measures the tool list as the client gets it
+    middleware=[Usage(), AuthMiddleware(auth=scraper_scope)],
     # shown on the OAuth consent page (sign-in to the admin and the MCP)
     # instead of FastMCP's name and logo; the page allows https images only
     website_url=config.auth.base_url,
@@ -437,13 +497,10 @@ async def import_suedboehmen_houses(
     numbers: list[str] | None = None,
     status: str | None = None,
 ) -> dict:
-    """Imports the houses of a village from the Südböhmen-Archiv (German
-    name, e.g. "Oberuresch") as house places, part of `place` (slug or id of
-    the village place), without passing them through you: names "<village>
-    <number>", attributes number, former_number, house_name, address.
-    `numbers` limits it to some houses. Importing again adds nothing new.
-    Returns created [{name, slug}], existing, duplicates (an existing place
-    looks the same: nothing created), skipped (no coordinates), errors."""
+    """Imports a village's houses from the Südböhmen-Archiv (German name,
+    e.g. "Oberuresch") server-side, part of `place` (the village): named
+    "<village> <number>". `numbers`: only these. Repeating adds nothing.
+    Returns created, existing, duplicates (not created), skipped, errors."""
     me = actor()
     try:
         data = await suedboehmen.village(village)
@@ -462,12 +519,10 @@ async def import_sacral_buildings(
     radius_km: float = 1.0,
     status: str | None = None,
 ) -> dict:
-    """Imports the destroyed or endangered sacral buildings within radius_km
-    of lat/lon from znicenekostely.cz as places, part of `place` (slug or
-    id), without passing them through you. Kinds: church, chapel,
-    wayside_shrine, else landmark; the Czech name is the name; category,
-    state and position become attributes. Importing again adds nothing new.
-    Returns created [{name, slug}], existing, duplicates, skipped, errors."""
+    """Imports the sacral buildings within radius_km of lat/lon from
+    znicenekostely.cz server-side, part of `place`: church, chapel,
+    wayside_shrine or landmark, Czech names. Repeating adds nothing.
+    Returns created, existing, duplicates, skipped, errors."""
     me = actor()
     try:
         data = await znicenekostely.objects_near(lat, lon, radius_km)
@@ -586,11 +641,11 @@ class TextEditItem(BaseModel):
 
 @admin_mcp.tool(auth=WRITE)
 async def edit_texts(texts: list[TextEditItem]) -> dict:
-    """Edits originals from a source: only remove what doesn't belong in the
+    """Edits originals from a source: only cut what doesn't belong in the
     app or fix typos, never add. To cut, give `remove` (parts, verbatim)
-    instead of `body`. Marked as edited; the verbatim text stays in the
-    source record. A resource that isn't new needs the review scope. Returns {done, errors, retranslate: [{resource, field, langs}]}:
-    the translations made from the earlier text."""
+    instead of `body`. Marked as edited (the source keeps the verbatim
+    text); not new: needs review. Returns {done, errors, retranslate}: the
+    translations made from the earlier text."""
     me = actor()
     stale = []
 
@@ -645,6 +700,14 @@ async def find_texts(
             offset,
         )
     )
+
+
+@admin_mcp.tool(auth=READ_ALL)
+async def usage(hours: float = 24) -> list[dict]:
+    """What agent runs cost (newest first): calls, bytes read, seconds,
+    errors, also per tool. A run: one X-Run, else no 15-min pause."""
+    since = datetime.now(timezone.utc) - timedelta(hours=hours)
+    return compact(await call(usage_service.runs, actor(), since))
 
 
 class LangMoveItem(BaseModel):

@@ -609,3 +609,56 @@ def test_an_agent_finds_requests_for_help_and_cuts_them(app, admin):
         "body": "Karl Hinterberger und Anna.",
         "edited": "a reference",
     }
+
+
+def test_usage_measures_what_a_run_reads(app, admin):
+    async def steps(client):
+        await client.list_tools()
+        await client.call_tool("find_places", {"text": "Oberuresch"})
+        await client.call_tool("find_places", {"text": "Asang"})
+        await client.call_tool("get_resource", {"key": "nowhere"}, raise_on_error=False)
+        return parse(await client.call_tool("usage", {}))
+
+    (latest,) = run(app, "/api/mcp/admin/", API_KEY, steps)
+    assert latest["account"] == "admin" and latest["run"] == {"model": "test"}
+    assert latest["calls"] == 4 and latest["errors"] == 1
+    tools = latest["tools"]
+    assert tools["find_places"]["calls"] == 2
+    assert tools["get_resource"] == {"calls": 1, "bytes": 0, "s": 0.0, "errors": 1}
+    # the tool list is the largest answer
+    assert list(tools)[0] == "tools/list" and tools["tools/list"]["bytes"] > 10000
+
+
+def test_usage_splits_calls_without_x_run_at_a_pause(clean):
+    from datetime import datetime, timedelta, timezone
+
+    from sqlmodel import Session, select
+
+    from api.db import engine
+    from api.model.tables import Account, ToolCall
+    from service import Actor, usage
+
+    start = datetime(2026, 11, 3, 9, tzinfo=timezone.utc)
+    with Session(engine) as session:
+        admin = session.exec(select(Account).where(Account.name == "admin")).one()
+        for minutes, run in [(0, None), (10, None), (12, {"id": "a"}), (40, None)]:
+            session.add(
+                ToolCall(
+                    at=start + timedelta(minutes=minutes),
+                    account_id=admin.id,
+                    run=run,
+                    tool="find_places",
+                    bytes=100,
+                    ms=50,
+                    ok=True,
+                )
+            )
+        session.commit()
+        me = Actor(admin.id, "admin", frozenset({"admin"}), None)
+        found = usage.runs(session, me, start)
+    # newest first: the call after the pause, the X-Run, the first two
+    assert [(r["calls"], r["run"]) for r in found] == [
+        (1, None),
+        (1, {"id": "a"}),
+        (2, None),
+    ]
