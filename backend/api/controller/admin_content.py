@@ -5,7 +5,7 @@ from typing import Annotated
 from uuid import UUID
 
 import httpx
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from sqlmodel import select
@@ -229,11 +229,20 @@ def get_review(
     kind: str | None = None,
     limit: int = 50,
     offset: int = 0,
+    source: Annotated[list[str] | None, Query()] = None,
 ):
     """The review list of one type (place, media, tour): rows with what the
-    admin shows (kind, picture, source, places, who added it), newest first,
-    and the total for paging."""
-    return review.queue(session, type, status, kind, limit, offset)
+    admin shows (kind, picture, source, places, who added it), places and
+    tours by name, media newest first, and the total for paging. source
+    (repeatable): only media of these sources (codes)."""
+    return review.queue(session, type, status, kind, limit, offset, source)
+
+
+@router.get("/review/sources", response_model=list[review.MediaSource])
+def get_review_sources(session: SessionDep, _: Reader, status: str = "new"):
+    """The sources of media in a status: code, name, count and whether the
+    source gave a permission to show (the admin's source filter)."""
+    return review.media_sources(session, status)
 
 
 @router.put("/resources/{id}/texts/{field}/{lang}", response_model=Text)

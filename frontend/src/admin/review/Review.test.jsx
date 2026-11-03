@@ -36,6 +36,29 @@ const ROWS = [
   },
 ];
 
+const SOURCES = [
+  {
+    code: "topothek:deutsch-reichenau",
+    name: "Topothek Deutsch Reichenau",
+    count: 1,
+    permitted: true,
+  },
+  { code: "boehmerwald", name: "Böhmerwald", count: 3, permitted: false },
+];
+
+const PHOTO = {
+  id: "m1",
+  type: "media",
+  status: "new",
+  label: "Hochzeit 1930",
+  places: ["Asang"],
+  created_at: "2026-11-01T10:00:00Z",
+  url: "https://example.test/photo.jpg",
+  may_show: true,
+  source: "Topothek Deutsch Reichenau",
+  source_permitted: true,
+};
+
 const reply = (status, body) =>
   new Response(JSON.stringify(body), {
     status,
@@ -52,6 +75,14 @@ const stub = () => {
       calls.push({ path: url.pathname, query: url.searchParams, init });
       if (url.pathname === "/api/admin/me")
         return reply(200, { name: "admin", scopes: ["admin"], roles: [] });
+      if (url.pathname === "/api/admin/review/sources")
+        return reply(200, SOURCES);
+      if (
+        url.pathname === "/api/admin/review/" &&
+        url.searchParams.get("type") === "media" &&
+        url.searchParams.get("status") === "new"
+      )
+        return reply(200, { total: 1, items: [PHOTO] });
       if (url.pathname === "/api/admin/review/")
         return reply(200, {
           total: url.searchParams.get("status") === "new" ? 2 : 0,
@@ -233,4 +264,27 @@ test("the type and status are in the URL", async () => {
   const list = calls.find((c) => c.path === "/api/admin/review/");
   expect(list.query.get("type")).toBe("media");
   expect(list.query.get("status")).toBe("muted");
+});
+
+test("pictures show their source and filter by sources with a permission", async () => {
+  window.history.replaceState(null, "", "/admin?type=media");
+  render(<App />);
+  expect(await screen.findByText("Hochzeit 1930")).toBeInTheDocument();
+  expect(screen.getByText(/Topothek Deutsch Reichenau ·/)).toBeInTheDocument();
+  // all sources by default
+  const first = calls.find((c) => c.path === "/api/admin/review/");
+  expect(first.query.getAll("source")).toEqual([]);
+  fireEvent.mouseDown(await screen.findByRole("combobox", { name: "" }));
+  fireEvent.click(
+    await screen.findByRole("option", { name: "Only sources with permission" }),
+  );
+  await waitFor(() =>
+    expect(window.location.search).toContain(
+      "source=topothek%3Adeutsch-reichenau",
+    ),
+  );
+  await waitFor(() => {
+    const last = calls.filter((c) => c.path === "/api/admin/review/").at(-1);
+    expect(last.query.getAll("source")).toEqual(["topothek:deutsch-reichenau"]);
+  });
 });

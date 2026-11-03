@@ -39,17 +39,25 @@ export const adminApi = {
   me: "/api/admin/me",
 };
 
-// The review list of one type in a status ({total, items}), a page at a time
-export const reviewList = ({ type, status, kind, offset = 0, limit = 50 }) =>
-  adminFetch(
-    `/api/admin/review/?${new URLSearchParams({
-      type,
-      status,
-      offset,
-      limit,
-      ...(kind ? { kind } : {}),
-    })}`,
-  );
+// The review list of one type in a status ({total, items}), a page at a
+// time; sources: media of these sources only (codes)
+export const reviewList = ({
+  type,
+  status,
+  kind,
+  sources = [],
+  offset = 0,
+  limit = 50,
+}) => {
+  const params = new URLSearchParams({ type, status, offset, limit });
+  if (kind) params.set("kind", kind);
+  sources.forEach((code) => params.append("source", code));
+  return adminFetch(`/api/admin/review/?${params}`);
+};
+
+// The sources of media in a status: [{code, name, count, permitted}]
+export const reviewSources = (status) =>
+  adminFetch(`/api/admin/review/sources?${new URLSearchParams({ status })}`);
 
 // One resource with its texts, links and sources
 export const resourceDetail = (id) => adminFetch(`/api/admin/resources/${id}`);

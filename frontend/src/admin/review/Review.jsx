@@ -2,7 +2,9 @@
 // places and tours by name (house numbers as numbers), media newest first.
 // Select rows, publish or mute them (with an undo), open one
 // for its details. The view lives in the query string, like the map's:
-// /admin?type=media&status=new&kind=house&open=<id>.
+// /admin?type=media&status=new&kind=house&source=<code>,<code>&open=<id>.
+// Pictures show their source and whether it gave a permission; the source
+// filter (all by default) can pick only the sources with a permission.
 import { useCallback, useEffect, useState } from "react";
 import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import Box from "@mui/material/Box";
@@ -13,6 +15,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import LinearProgress from "@mui/material/LinearProgress";
 import Link from "@mui/material/Link";
+import ListItemText from "@mui/material/ListItemText";
 import MenuItem from "@mui/material/MenuItem";
 import Snackbar from "@mui/material/Snackbar";
 import Tab from "@mui/material/Tab";
@@ -24,7 +27,13 @@ import Typography from "@mui/material/Typography";
 import { Icon } from "../../icons";
 import { useLanguage } from "../../LanguageContext";
 import { useAuth } from "../AuthContext";
-import { fill, PLACE_KINDS, reviewList, setStatuses } from "../api";
+import {
+  fill,
+  PLACE_KINDS,
+  reviewList,
+  reviewSources,
+  setStatuses,
+} from "../api";
 import Detail from "./Detail";
 
 const TYPES = ["place", "media", "tour"];
@@ -46,14 +55,16 @@ const useView = () => {
       ? params.get("status")
       : "new",
     kind: params.get("kind") || "",
+    sources: (params.get("source") || "").split(",").filter(Boolean),
     open: params.get("open"),
   };
   const set = (changes) =>
     setParams((current) => {
       const next = new URLSearchParams(current);
-      Object.entries(changes).forEach(([key, value]) =>
-        value ? next.set(key, value) : next.delete(key),
-      );
+      Object.entries(changes).forEach(([key, value]) => {
+        const text = Array.isArray(value) ? value.join(",") : value;
+        text ? next.set(key, text) : next.delete(key);
+      });
       return next;
     });
   return [view, set];
@@ -65,6 +76,88 @@ const date = (iso, language) =>
     month: "short",
     day: "numeric",
   });
+
+// A picture's source and whether it gave a permission to show
+const SourceNote = ({ item }) => {
+  const { t } = useLanguage();
+  if (!item.source) return null;
+  return (
+    <Box sx={{ fontSize: 13, color: "text.secondary" }}>
+      {item.source} ·{" "}
+      <Box
+        component="span"
+        sx={{
+          color: item.source_permitted ? "success.main" : "warning.main",
+          fontWeight: 500,
+        }}
+      >
+        {item.source_permitted ? t.admin.permitted : t.admin.notPermitted}
+      </Box>
+    </Box>
+  );
+};
+
+// Media sources, several at once (none chosen = all); the first entry
+// chooses the sources with a permission
+const SourceFilter = ({ sources, value, onChange }) => {
+  const { t } = useLanguage();
+  const PERMITTED = "__permitted";
+  const names = Object.fromEntries(sources.map((s) => [s.code, s.name]));
+  return (
+    <TextField
+      select
+      size="small"
+      value={value}
+      onChange={(e) => {
+        const chosen = e.target.value;
+        onChange(
+          chosen.includes(PERMITTED)
+            ? sources.filter((s) => s.permitted).map((s) => s.code)
+            : chosen,
+        );
+      }}
+      sx={{ minWidth: 200, maxWidth: 320 }}
+      slotProps={{
+        select: {
+          multiple: true,
+          displayEmpty: true,
+          renderValue: (chosen) =>
+            chosen.length === 0
+              ? t.admin.allSources
+              : chosen.length === 1
+                ? (names[chosen[0]] ?? chosen[0])
+                : fill(t.admin.sourcesChosen, { n: chosen.length }),
+        },
+      }}
+    >
+      <MenuItem value={PERMITTED}>
+        <ListItemText primary={t.admin.permittedOnly} />
+      </MenuItem>
+      {sources.map((source) => (
+        <MenuItem key={source.code} value={source.code}>
+          <Checkbox
+            size="small"
+            checked={value.includes(source.code)}
+            sx={{ p: 0.5, mr: 1 }}
+          />
+          <ListItemText
+            primary={`${source.name} (${source.count})`}
+            secondary={
+              source.permitted ? t.admin.permitted : t.admin.notPermitted
+            }
+            slotProps={{
+              secondary: {
+                sx: {
+                  color: source.permitted ? "success.main" : "warning.main",
+                },
+              },
+            }}
+          />
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+};
 
 const Row = ({ item, checked, onCheck, onOpen }) => {
   const { t, language } = useLanguage();
@@ -135,6 +228,7 @@ const Row = ({ item, checked, onCheck, onOpen }) => {
         <Box sx={{ color: "text.secondary", fontSize: 13 }}>
           {meta.join(" · ")}
         </Box>
+        <SourceNote item={item} />
         {item.status_reason && (
           <Box
             sx={{ color: "text.secondary", fontSize: 13, fontStyle: "italic" }}
@@ -232,6 +326,7 @@ const Review = () => {
     failed: false,
   });
   const [selected, setSelected] = useState(new Set());
+  const [sources, setSources] = useState([]); // media sources in the status
   const [asking, setAsking] = useState(null); // ids waiting for a mute reason
   // ids waiting for a confirmation: {ids, uncovered}
   const [confirming, setConfirming] = useState(null);
@@ -246,11 +341,12 @@ const Review = () => {
     async (offset = 0) => {
       setList((l) => ({ ...l, loading: true, failed: false }));
       try {
-        const { type, status, kind } = view;
+        const { type, status, kind, sources } = view;
         const page = await reviewList({
           type,
           status,
           kind,
+          sources: type === "media" ? sources : [],
           offset,
           limit: PAGE,
         });
@@ -265,8 +361,19 @@ const Review = () => {
       }
     },
     // the list's filters only: opening an item doesn't reload the list
-    [view.type, view.status, view.kind],
+    [view.type, view.status, view.kind, view.sources.join(",")],
   );
+
+  useEffect(() => {
+    if (view.type !== "media") return;
+    let current = true;
+    reviewSources(view.status)
+      .then((list) => current && setSources(list))
+      .catch(() => current && setSources([]));
+    return () => {
+      current = false;
+    };
+  }, [view.type, view.status]);
 
   useEffect(() => {
     setSelected(new Set());
@@ -330,7 +437,9 @@ const Review = () => {
     <Box sx={{ maxWidth: 1100, mx: "auto", px: { xs: 1, sm: 3 }, pb: 8 }}>
       <Tabs
         value={view.type}
-        onChange={(_, type) => setView({ type, kind: null, open: null })}
+        onChange={(_, type) =>
+          setView({ type, kind: null, source: null, open: null })
+        }
         variant="scrollable"
         sx={{ borderBottom: 1, borderColor: "divider", px: { xs: 1, sm: 0 } }}
       >
@@ -381,6 +490,13 @@ const Review = () => {
               </MenuItem>
             ))}
           </TextField>
+        )}
+        {view.type === "media" && (
+          <SourceFilter
+            sources={sources}
+            value={view.sources}
+            onChange={(chosen) => setView({ source: chosen, open: null })}
+          />
         )}
         <Box sx={{ color: "text.secondary", fontSize: 14 }}>{list.total}</Box>
         {view.type === "place" && mayWrite && (

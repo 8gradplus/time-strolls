@@ -9,10 +9,12 @@ from sqlmodel import Session, func, select
 
 from api.model.tables import (
     Account,
+    Permission,
     Place,
     Relation,
     Resource,
     ResourceSource,
+    Source,
     SourceRecord,
     Text,
 )
@@ -199,6 +201,9 @@ class QueueItem(BaseModel):
     url: str | None = None
     source_url: str | None = None
     may_show: bool | None = None
+    # media: the source's name and whether it gave a permission to show
+    source: str | None = None
+    source_permitted: bool | None = None
     # the places it belongs to (part_of) or shows (media)
     places: list[str] = []
 
@@ -223,6 +228,49 @@ def _order(view):
     ]
 
 
+def permitted_sources(session: Session) -> set[UUID]:
+    """The sources that gave a permission to show their content."""
+    return set(
+        session.exec(
+            select(Permission.source_id).where(
+                Permission.source_id.is_not(None),
+                Permission.revoked_at.is_(None),
+                Permission.show,
+            )
+        ).all()
+    )
+
+
+class MediaSource(BaseModel):
+    code: str
+    name: str
+    count: int  # its media in the status
+    permitted: bool  # it gave a permission to show
+
+
+def media_sources(session: Session, status: str = "new") -> list[MediaSource]:
+    """The sources of media in a status, with counts and permission (the
+    admin's source filter), by name."""
+    if status not in STATUSES:
+        raise Invalid(f"unknown status {status!r}")
+    allowed = permitted_sources(session)
+    rows = session.exec(
+        select(
+            Source.id, Source.code, Source.name, func.count(func.distinct(MediaView.id))
+        )
+        .join(SourceRecord, SourceRecord.source_id == Source.id)
+        .join(ResourceSource, ResourceSource.source_record_id == SourceRecord.id)
+        .join(MediaView, MediaView.id == ResourceSource.resource_id)
+        .where(MediaView.status == status)
+        .group_by(Source.id, Source.code, Source.name)
+        .order_by(Source.name)
+    ).all()
+    return [
+        MediaSource(code=code, name=name, count=count, permitted=id in allowed)
+        for id, code, name, count in rows
+    ]
+
+
 def queue(
     session: Session,
     type: str,
@@ -230,10 +278,11 @@ def queue(
     kind: str | None = None,
     limit: int = 50,
     offset: int = 0,
+    sources: list[str] | None = None,
 ) -> Queue:
     """One type's resources in a status (places and tours by name, media
     newest first), with what a row of the review list shows; a few queries
-    per page, not one per row."""
+    per page, not one per row. sources: media of these sources (codes)."""
     views = {"place": PlaceView, "media": MediaView, "tour": TourView}
     if type not in views:
         raise Invalid(f"unknown type {type!r}; known: {list(TYPES)}")
@@ -243,6 +292,15 @@ def queue(
     where = [view.status == status]
     if kind and type != "tour":
         where.append(view.kind == kind)
+    if sources and type == "media":
+        where.append(
+            view.id.in_(
+                select(ResourceSource.resource_id)
+                .join(SourceRecord, SourceRecord.id == ResourceSource.source_record_id)
+                .join(Source, Source.id == SourceRecord.source_id)
+                .where(Source.code.in_(sources))
+            )
+        )
     total = session.exec(select(func.count()).select_from(view).where(*where)).one()
     rows = list(
         session.exec(
@@ -271,6 +329,17 @@ def queue(
                 [t for t in texts if t.resource_id == id], "title", None
             )
             titles[id] = text.body if text else None
+    source_of: dict[UUID, tuple[str, bool]] = {}
+    if type == "media" and ids:
+        allowed = permitted_sources(session)
+        for media_id, source_id, name in session.exec(
+            select(ResourceSource.resource_id, Source.id, Source.name)
+            .join(SourceRecord, SourceRecord.id == ResourceSource.source_record_id)
+            .join(Source, Source.id == SourceRecord.source_id)
+            .where(ResourceSource.resource_id.in_(ids))
+            .order_by(SourceRecord.created_at)
+        ):
+            source_of.setdefault(media_id, (name, source_id in allowed))
     places_of: dict[UUID, list[str]] = {id: [] for id in ids}
     predicate = {"place": "part_of", "media": "shows"}.get(type)
     if predicate and ids:
@@ -298,6 +367,8 @@ def queue(
                 url=getattr(r, "url", None),
                 source_url=getattr(r, "source_url", None),
                 may_show=getattr(r, "may_show", None),
+                source=source_of.get(r.id, (None, None))[0],
+                source_permitted=source_of.get(r.id, (None, None))[1],
                 places=places_of[r.id],
             )
             for r in rows
