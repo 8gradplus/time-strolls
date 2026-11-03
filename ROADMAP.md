@@ -30,7 +30,25 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   background GPS and audio. So offline lands as a PWA, and Capacitor wraps
   the same build later.
 
-## Next session (state on 2026-11-01)
+## Next session (state on 2026-11-02)
+**Start here: release v0.6.0 (step 5, PR 6d).** The admin UI is merged
+(5a–5c #41–#43, 6a–6c #44–#46; CI green on `main`), but not released: v0.5.1
+is the latest tag. In this order, by the user:
+1. Google Cloud console: switch the OAuth client from "Testing" to "In
+   production" (else every editor must be a Google test user and sign-ins
+   expire after 7 days).
+2. Publish the release `v0.6.0` (target `main`, title "v0.6.0: the admin";
+   notes: review list, accounts and tokens, Topothek import, places and
+   texts; a person's token now does at most what their current roles
+   allow). No migration. It is the first release with #39 (recreate Caddy
+   when `Caddyfile.prod` changed): that step should do nothing.
+3. Check `/admin` on production: Prüfen, Importieren, Konten, Mein Zugang.
+4. Invite the first editors under Konten; collect their feedback.
+Then set 6d to done, and pick up item 0's "after step 5" list below.
+Not tried on production yet: a real harvest from the import page and
+creating a place (both were checked by hand only without saving).
+
+### State on 2026-11-01
 **v0.4.0 is live (2026-11-01).** The release brought the new content model
 (2a #17, 2b #18, 2c #19), the MCP server (#20–#22), houses and chapels on
 the map (#24, #25), the text cleanup (#27), the release prep (#30) and #31
@@ -69,7 +87,7 @@ machine-translated into cs/en. Production gets this by `make push` in
    OAuth through FastMCP with Google login, roles in our database; see
    section 5 and its PR table. **Live since v0.5.1 (2026-11-01):** invited
    editors sign in with Google; claude.ai lists the admin tools. Next:
-   PR 5, the admin UI (own MUI pages; 5a–5c done), then PR 6 in three parts (6a accounts and tokens, 6b Topothek import, 6c places; planned 2026-11-02, see the PR table in section 5), then the release.
+   PR 5 and PR 6, the admin UI (own MUI pages; 5a–6c merged 2026-11-02, see the PR table in section 5), then the release (6d, see "Next session" above).
    After step 5: the open points of the release
    prep above and items 1, 4, 6 and the leftovers of round B below, then
    the agreed order (item 5). Round B (houses and chapels) is done: villages and mills at every zoom,
@@ -518,10 +536,10 @@ days). The first admin is invited through the admin API with `API_KEY`.
 | 5a | Admin API for the UI: `GET /api/admin/review/` (one type's rows with kind, picture, source, places, author; `total` for paging) and `POST /api/admin/resources/status` (several at once; `each()` moved into the service, shared with MCP) | done (#41) |
 | 5b | Admin shell and sign-in: `/admin` as a lazy chunk, OAuth 2.1 public client (`oauth4webapi`, dynamic registration, PKCE; tokens in memory and `sessionStorage`), local mode when `/api/admin/me` answers without a token, the not-invited screen, de/cs/en | done (#42) |
 | 5c | Review queue: type tabs, filters, batch publish/mute with undo, detail panel (photo, texts per language, sources, permission, history), phone layout | done (#43) |
-| 6a | Accounts (admins): the list with email, roles and whether they signed in yet, invite, grant and revoke roles, each account's tokens (created and shown once, revoked). Personal tokens for everyone ("Mein Zugang", `/api/admin/me/tokens`, scopes at most one's own); a person's token is limited to their current roles at every request, so revoking a role also stops their tokens | in review |
-| 6b | Topothek import: paste links (one per line), choose the places they show (place search), harvested one after another with a row per link (new, known, error) that opens in the review panel. `POST /api/admin/media/topothek/` per link (now with the title); `GET /api/admin/places/search` (name and/or position, with the village), shared with 6c | in review |
-| 6c | Places: a new place with a map picker (click or drag the pin; kind, name and its language, the village it is part of; a refused duplicate is shown with "create anyway"), editing name, kind, position and village, and texts per language in the detail panel (edit an original with a note, add or fix a translation) | in review; frontend only (the routes were there) |
-| 6d | Release (v0.6.0) with 5a–6c; invite the first editors (Google client "In production" first) | |
+| 6a | Accounts (admins): the list with email, roles and whether they signed in yet, invite, grant and revoke roles, each account's tokens (created and shown once, revoked). Personal tokens for everyone ("Mein Zugang", `/api/admin/me/tokens`, scopes at most one's own); a person's token is limited to their current roles at every request, so revoking a role also stops their tokens | done (#44) |
+| 6b | Topothek import: paste links (one per line), choose the places they show (place search), harvested one after another with a row per link (new, known, error) that opens in the review panel. `POST /api/admin/media/topothek/` per link (now with the title); `GET /api/admin/places/search` (name and/or position, with the village), shared with 6c | done (#45) |
+| 6c | Places: a new place with a map picker (click or drag the pin; kind, name and its language, the village it is part of; a refused duplicate is shown with "create anyway"), editing name, kind, position and village, and texts per language in the detail panel (edit an original with a note, add or fix a translation) | done (#46) |
+| 6d | Release (v0.6.0) with 5a–6c; invite the first editors (Google client "In production" first) | next: Google client "In production", then the release |
 
 **Admin UI decisions (2026-11-01):** our own MUI pages in the app's look (not
 react-admin: our API isn't a standard REST shape, and the screens such as the
