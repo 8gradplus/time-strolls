@@ -626,6 +626,24 @@ const Menu = (props) => {
             </Plain>
           </Box>
         ))}
+        {/* The way into the admin, a plain link at the end of the small print */}
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box
+            component="span"
+            aria-hidden="true"
+            sx={{ px: 1.25, opacity: 0.5 }}
+          >
+            ·
+          </Box>
+          <Link
+            href="/admin"
+            color="inherit"
+            underline="none"
+            sx={{ py: 0.75, "&:hover": { color: "text.primary" } }}
+          >
+            {t.login}
+          </Link>
+        </Box>
       </Box>
     </Box>
   );

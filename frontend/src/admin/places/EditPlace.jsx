@@ -1,4 +1,6 @@
 // Changing a place from its panel: its kind, its village and where it is.
+// A village isn't part of a village: choosing that kind hides the picker and
+// saving drops the link.
 // The slug stays (links keep working); names are texts, edited in the panel.
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
@@ -49,9 +51,10 @@ const EditPlace = ({ open, place, relations, onClose, onSaved }) => {
         ...(point.lat !== place.lat || point.lon !== place.lon ? point : {}),
       };
       if (Object.keys(changes).length) await updatePlace(place.id, changes);
-      if ((village?.id ?? null) !== (current?.object_id ?? null)) {
+      const partOf = kind === "village" ? null : village;
+      if ((partOf?.id ?? null) !== (current?.object_id ?? null)) {
         if (current) await unlink(current.id);
-        if (village) await link(place.id, "part_of", village.id);
+        if (partOf) await link(place.id, "part_of", partOf.id);
       }
       onSaved();
     } catch (err) {
@@ -73,14 +76,16 @@ const EditPlace = ({ open, place, relations, onClose, onSaved }) => {
       <DialogContent>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, pt: 1, mb: 2 }}>
           <KindSelect value={kind} onChange={setKind} />
-          <Box sx={{ flex: "1 1 260px" }}>
-            <PlacePicker
-              multiple={false}
-              value={village}
-              onChange={setVillage}
-              label={t.admin.village}
-            />
-          </Box>
+          {kind !== "village" && (
+            <Box sx={{ flex: "1 1 260px" }}>
+              <PlacePicker
+                multiple={false}
+                value={village}
+                onChange={setVillage}
+                label={t.admin.village}
+              />
+            </Box>
+          )}
         </Box>
         <MapPicker value={point} onChange={setPoint} ignore={place.id} />
         {error && (

@@ -12,6 +12,7 @@ const translations = {
     aboutText:
       "Time Strolls führt durch die Gegend um Deutsch Reichenau an der österreichisch-tschechischen Grenze: Orte auf der Karte mit historischen Bildern, dazu Luftbilder von 1947 bis heute auf der Zeitleiste.",
     imprint: "Impressum",
+    login: "Anmelden",
     back: "Zurück",
     contribute: "Mitmachen",
     openSource: "Time Strolls ist Open Source.",
@@ -232,6 +233,7 @@ const translations = {
     aboutText:
       "Time Strolls provází okolím Rychnůvku (Deutsch Reichenau) na rakousko-české hranici: místa na mapě s historickými snímky a k tomu letecké snímky od roku 1947 až po současnost na časové ose.",
     imprint: "Tiráž",
+    login: "Přihlásit",
     back: "Zpět",
     contribute: "Zapojte se",
     openSource: "Time Strolls je open source.",
@@ -449,6 +451,7 @@ const translations = {
     aboutText:
       "Time Strolls guides you around Deutsch Reichenau on the Austrian–Czech border: places on the map with historic photos, and aerial imagery from 1947 to today on the time line.",
     imprint: "Imprint",
+    login: "Log in",
     back: "Back",
     contribute: "Contribute",
     openSource: "Time Strolls is open source.",

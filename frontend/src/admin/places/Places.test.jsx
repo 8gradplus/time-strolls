@@ -1,5 +1,6 @@
-// Places and texts as an editor changes them: a new place (refused as a
-// duplicate, then created anyway, linked to its village), an original from
+// Places and texts as an editor changes them: a new place (a village by
+// default, without "part of"; as a house refused as a duplicate, then
+// created anyway, linked to its village), an original from
 // a source edited with a note, a translation added. fetch answers as the API.
 import {
   cleanup,
@@ -124,6 +125,12 @@ test("a new place refused as a duplicate is created anyway, in its village", asy
   fireEvent.change(await screen.findByLabelText("Name"), {
     target: { value: "Oberuresch 3a" },
   });
+  // a village by default, which isn't part of a village
+  const kind = screen.getByRole("combobox", { name: "Kind" });
+  expect(kind).toHaveTextContent("Village");
+  expect(screen.queryByLabelText("Search a village (optional)")).toBeNull();
+  fireEvent.mouseDown(kind);
+  fireEvent.click(await screen.findByRole("option", { name: "House" }));
   const search = screen.getByLabelText("Search a village (optional)");
   fireEvent.focus(search);
   fireEvent.change(search, { target: { value: "uresch" } });
