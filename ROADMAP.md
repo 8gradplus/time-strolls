@@ -82,7 +82,8 @@ the order it came, to be prioritised together, not implemented yet):**
    covers it. Today the panel only says "no permission yet" (`may_show`
    false), without the reason. Publishing an image without a permission
    asks first: a warning in the panel and in the list's bulk publish
-   (how many of the selected aren't covered). It is still allowed, as
+   (how many of the selected aren't covered). Allowed after the warning
+   and a confirmation (confirmed by the user 2026-11-03), as
    published-but-not-permitted stays off the map. Probably needed: the
    admin detail returns the matching permission(s) and their scope, not
    only `may_show`.
