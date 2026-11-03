@@ -90,6 +90,18 @@ machine-translated into cs/en. Production gets this by `make push` in
   the name when the record keys differ.
 - Slugs collide for same-name places within ~100 m (3 decimals): one chapel
   in Deutsch Reichenau (znicenekostely 19688) couldn't be created.
+- The OAuth consent page ("Application Access Request", seen on sign-in to
+  the admin and the MCP) is FastMCP's own and doesn't match our look (noted
+  2026-11-03). It comes from `create_consent_html` in fastmcp 3.4.0
+  (`server/auth/oauth_proxy/ui.py`); the error page from `create_error_html`.
+  Cheap first step: give `admin_mcp` a name, our logo (`icons`) and
+  `website_url`, which the page already shows. Then our own page in the
+  Wall-label look (Cormorant + Jost, theme tokens, light and dark,
+  de/cs/en), keeping FastMCP's form fields and CSRF/transaction checks; a
+  small override of its consent handler, to be rechecked on every fastmcp
+  upgrade. Keep `require_authorization_consent=True` ("remember" would show
+  it less often but weakens the protection against a fake authorization
+  server).
 0. **Start here: step 5, auth and admin UI** (decided 2026-11-01: more
    impact on the product than the small points). Planned on 2026-11-01:
    OAuth through FastMCP with Google login, roles in our database; see
