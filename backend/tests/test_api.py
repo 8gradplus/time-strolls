@@ -644,6 +644,34 @@ def test_a_photo_says_which_permission_covers_it(admin, harvested):
     assert place_detail["rights"] is None
 
 
+def test_a_place_has_a_description_per_language(admin):
+    p = place(admin)
+    assert admin.get(f"/api/locations/{p['slug']}").json()["description"] is None
+    r = admin.put(
+        f"/api/admin/resources/{p['id']}/texts/description/de",
+        json={"body": "Ein Dorf am Schwemmkanal."},
+    )
+    assert r.status_code == 200, r.text
+    about = admin.get(f"/api/locations/{p['slug']}", params={"lang": "en"}).json()
+    assert about["description"] == {
+        "text": "Ein Dorf am Schwemmkanal.",
+        "lang": "de",
+        "method": None,
+        "edited": False,
+    }
+    admin.put(
+        f"/api/admin/resources/{p['id']}/texts/description/en",
+        json={
+            "body": "A village on the canal.",
+            "method": "human",
+            "translated_from": "de",
+        },
+    )
+    about = admin.get(f"/api/locations/{p['slug']}", params={"lang": "en"}).json()
+    assert about["description"]["text"] == "A village on the canal."
+    assert about["description"]["method"] == "human"
+
+
 def test_the_review_list_pages(admin):
     for i in range(3):
         place(admin, f"Haus {i}", status="new", lat=48.6 + i / 100, lon=14.0)

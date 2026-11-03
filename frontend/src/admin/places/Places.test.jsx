@@ -113,6 +113,27 @@ beforeEach(() => {
           sources: [],
           verbatim: {},
         });
+      if (path === "/api/admin/resources/v1")
+        return reply(200, {
+          resource: { id: "v1", type: "place", status: "published" },
+          item: { ...VILLAGE },
+          texts: [
+            {
+              id: "t5",
+              field: "name",
+              lang: "de",
+              body: "Oberuresch",
+              method: "original",
+              is_primary: true,
+            },
+          ],
+          relations: [],
+          shows: [],
+          sources: [],
+          verbatim: {},
+        });
+      if (path.startsWith("/api/admin/resources/v1/texts/"))
+        return reply(200, { id: "t6" });
       if (path.startsWith("/api/admin/resources/m1/texts/"))
         return reply(200, { id: "t2" });
       if (path.endsWith("/history")) return reply(200, []);
@@ -251,5 +272,24 @@ test("the places a photo shows are removed and added at once", async () => {
       predicate: "shows",
       object: "v1",
     }),
+  );
+});
+
+test("a place without a description gets one, as an original", async () => {
+  window.history.replaceState(null, "", "/admin?type=place&open=v1");
+  render(<App />);
+  expect(await screen.findByText("Description")).toBeInTheDocument();
+  // the name has its translations offered too; the description's buttons
+  // come last
+  const cs = screen.getAllByRole("button", { name: "+ CS" });
+  fireEvent.click(cs[cs.length - 1]);
+  fireEvent.change(screen.getByLabelText("Description · CS"), {
+    target: { value: "Vesnice u kanálu." },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() =>
+    expect(
+      sent("/api/admin/resources/v1/texts/description/cs", "PUT")[0].body,
+    ).toEqual({ body: "Vesnice u kanálu." }),
   );
 });

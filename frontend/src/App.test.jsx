@@ -283,3 +283,37 @@ test("the appearance button steps through the colour modes", async () => {
     within(menu).getByRole("button", { name: "Darstellung: Hell" }),
   ).toBeInTheDocument();
 });
+
+test("a place's description stands in its panel, a machine one marked", async () => {
+  localStorage.setItem("language", "en");
+  window.history.replaceState(null, "", "/?location=oberuresch");
+  fetch.mockImplementation((url) =>
+    url === "/api/locations/oberuresch?lang=en"
+      ? json({
+          place: {
+            id: "v1",
+            slug: "oberuresch",
+            name: "Oberuresch",
+            kind: "village",
+            lat: 48.609,
+            lon: 14.056,
+          },
+          description: {
+            text: "A village on the canal.",
+            lang: "en",
+            method: "machine",
+          },
+          children: [],
+          podcasts: [],
+          images: [],
+        })
+      : respond(url),
+  );
+  render(<App />);
+
+  expect(await screen.findByText("A village on the canal.")).toHaveAttribute(
+    "lang",
+    "en",
+  );
+  expect(screen.getByText("Machine translated")).toBeInTheDocument();
+});
