@@ -1,7 +1,7 @@
 // One resource of the review list in a panel (right on larger screens, full
 // screen on phones): the picture, its texts per language with how they came
-// about, its sources and permission, its history, and the same actions as
-// the list.
+// about, the places a photo shows (chips, changed at once), its sources and
+// permission, its history, and the same actions as the list.
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -20,11 +20,14 @@ import {
   editText,
   fill,
   LANGS,
+  link,
   putText,
   resourceDetail,
   resourceHistory,
+  unlink,
 } from "../api";
 import EditPlace from "../places/EditPlace";
+import PlacePicker, { placeMeta } from "../places/PlacePicker";
 
 const FIELDS = ["name", "title", "description"];
 
@@ -260,6 +263,60 @@ const Texts = ({ id, texts, verbatim, editable, onChanged }) => {
   });
 };
 
+// The places a photo shows (its `shows` links) as chips: ✕ removes one, the
+// search adds more. Every change is saved at once, then the panel reloads.
+const ShownPlaces = ({ id, shows, editable, onChanged }) => {
+  const { t } = useLanguage();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  if (!editable)
+    return shows.length ? (
+      shows.map((p) => (
+        <Box key={p.id} sx={{ fontSize: 14 }}>
+          {p.name}
+          <Box component="span" sx={{ color: "text.secondary", fontSize: 13 }}>
+            {" · "}
+            {placeMeta(p, t)}
+          </Box>
+        </Box>
+      ))
+    ) : (
+      <Box sx={{ fontSize: 14, color: "text.secondary" }}>
+        {t.admin.showsNone}
+      </Box>
+    );
+  const change = async (next) => {
+    const ids = new Set(next.map((p) => p.id));
+    const before = new Set(shows.map((p) => p.id));
+    setBusy(true);
+    setError(null);
+    try {
+      for (const p of shows.filter((p) => !ids.has(p.id)))
+        await unlink(p.relation_id);
+      for (const p of next.filter((p) => !before.has(p.id)))
+        await link(id, "shows", p.id);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+      onChanged();
+    }
+  };
+  return (
+    <Box sx={{ opacity: busy ? 0.6 : 1 }}>
+      <PlacePicker value={shows} onChange={change} label={t.admin.addPlace} />
+      {error && (
+        <Typography
+          role="alert"
+          sx={{ color: "error.main", fontSize: 14, mt: 1 }}
+        >
+          {error}
+        </Typography>
+      )}
+    </Box>
+  );
+};
+
 const Detail = ({
   id,
   row,
@@ -416,6 +473,16 @@ const Detail = ({
                 onChanged={changed}
               />
             </Section>
+            {detail.resource.type === "media" && (
+              <Section title={t.admin.shows}>
+                <ShownPlaces
+                  id={detail.resource.id}
+                  shows={detail.shows ?? []}
+                  editable={mayWrite}
+                  onChanged={changed}
+                />
+              </Section>
+            )}
             {mayWrite && detail.resource.type === "place" && (
               <Section title={t.admin.placeSection}>
                 <Box sx={{ fontSize: 14, mb: 1 }}>

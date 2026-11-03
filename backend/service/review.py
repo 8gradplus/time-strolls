@@ -60,6 +60,18 @@ def list_(
     ]
 
 
+class Shown(BaseModel):
+    """A place a media shows, with the link (to remove it) and its village."""
+
+    relation_id: UUID
+    id: UUID
+    slug: str
+    name: str | None = None
+    kind: str
+    status: str
+    part_of_name: str | None = None
+
+
 class Detail(BaseModel):
     resource: Resource
     item: dict
@@ -68,6 +80,49 @@ class Detail(BaseModel):
     sources: list[dict]
     # the source's wording of edited texts, by "field/lang"
     verbatim: dict[str, str] = {}
+    # the places a media shows (its `shows` links), named
+    shows: list[Shown] = []
+
+
+def shown(session: Session, id: UUID, relations: list[Relation]) -> list[Shown]:
+    links = {
+        r.object_id: r.id
+        for r in relations
+        if r.predicate == "shows" and r.subject_id == id
+    }
+    if not links:
+        return []
+    rows = session.exec(select(PlaceView).where(PlaceView.id.in_(list(links))))
+    found = {p.id: p for p in rows}
+    parents = dict(
+        session.exec(
+            select(Relation.subject_id, Relation.object_id).where(
+                Relation.subject_id.in_(list(found)), Relation.predicate == "part_of"
+            )
+        ).all()
+    )
+    names = dict(
+        session.exec(
+            select(PlaceView.id, PlaceView.name).where(
+                PlaceView.id.in_(list(parents.values()))
+            )
+        ).all()
+    )
+    return sorted(
+        (
+            Shown(
+                relation_id=links[p.id],
+                id=p.id,
+                slug=p.slug,
+                name=p.name,
+                kind=p.kind,
+                status=p.status,
+                part_of_name=names.get(parents.get(p.id)),
+            )
+            for p in found.values()
+        ),
+        key=lambda s: (s.part_of_name or s.name or "", s.name or ""),
+    )
 
 
 def detail(session: Session, key: str) -> Detail:
@@ -82,12 +137,14 @@ def detail(session: Session, key: str) -> Detail:
         .join(ResourceSource, ResourceSource.source_record_id == SourceRecord.id)
         .where(ResourceSource.resource_id == id)
     )
+    relations = resources.relations(session, id)
     return Detail(
         resource=resource,
         item=item,
         texts=resources.texts(session, id),
         verbatim=resources.verbatim(session, id),
-        relations=resources.relations(session, id),
+        relations=relations,
+        shows=shown(session, id, relations),
         sources=[
             r.model_dump(include={"id", "external_id", "url", "lang", "retrieved_at"})
             for r in records

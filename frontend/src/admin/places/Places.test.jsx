@@ -1,7 +1,8 @@
 // Places and texts as an editor changes them: a new place (a village by
 // default, without "part of"; as a house refused as a duplicate, then
 // created anyway, linked to its village), an original from
-// a source edited with a note, a translation added. fetch answers as the API.
+// a source edited with a note, a translation added, the places a photo
+// shows changed. fetch answers as the API.
 import {
   cleanup,
   fireEvent,
@@ -59,6 +60,8 @@ beforeEach(() => {
                 "looks like an existing place: Oberuresch 3 (oberuresch-3, house, 12 m)",
             });
       if (path === "/api/admin/relations/") return reply(201, { id: "r9" });
+      if (path.startsWith("/api/admin/relations/") && method === "DELETE")
+        return new Response(null, { status: 204 });
       if (path === "/api/admin/review/")
         return reply(200, {
           total: 1,
@@ -89,6 +92,17 @@ beforeEach(() => {
             },
           ],
           relations: [],
+          shows: [
+            {
+              relation_id: "r1",
+              id: "h3",
+              slug: "oberuresch-3",
+              name: "Oberuresch 3",
+              kind: "house",
+              status: "published",
+              part_of_name: "Oberuresch",
+            },
+          ],
           sources: [],
           verbatim: {},
         });
@@ -201,6 +215,28 @@ test("an original from a source is edited with a note; a translation is added", 
       body: "Family in front of the house",
       method: "human",
       translated_from: "de",
+    }),
+  );
+});
+
+test("the places a photo shows are removed and added at once", async () => {
+  window.history.replaceState(null, "", "/admin?type=media&open=m1");
+  render(<App />);
+  const chip = await screen.findByRole("button", { name: "Oberuresch 3" });
+  fireEvent.keyDown(chip, { key: "Backspace" });
+  await waitFor(() =>
+    expect(sent("/api/admin/relations/r1", "DELETE")).toHaveLength(1),
+  );
+
+  const search = screen.getByLabelText("Add a place");
+  fireEvent.focus(search);
+  fireEvent.change(search, { target: { value: "uresch" } });
+  fireEvent.click(await screen.findByRole("option", { name: /Oberuresch/ }));
+  await waitFor(() =>
+    expect(sent("/api/admin/relations/", "POST")[0].body).toEqual({
+      subject: "m1",
+      predicate: "shows",
+      object: "v1",
     }),
   );
 });
