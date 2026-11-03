@@ -60,7 +60,9 @@ const originalOf = (texts, field) =>
 
 // One text in place: an original from a source is edited with a note (and
 // marked as edited), an own original or a translation is replaced; a
-// translation by hand becomes "human". `x` is null for a new translation.
+// translation by hand becomes "human". `x` is null for a new text: a
+// translation from `from`, or without `from` the field's first text, an
+// original.
 const TextEditor = ({ id, field, lang, x, from, onDone, onCancel }) => {
   const { t } = useLanguage();
   const [body, setBody] = useState(x?.body ?? "");
@@ -73,6 +75,8 @@ const TextEditor = ({ id, field, lang, x, from, onDone, onCancel }) => {
     setError(null);
     try {
       if (fromSource) await editText(id, field, lang, body.trim(), note.trim());
+      else if (!x && !from)
+        await putText(id, field, lang, { body: body.trim() });
       else if (x?.method === "original")
         await putText(id, field, lang, {
           body: body.trim(),
@@ -136,21 +140,26 @@ const TextEditor = ({ id, field, lang, x, from, onDone, onCancel }) => {
   );
 };
 
-const Texts = ({ id, texts, verbatim, editable, onChanged }) => {
+// `offer`: fields shown even while empty (a place's description), so the
+// first text can be written; it becomes the original.
+const Texts = ({ id, texts, verbatim, editable, onChanged, offer = [] }) => {
   const { t } = useLanguage();
   const [editing, setEditing] = useState(null); // "field/lang"
-  const fields = FIELDS.filter((f) => texts.some((x) => x.field === f));
+  const fields = FIELDS.filter(
+    (f) => texts.some((x) => x.field === f) || (editable && offer.includes(f)),
+  );
   const done = () => {
     setEditing(null);
     onChanged();
   };
   return fields.map((field) => {
     const original = originalOf(texts, field);
-    const missing = original
-      ? LANGS.filter(
-          (l) => !texts.some((x) => x.field === field && x.lang === l),
-        )
-      : [];
+    const missing = LANGS.filter(
+      (l) => !texts.some((x) => x.field === field && x.lang === l),
+    );
+    // without an original only an empty offered field can get a first text
+    const empty = !texts.some((x) => x.field === field);
+    const addable = original || empty ? missing : [];
     return (
       <Box key={field} sx={{ mb: 2 }}>
         <Box sx={{ fontWeight: 600, fontSize: 14, mb: 0.5 }}>
@@ -231,7 +240,7 @@ const Texts = ({ id, texts, verbatim, editable, onChanged }) => {
             ),
           )}
         {editable &&
-          missing.map((lang) =>
+          addable.map((lang) =>
             editing === `${field}/${lang}` ? (
               <TextEditor
                 key={lang}
@@ -239,15 +248,15 @@ const Texts = ({ id, texts, verbatim, editable, onChanged }) => {
                 field={field}
                 lang={lang}
                 x={null}
-                from={original.lang}
+                from={original?.lang}
                 onDone={done}
                 onCancel={() => setEditing(null)}
               />
             ) : null,
           )}
-        {editable && missing.length > 0 && (
+        {editable && addable.length > 0 && (
           <Box sx={{ display: "flex", gap: 1.5, fontSize: 13 }}>
-            {missing.map((lang) => (
+            {addable.map((lang) => (
               <Plain
                 key={lang}
                 onClick={() => setEditing(`${field}/${lang}`)}
@@ -521,6 +530,7 @@ const Detail = ({
                 verbatim={detail.verbatim ?? {}}
                 editable={mayWrite}
                 onChanged={changed}
+                offer={detail.resource.type === "place" ? ["description"] : []}
               />
             </Section>
             {detail.resource.type === "media" && (

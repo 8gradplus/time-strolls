@@ -72,8 +72,16 @@ class LocationPodcast(Translated):
     owner: str | None = None
 
 
+class PlaceDescription(Translated):
+    """A place's description in the language asked for, else the original."""
+
+    text: str
+    edited: bool = False
+
+
 class Location(BaseModel):
     place: LocationPlace
+    description: PlaceDescription | None = None
     parent: LocationPlace | None = None
     # what is part of it (a village's houses and chapels), by kind and number
     children: list[LocationPlace] = []
@@ -231,7 +239,8 @@ def location(session: Session, key: str, lang: str | None = None) -> Location:
         raise NotFound(f"no place {key!r}")
     images = linked_media(session, place.id, "shows", ["image"])
     podcasts = linked_media(session, place.id, "about", ["audio"])
-    texts = texts_of(session, [m.id for m in images + podcasts])
+    texts = texts_of(session, [place.id] + [m.id for m in images + podcasts])
+    about = resources.pick(texts[place.id], "description", lang)
 
     def image(m: PublicMedia) -> LocationImage:
         title = resources.pick(texts[m.id], "title", lang)
@@ -281,6 +290,13 @@ def location(session: Session, key: str, lang: str | None = None) -> Location:
     rows = {p.id: p for p in location_places(session, near, lang)}
     return Location(
         place=rows[place.id],
+        description=PlaceDescription(
+            text=about.body,
+            edited=edited(texts[place.id], about),
+            **translated(about),
+        )
+        if about
+        else None,
         parent=rows.get(parent_id),
         children=sorted(
             (rows[id] for id in child_ids if id in rows), key=by_kind_and_number

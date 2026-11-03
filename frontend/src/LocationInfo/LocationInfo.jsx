@@ -267,6 +267,25 @@ const LocationInfo = (props) => {
     >
       {info && (
         <Box sx={{ pt: 0.5, pb: 2.5 }}>
+          {info.description && (
+            // The place's own text, before what belongs to it
+            <Box sx={{ px: 2.5, pb: 2 }}>
+              <Typography
+                lang={info.description.lang}
+                sx={{ whiteSpace: "pre-line", lineHeight: 1.6 }}
+              >
+                {info.description.text}
+              </Typography>
+              {info.description.method === "machine" && (
+                <Typography
+                  color="text.secondary"
+                  sx={{ fontSize: "0.8rem", mt: 0.5 }}
+                >
+                  {t.machineTranslated}
+                </Typography>
+              )}
+            </Box>
+          )}
           {groupsOf(info.children ?? []).map((group) => (
             <PlaceGroup
               key={`${slug}-${group.key}`}
