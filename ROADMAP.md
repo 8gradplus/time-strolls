@@ -31,24 +31,19 @@ Drafted and agreed on 2026-10-20. Update the status table whenever a step lands.
   the same build later.
 
 ## Next session (state on 2026-11-03)
-**Start here: release v0.6.0 (step 5, PR 6d).** The admin UI is merged
-(5a–5c #41–#43, 6a–6c #44–#46; CI green on `main`), but not released: v0.5.1
-is the latest tag. The Google client stays in **"Testing"** for now (decided
-2026-11-03: the legal side comes first, see "Later" below). In this order,
-by the user:
-1. Publish the release `v0.6.0` (target `main`, title "v0.6.0: the admin";
-   notes: review list, accounts and tokens, Topothek import, places and
-   texts; a person's token now does at most what their current roles
-   allow). No migration. It is the first release with #39 (recreate Caddy
-   when `Caddyfile.prod` changed): that step should do nothing.
-2. Check `/admin` on production: Prüfen, Importieren, Konten, Mein Zugang.
-3. Invite the first editors under Konten **and** add each address as a test
-   user in the Google console (Audience → Test users, 100 at most). Their
-   sign-ins expire after 7 days; then they sign in again (claude.ai
-   reconnects the connector). Collect their feedback.
-Then set 6d to done, and pick up item 0's "after step 5" list below.
-Not tried on production yet: a real harvest from the import page and
-creating a place (both were checked by hand only without saving).
+**v0.6.0 is live (2026-11-03): the admin** (step 5 done, 5a–6c #41–#46).
+The release workflow passed; `/api/ready`, `/admin` and the OAuth metadata
+answer. The user checked `/admin` on production and published two items
+(a harvest and a place work there too). The Google client stays in
+**"Testing"** (decided 2026-11-03: the legal side comes first, see "Later"
+below): every editor is invited under Konten **and** added as a test user
+in the Google console (Audience → Test users, 100 at most); sign-ins
+expire after 7 days, then they sign in again (claude.ai reconnects the
+connector).
+
+**Start here: the feedback below.** Prioritise it with the user, then one
+small PR per point; point 6 needs decisions first. After that, item 0's
+"after step 5" list.
 
 **Feedback after v0.6.0 (2026-11-03, the user's test on production; in
 the order it came, to be prioritised together, not implemented yet):**
@@ -162,7 +157,7 @@ machine-translated into cs/en. Production gets this by `make push` in
    OAuth through FastMCP with Google login, roles in our database; see
    section 5 and its PR table. **Live since v0.5.1 (2026-11-01):** invited
    editors sign in with Google; claude.ai lists the admin tools. Next:
-   PR 5 and PR 6, the admin UI (own MUI pages; 5a–6c merged 2026-11-02, see the PR table in section 5), then the release (6d, see "Next session" above).
+   PR 5 and PR 6, the admin UI (own MUI pages; 5a–6c merged 2026-11-02, see the PR table in section 5); released as v0.6.0 on 2026-11-03 (6d). Its feedback is in "Next session" above.
    After step 5: the open points of the release
    prep above and items 1, 4, 6 and the leftovers of round B below, then
    the agreed order (item 5). Round B (houses and chapels) is done: villages and mills at every zoom,
@@ -255,7 +250,7 @@ machine-translated into cs/en. Production gets this by `make push` in
 | 2e | Houses and chapels on the map (round B), tap label and pips | Done (#24, #25) |
 | 3 | Own base map and offline PWA | Open |
 | 4 | Release workflow (DOCR, deploy) | Done (#10, #11) |
-| 5 | Auth (OIDC JWT) and admin (react-admin) | Next (decided 2026-11-01); plan first |
+| 5 | Auth (OAuth with Google, invited editors, tokens) and admin (own MUI pages) | Done: v0.5.1 (auth), v0.6.0 (admin, 2026-11-03); feedback in "Next session" |
 | 6 | Capacitor Android: geofence notifications, background audio | Open |
 | 7 | MCP server on the same auth | First version for agents done (#20, #21, #22, scraper v0.4.0); bearer tokens for now, OAuth with step 5; text cleanup (#27); live since v0.4.0 (2026-11-01) |
 
@@ -614,7 +609,7 @@ days). The first admin is invited through the admin API with `API_KEY`.
 | 6a | Accounts (admins): the list with email, roles and whether they signed in yet, invite, grant and revoke roles, each account's tokens (created and shown once, revoked). Personal tokens for everyone ("Mein Zugang", `/api/admin/me/tokens`, scopes at most one's own); a person's token is limited to their current roles at every request, so revoking a role also stops their tokens | done (#44) |
 | 6b | Topothek import: paste links (one per line), choose the places they show (place search), harvested one after another with a row per link (new, known, error) that opens in the review panel. `POST /api/admin/media/topothek/` per link (now with the title); `GET /api/admin/places/search` (name and/or position, with the village), shared with 6c | done (#45) |
 | 6c | Places: a new place with a map picker (click or drag the pin; kind, name and its language, the village it is part of; a refused duplicate is shown with "create anyway"), editing name, kind, position and village, and texts per language in the detail panel (edit an original with a note, add or fix a translation) | done (#46) |
-| 6d | Release (v0.6.0) with 5a–6c; invite the first editors (as Google test users while the client is in "Testing"; "In production" postponed until the legal side is done) | next: the release |
+| 6d | Release (v0.6.0) with 5a–6c; invite the first editors (as Google test users while the client is in "Testing"; "In production" postponed until the legal side is done) | done (v0.6.0, 2026-11-03) |
 
 **Admin UI decisions (2026-11-01):** our own MUI pages in the app's look (not
 react-admin: our API isn't a standard REST shape, and the screens such as the
