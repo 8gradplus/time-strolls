@@ -21,12 +21,14 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from fastmcp.server.dependencies import get_access_token, get_http_headers
 from fastmcp.server.middleware.authorization import AuthMiddleware
+from mcp.types import Icon
 from pydantic import BaseModel
 from pydantic_core import to_jsonable_python
 from scrape_time_strolls.mcp.server import mcp as scraping
 from sqlmodel import Session
 
 from api.auth.oauth import auth
+from config import config
 from api.db import engine
 from importers import suedboehmen, topothek, znicenekostely
 from service import (
@@ -185,6 +187,10 @@ admin_mcp = FastMCP(
   permission.""",
     auth=auth,
     middleware=[AuthMiddleware(auth=scraper_scope)],
+    # shown on the OAuth consent page (sign-in to the admin and the MCP)
+    # instead of FastMCP's name and logo; the page allows https images only
+    website_url=config.auth.base_url,
+    icons=[Icon(src=f"{config.auth.base_url}/logo192.png", mimeType="image/png")],
 )
 admin_mcp.mount(scraping, namespace="scraping")
 
