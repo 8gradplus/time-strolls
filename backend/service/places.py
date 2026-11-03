@@ -10,7 +10,14 @@ from pydantic import BaseModel
 from sqlalchemy import cast, func, null
 from sqlmodel import Session, select
 
-from api.model.tables import Place, PlaceKind, Relation, Text
+from api.model.tables import (
+    Place,
+    PlaceKind,
+    Relation,
+    ResourceSource,
+    SourceRecord,
+    Text,
+)
 from api.model.views import PlaceView
 from helpers.slug import generate_place_slug
 from service import Actor, Conflict, Invalid, NotFound, audit, initial_status, require
@@ -71,6 +78,34 @@ def normalise(name: str) -> str:
     return " ".join("sankt" if w in ("st", "skt") else w for w in words)
 
 
+# Words that say what a place is, not which one: archives name many chapels
+# just "kaple" (and the sacral import falls back to the category, "Kapličky").
+# They stay the stored name, but don't count as a name for duplicates.
+KIND_WORDS = frozenset(
+    normalise(word)
+    for word in (
+        # cs, with the categories of znicenekostely
+        "kaple", "kaplička", "kapličky", "velká kaple", "velké kaple",
+        "kostel", "kostely", "kostelík", "boží muka", "svatý obraz",
+        "svaté obrazy", "kříž", "křížek", "zvonice", "zvonička", "zvoničky",
+        "hřbitov", "hřbitovy", "fara", "fary", "márnice", "klášter",
+        "kláštery", "mlýn", "dům", "statek",
+        # de
+        "Kapelle", "Wegkapelle", "Kirche", "Marterl", "Bildstock",
+        "Wegkreuz", "Kreuz", "Friedhof", "Mühle", "Pfarrhof", "Glockenturm",
+        "Haus", "Hof",
+        # en
+        "chapel", "church", "wayside shrine", "cross", "cemetery", "mill",
+        "house", "farm",
+    )
+)  # fmt: skip
+
+
+def names_for_duplicates(names) -> set[str]:
+    """The normalised names that identify a place: no kind words."""
+    return {n for n in map(normalise, names) if n and n not in KIND_WORDS}
+
+
 class PlaceUpdate(BaseModel):
     kind: str | None = None
     lat: float | None = None
@@ -88,15 +123,19 @@ def check_kind(session: Session, kind: str):
 
 
 def create(
-    session: Session, actor: Actor, data: PlaceIn, commit: bool = True
+    session: Session,
+    actor: Actor,
+    data: PlaceIn,
+    commit: bool = True,
+    record: SourceRecord | None = None,
 ) -> PlaceView:
     """A new place; one that looks like an existing place raises Duplicate,
-    unless data.force."""
+    unless data.force. `record`: the source record it is made from."""
     require(actor, "write")
     check_kind(session, data.kind)
     status = initial_status(actor, data.status)
     if not data.force:
-        matches = duplicates(session, data)
+        matches = duplicates(session, data, record)
         if matches:
             raise Duplicate(matches)
     slug = generate_place_slug(data.name, data.lat, data.lon)
@@ -258,16 +297,20 @@ def search(
     ]
 
 
-def duplicates(session: Session, data: PlaceIn) -> list[Found]:
+def duplicates(
+    session: Session, data: PlaceIn, record: SourceRecord | None = None
+) -> list[Found]:
     """Existing places that the new one would repeat: a name matches within
-    DUPLICATE_NAME_M, or the same kind is within DUPLICATE_SPOT_M (unless both
-    have house numbers and they differ)."""
-    wanted = {normalise(n) for n in (data.name, *data.names.values())}
+    DUPLICATE_NAME_M (kind words like "kaple" aren't names), or the same kind
+    is within DUPLICATE_SPOT_M (unless both have house numbers and they
+    differ). A place made from another record of the same source as
+    `record` is another place: the archive tells them apart."""
+    wanted = names_for_duplicates((data.name, *data.names.values()))
     number = number_of(data.attributes)
     matches = []
     near = search(session, lat=data.lat, lon=data.lon, radius_m=DUPLICATE_NAME_M)
     for place in near:
-        same_name = wanted & {normalise(n) for n in (place.name or "", *place.names)}
+        same_name = wanted & names_for_duplicates((place.name or "", *place.names))
         same_spot = (
             place.kind == data.kind
             and place.distance_m <= DUPLICATE_SPOT_M
@@ -275,4 +318,20 @@ def duplicates(session: Session, data: PlaceIn) -> list[Found]:
         )
         if same_name or same_spot:
             matches.append(place)
+    if record and matches:
+        others = set(
+            session.exec(
+                select(ResourceSource.resource_id)
+                .join(
+                    SourceRecord,
+                    SourceRecord.id == ResourceSource.source_record_id,
+                )
+                .where(
+                    ResourceSource.resource_id.in_([m.id for m in matches]),
+                    SourceRecord.source_id == record.source_id,
+                    SourceRecord.id != record.id,
+                )
+            )
+        )
+        matches = [m for m in matches if m.id not in others]
     return matches

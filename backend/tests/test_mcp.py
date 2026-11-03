@@ -325,6 +325,66 @@ def test_create_places_refuses_duplicates(app, admin):
     assert "unknown place kind" in invalid["error"]
 
 
+def test_a_kind_word_is_no_name_for_duplicates(app, admin):
+    async def steps(client):
+        async def create(*places):
+            result = await client.call_tool("create_places", {"places": list(places)})
+            return parse(result)
+
+        chapel = {"lang": "cs", "kind": "chapel", "lon": 14.12}
+        await create(
+            chapel | {"name": "kaple", "lat": 48.63},
+            chapel | {"name": "Kaple sv. Jana", "lat": 48.632},
+        )
+        return await create(
+            # another chapel called just "kaple", 450 m away
+            chapel | {"name": "Kaple", "lat": 48.634},
+            # a real name is still compared, 250 m away
+            chapel | {"name": "kaple sv. Jana", "lat": 48.6343},
+        )
+
+    plain, named = run(app, "/api/mcp/admin/", API_KEY, steps)
+    assert "slug" in plain
+    assert named["duplicate_of"][0]["name"] == "Kaple sv. Jana"
+
+
+def test_other_records_of_a_source_are_other_places(importing, monkeypatch, admin):
+    from importers import znicenekostely
+
+    def kaple(id, lat):
+        return {
+            "id": id,
+            "name": "kaple",
+            "category": "Kaple",
+            "lat": lat,
+            "lon": 14.0562,
+            "source_url": f"https://www.znicenekostely.cz/objekt/detail/{id}",
+        }
+
+    # two chapels 2 m apart: the same kind on the same spot, but the archive
+    # has them as two objects
+    two = KOSTELY | {"objects": [kaple(1, 48.61049), kaple(2, 48.61051)]}
+
+    async def objects_near(lat, lon, radius_km):
+        return two
+
+    monkeypatch.setattr(znicenekostely, "objects_near", objects_near)
+
+    async def steps(client):
+        async def tool(name, arguments):
+            return parse(await client.call_tool(name, arguments))
+
+        (village,) = await tool("create_places", {"places": [VILLAGE]})
+        args = {"lat": 48.6105, "lon": 14.0562, "place": village["slug"]}
+        return await tool("import_sacral_buildings", args), await tool(
+            "import_sacral_buildings", args
+        )
+
+    first, again = run(importing, "/api/mcp/admin/", API_KEY, steps)
+    assert len(first["created"]) == 2 and "duplicates" not in first
+    assert len(again["existing"]) == 2
+
+
 def test_paths_without_the_trailing_slash(app):
     assert {"set_status", "list_resources"} <= run(
         app, "/api/mcp/admin", API_KEY, names
