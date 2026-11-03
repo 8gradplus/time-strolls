@@ -240,7 +240,9 @@ admin_mcp = FastMCP(
   move_text_langs.
 - Houses and sacral buildings: import_suedboehmen_houses and
   import_sacral_buildings store them directly (with their source record),
-  so don't copy scraper results into create_places.
+  so don't copy scraper results into create_places. Then check_houses:
+  move misplaced houses to the village they stand in (move_places), mute
+  one of each same_spot pair.
 - Topothek: search with the scraping_ tools, then harvest_topothek; the
   archives are small, so harvest only what is needed. The scraping_ tools
   for suedboehmen and znicenekostely take numbers/categories, limit and
@@ -357,6 +359,21 @@ async def get_resource(key: str, full: bool = False) -> dict:
     if full:
         return await call(review.detail, key)
     return await call(resource_brief, key)
+
+
+@admin_mcp.tool(auth=READ_ALL)
+async def check_houses(
+    lat: float,
+    lon: float,
+    radius_m: float = 5000,
+    far_m: float = place_service.MISPLACED_FAR_M,
+    near_m: float = place_service.MISPLACED_NEAR_M,
+) -> dict:
+    """After an import: houses (not muted) far from their village and near
+    another (misplaced: move_places), one number on one point under two
+    villages (same_spot: mute one), and houses without a village."""
+    found = await call(place_service.check_houses, lat, lon, radius_m, far_m, near_m)
+    return compact(found)
 
 
 @admin_mcp.tool(auth=READ_ALL)
@@ -603,6 +620,28 @@ async def unlink(relation_ids: list[str]) -> dict:
     return compact(await call(each, relation_ids, remove))
 
 
+class Move(BaseModel):
+    place: str  # id or slug, e.g. a house
+    part_of: str  # id or slug of the place it belongs to, e.g. its village
+
+
+@admin_mcp.tool(auth=WRITE)
+async def move_places(moves: list[Move]) -> dict:
+    """Puts places (houses, chapels) into another village: the new part_of
+    replaces the old one. Returns {done, errors}."""
+    me = actor()
+
+    def move(session, item: Move):
+        place_service.move(
+            session,
+            me,
+            resources.resolve(session, item.place, "place"),
+            resources.resolve(session, item.part_of, "place"),
+        )
+
+    return compact(await call(each, moves, move))
+
+
 class TextItem(BaseModel):
     resource: str  # id or slug
     field: str  # name, title, description, ...
@@ -734,13 +773,22 @@ async def move_text_langs(moves: list[LangMoveItem]) -> dict:
 # Reviewing
 
 
+class StatusItem(BaseModel):
+    resource: str  # id or slug
+    reason: str | None = None  # this one's own reason
+
+
 @admin_mcp.tool(auth=REVIEW)
 async def set_status(
-    resources: list[str], status: str, reason: str | None = None
+    resources: list[str | StatusItem], status: str, reason: str | None = None
 ) -> dict:
     """Publishes, mutes (give a reason), withdraws or resets resources (ids
-    or slugs) to new. Returns {done, errors: [{item, error}]}."""
-    return compact(await call(review.set_statuses, actor(), resources, status, reason))
+    or slugs, or {resource, reason}) to new. Returns {done, errors}."""
+    items = [
+        item if isinstance(item, str) else (item.resource, item.reason)
+        for item in resources
+    ]
+    return compact(await call(review.set_statuses, actor(), items, status, reason))
 
 
 @admin_mcp.tool(auth=REVIEW)

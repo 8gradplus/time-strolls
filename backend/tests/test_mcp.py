@@ -409,7 +409,9 @@ def test_the_tool_list_stays_small(app):
 
     count, size = run(app, "/api/mcp/admin/", API_KEY, size)
     print(f"\nadmin tools: {count}, {size} bytes (without the scraper's)")
-    assert size < 16000
+    # 16 KB until 2026-11-03; move_places and check_houses (+1.4 KB) save an
+    # agent about 30 calls when it relinks a village's houses
+    assert size < 17500
 
 
 # Imports from the scrapers, without the network -----------------------------------
@@ -662,3 +664,75 @@ def test_usage_splits_calls_without_x_run_at_a_pause(clean):
         (1, {"id": "a"}),
         (2, None),
     ]
+
+
+def test_an_agent_puts_houses_into_the_village_they_stand_in(app, admin):
+    """check_houses finds a house filed under the wrong village and a house
+    listed twice; move_places and set_status (a reason each) fix them."""
+    a = {"name": "Heinrichsöd", "lat": 48.60, "lon": 14.0}
+    b = {"name": "Loislreith", "lat": 48.61, "lon": 14.0}  # 1.1 km north
+
+    def house(name, number, lat, village):
+        return {
+            "name": name,
+            "kind": "house",
+            "lat": lat,
+            "lon": 14.0,
+            "attributes": {"number": number},
+            "part_of": village,
+        }
+
+    async def steps(client):
+        call = Meter(client)
+        villages = await call("create_places", {"places": [a, b]})
+        a_slug, b_slug = (v["slug"] for v in villages)
+        houses = await call(
+            "create_places",
+            {
+                "places": [
+                    # filed under Heinrichsöd, but it stands in Loislreith
+                    house("Heinrichsöd 20", "20", 48.6101, a_slug),
+                    house("Heinrichsöd 3", "3", 48.6002, a_slug),
+                    # the same house, listed under both
+                    house("Loislreith 3", "3", 48.60021, b_slug) | {"force": True},
+                ]
+            },
+        )
+        found = await call("check_houses", {"lat": 48.605, "lon": 14.0})
+        moved = await call(
+            "move_places",
+            {"moves": [{"place": houses[0]["slug"], "part_of": b_slug}]},
+        )
+        muted = await call(
+            "set_status",
+            {
+                "resources": [
+                    {
+                        "resource": houses[2]["slug"],
+                        "reason": "Duplicate of Heinrichsöd 3",
+                    }
+                ],
+                "status": "muted",
+            },
+        )
+        again = await call("check_houses", {"lat": 48.605, "lon": 14.0})
+        brief = await call("get_resource", {"key": houses[0]["slug"]})
+        return a_slug, b_slug, houses, found, moved, muted, again, brief
+
+    a_slug, b_slug, houses, found, moved, muted, again, brief = run(
+        app, "/api/mcp/admin/", API_KEY, steps
+    )
+    assert found["houses"] == 3
+    (misplaced,) = found["misplaced"]
+    assert misplaced["house"] == houses[0]["slug"] and misplaced["nearest"] == b_slug
+    assert misplaced["village"] == a_slug and misplaced["village_m"] > 1000
+    (pair,) = found["same_spot"]
+    assert set(pair["houses"]) == {houses[1]["slug"], houses[2]["slug"]}
+    assert moved == {"done": 1} and muted == {"done": 1}
+    # moved and muted: nothing left to report
+    assert again == {"houses": 2}
+    part_of = [x for x in brief["links"] if x["predicate"] == "part_of"]
+    assert [x["label"] for x in part_of] == ["Loislreith"]
+    detail = admin.get(f"/api/admin/resources/{houses[2]['id']}").json()
+    assert detail["resource"]["status"] == "muted"
+    assert detail["resource"]["status_reason"] == "Duplicate of Heinrichsöd 3"

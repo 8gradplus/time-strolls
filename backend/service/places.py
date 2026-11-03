@@ -3,6 +3,7 @@ one of them primary; the slug comes from it and the coordinates, once."""
 
 import re
 import unicodedata
+from math import asin, cos, radians, sin, sqrt
 from uuid import UUID
 
 from geoalchemy2 import Geography
@@ -335,3 +336,157 @@ def duplicates(
         )
         matches = [m for m in matches if m.id not in others]
     return matches
+
+
+# Houses and their villages (agents fix part_of after an import) ----------------
+
+
+def move(session: Session, actor: Actor, id: UUID, to: UUID):
+    """Makes `to` the one place `id` is part of: links it, then removes the
+    other part_of links (both in the change log). Moving again changes nothing."""
+    require(actor, "write")
+    resources.link(session, actor, id, "part_of", to)
+    old = session.exec(
+        select(Relation.id).where(
+            Relation.subject_id == id,
+            Relation.predicate == "part_of",
+            Relation.object_id != to,
+        )
+    ).all()
+    for relation_id in old:
+        resources.unlink(session, actor, relation_id)
+
+
+HOUSE_KINDS = ("house", "farm")
+# a house this far from its village and this close to another (and clearly
+# closer) is reported as misplaced; same number this close: the same house
+MISPLACED_FAR_M = 600
+MISPLACED_NEAR_M = 500
+MISPLACED_GAIN_M = 300
+SAME_SPOT_M = 30
+
+
+def meters(a: PlaceView, b: PlaceView) -> float:
+    """Distance on the sphere; good enough for a few kilometres."""
+    dlat, dlon = radians(b.lat - a.lat), radians(b.lon - a.lon)
+    h = (
+        sin(dlat / 2) ** 2
+        + cos(radians(a.lat)) * cos(radians(b.lat)) * sin(dlon / 2) ** 2
+    )
+    return 2 * 6_371_000 * asin(sqrt(h))
+
+
+class Misplaced(BaseModel):
+    house: str  # slug
+    village: str | None = None  # the slug of the village it is part of
+    village_m: int | None = None
+    nearest: str  # the slug of the nearest other village
+    nearest_m: int
+
+
+class SameSpot(BaseModel):
+    houses: list[str]  # slugs, same number on (almost) the same point
+    villages: list[str | None]  # what each is part of
+    distance_m: int
+
+
+class HouseCheck(BaseModel):
+    houses: int
+    misplaced: list[Misplaced] = []
+    same_spot: list[SameSpot] = []
+    no_village: list[str] = []
+
+
+def check_houses(
+    session: Session,
+    lat: float,
+    lon: float,
+    radius_m: float = 5000,
+    far_m: float = MISPLACED_FAR_M,
+    near_m: float = MISPLACED_NEAR_M,
+) -> HouseCheck:
+    """Houses (not muted or withdrawn) within radius_m: same-number pairs on
+    the same point under different villages (one to mute), those far from
+    their village and near another (to move; twins are left out until one
+    is muted), and those without a village."""
+    here = cast(func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326), Geography)
+    there = cast(Place.geom, Geography)
+
+    def within(radius, kinds):
+        return list(
+            session.exec(
+                select(PlaceView)
+                .join(Place, Place.id == PlaceView.id)
+                .where(
+                    func.ST_DWithin(there, here, radius),
+                    PlaceView.kind.in_(kinds),
+                    PlaceView.status.notin_(("muted", "withdrawn")),
+                )
+                .order_by(PlaceView.name)
+            )
+        )
+
+    houses = within(radius_m, HOUSE_KINDS)
+    # villages a little beyond the circle, for houses near its edge
+    villages = within(radius_m + 3000, ("village",))
+    village_of = dict(
+        session.exec(
+            select(Relation.subject_id, Relation.object_id).where(
+                Relation.subject_id.in_([h.id for h in houses]),
+                Relation.predicate == "part_of",
+            )
+        ).all()
+    )
+    by_id = {v.id: v for v in villages}
+    for missing in set(village_of.values()) - by_id.keys():
+        place = session.get(PlaceView, missing)
+        if place:
+            by_id[missing] = place
+    check = HouseCheck(houses=len(houses))
+    by_number: dict[str, list[PlaceView]] = {}
+    for house in houses:
+        number = number_of(house.attributes)
+        if number:
+            by_number.setdefault(number, []).append(house)
+    for same in by_number.values():
+        for i, a in enumerate(same):
+            for b in same[i + 1 :]:
+                apart = meters(a, b)
+                if apart <= SAME_SPOT_M and village_of.get(a.id) != village_of.get(
+                    b.id
+                ):
+                    check.same_spot.append(
+                        SameSpot(
+                            houses=[a.slug, b.slug],
+                            villages=[
+                                getattr(by_id.get(village_of.get(h.id)), "slug", None)
+                                for h in (a, b)
+                            ],
+                            distance_m=round(apart),
+                        )
+                    )
+    # a house listed twice is muted first, not moved
+    twins = {slug for pair in check.same_spot for slug in pair.houses}
+    for house in houses:
+        if house.slug in twins:
+            continue
+        own = by_id.get(village_of.get(house.id))
+        if own is None:
+            check.no_village.append(house.slug)
+            continue
+        own_m = meters(house, own)
+        others = [(meters(house, v), v) for v in villages if v.id != own.id]
+        if own_m <= far_m or not others:
+            continue
+        nearest_m, nearest = min(others, key=lambda pair: pair[0])
+        if nearest_m <= near_m and own_m - nearest_m >= MISPLACED_GAIN_M:
+            check.misplaced.append(
+                Misplaced(
+                    house=house.slug,
+                    village=own.slug,
+                    village_m=round(own_m),
+                    nearest=nearest.slug,
+                    nearest_m=round(nearest_m),
+                )
+            )
+    return check

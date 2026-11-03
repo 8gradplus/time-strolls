@@ -163,16 +163,18 @@ def detail(session: Session, key: str) -> Detail:
 def set_statuses(
     session: Session,
     actor: Actor,
-    keys: list[str],
+    keys: list[str | tuple[str, str | None]],
     status: str,
     reason: str | None = None,
 ) -> dict:
-    """Publishes, mutes, withdraws or resets resources (ids or slugs).
-    Returns {done, errors: [{item, error}]}; one failure doesn't stop the rest."""
+    """Publishes, mutes, withdraws or resets resources (ids or slugs; or
+    (key, reason) for a reason of its own). Returns {done, errors: [{item,
+    error}]}; one failure doesn't stop the rest."""
 
-    def change(session: Session, key: str):
+    def change(session: Session, item):
+        key, why = (item, reason) if isinstance(item, str) else item
         resources.set_status(
-            session, actor, resources.resolve(session, key), status, reason
+            session, actor, resources.resolve(session, key), status, why or reason
         )
 
     return each(session, keys, change)
